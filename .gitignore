@@ -4,6 +4,7 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 capturas/
 saida/
+caixa-de-saida/
 .env
 .env.*
 !.env.example

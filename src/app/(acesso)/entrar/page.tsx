@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BotaoPrincipal, Cabecalho, CampoDeCorreo, LinkDeTexto } from '@/components/acesso/campos';
+import { Aviso, BotaoPrincipal, Cabecalho, CampoDeCorreo, LinkDeTexto } from '@/components/acesso/campos';
 import { CampoSenha } from '@/components/acesso/CampoSenha';
 import { es } from '@/i18n/es';
 import { entrar } from '../acoes';
@@ -22,11 +22,7 @@ export default async function PaginaEntrar({ searchParams }: Props) {
     <>
       <Cabecalho area={es.acesso.area} titulo={es.entrar.titulo} />
       <form action={entrar} className="flex flex-col gap-5">
-        {erro ? (
-          <p role="alert" className="rounded-xl border border-perigo bg-cartao px-4 py-3 text-[15px] font-semibold text-perigo">
-            {erro}
-          </p>
-        ) : null}
+        {erro ? <Aviso tipo="erro">{erro}</Aviso> : null}
         <CampoDeCorreo rotulo={es.entrar.correo} exemplo={es.entrar.correoEjemplo} />
         <CampoSenha
           rotulo={es.entrar.clave}

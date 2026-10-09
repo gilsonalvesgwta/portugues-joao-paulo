@@ -96,6 +96,8 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_URL=$ENDERECO"
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$PUBLICA"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICO"
+            echo "EMAIL_DRIVER=arquivo"
+            echo "EMAIL_PASTA=$GITHUB_WORKSPACE/caixa-de-saida"
           } >> "$GITHUB_ENV"
       - name: Compilar
         run: npm run build 2>&1 | tee saida/2-compilar.txt

@@ -14,6 +14,22 @@ export function Cabecalho({ area, titulo, texto }: { area: string; titulo: strin
   );
 }
 
+// Mensagem acima do formulário: aviso de erro (lido na hora pelo leitor de tela) ou confirmação.
+export function Aviso({ tipo, children }: { tipo: 'erro' | 'ok'; children: ReactNode }) {
+  if (tipo === 'erro') {
+    return (
+      <p role="alert" className="rounded-xl border border-perigo bg-cartao px-4 py-3 text-[15px] font-semibold text-perigo">
+        {children}
+      </p>
+    );
+  }
+  return (
+    <p role="status" className="rounded-xl border border-verde bg-verde-suave px-4 py-3 text-[15px] font-semibold text-verde">
+      {children}
+    </p>
+  );
+}
+
 export function CampoDeCorreo({ rotulo, exemplo }: { rotulo: string; exemplo: string }) {
   return (
     <div className="flex flex-col gap-2">

@@ -47,4 +47,26 @@ export const es = {
     texto: 'Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.',
     boton: 'Enviar enlace',
   },
+  enlace: {
+    enviado: 'Si ese correo tiene una compra, acabamos de enviarle un enlace. Revisa tu bandeja de entrada y la carpeta de spam.',
+    correoInvalido: 'Escribe un correo electrónico válido.',
+    invalido: 'El enlace no es válido o ya caducó. Pide uno nuevo.',
+  },
+  confirmar: {
+    titulo: 'Ya casi está',
+    texto: 'Pulsa el botón para elegir tu contraseña.',
+    boton: 'Continuar',
+  },
+  nuevaClave: {
+    titulo: 'Elige tu contraseña',
+    texto: 'La usarás cada vez que entres a tus clases.',
+    nueva: 'Contraseña nueva',
+    repetir: 'Repite la contraseña',
+    boton: 'Guardar y entrar',
+    errores: {
+      corta: 'La contraseña debe tener al menos 8 caracteres.',
+      distintas: 'Las contraseñas no coinciden.',
+      fallo: 'No pudimos guardar la contraseña. Inténtalo de nuevo.',
+    },
+  },
 } as const;

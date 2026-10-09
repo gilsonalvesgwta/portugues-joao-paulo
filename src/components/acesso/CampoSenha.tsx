@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { classeDoCampo } from './campos';
 
 type Props = {
+  id?: string;
+  autoCompletar?: 'current-password' | 'new-password';
   rotulo: string;
   exemplo: string;
   mostrar: string;
@@ -11,22 +13,22 @@ type Props = {
 };
 
 // Campo de senha com o botão de mostrar e ocultar o que foi digitado.
-export function CampoSenha({ rotulo, exemplo, mostrar, ocultar }: Props) {
+export function CampoSenha({ id = 'clave', autoCompletar = 'current-password', rotulo, exemplo, mostrar, ocultar }: Props) {
   const [visivel, setVisivel] = useState(false);
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="clave" className="text-[15px] font-semibold">
+      <label htmlFor={id} className="text-[15px] font-semibold">
         {rotulo}
       </label>
       <div className="flex items-center gap-2">
         <input
-          id="clave"
-          name="clave"
+          id={id}
+          name={id}
           type={visivel ? 'text' : 'password'}
           required
           minLength={8}
-          autoComplete="current-password"
+          autoComplete={autoCompletar}
           placeholder={exemplo}
           className={classeDoCampo}
         />
