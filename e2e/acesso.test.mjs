@@ -82,8 +82,9 @@ test('professor entra direto na administração', async () => {
   const pagina = await novaPagina(navegador);
   await entrar(pagina, professor.email, senha);
   await pagina.waitForURL('**/admin');
-  assert.equal(await pagina.getByRole('heading', { level: 1 }).innerText(), 'Administração');
-  assert.match(await pagina.locator('main').innerText(), /Você entrou como Professor/);
+  assert.equal(await pagina.getByRole('heading', { level: 1 }).innerText(), 'Painel');
+  assert.match(await pagina.locator('main').innerText(), /Você entrou como Professor\./);
+  assert.equal(await pagina.getByRole('navigation', { name: 'Administração' }).getByRole('link', { name: 'Painel' }).getAttribute('aria-current'), 'page');
   await pagina.screenshot({ path: 'capturas/admin-computador.png', fullPage: true });
 });
 

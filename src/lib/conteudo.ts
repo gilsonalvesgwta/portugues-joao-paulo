@@ -1,0 +1,171 @@
+// Regras do conteúdo editado na administração: cursos, módulos e aulas.
+// Sem dependências, para valer igual na tela, no servidor e nos testes.
+
+export type Erros = Record<string, string>;
+export type Resultado<T> = { ok: true; valor: T } | { ok: false; erros: Erros };
+export type Entrada = Record<string, unknown>;
+
+export const TITULO_MAX = 160;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const CODIGO_DO_VIDEO = /^[A-Za-z0-9_-]{1,100}$/;
+
+export function ehUuid(valor: unknown): valor is string {
+  return typeof valor === 'string' && UUID.test(valor);
+}
+
+// Tira espaços das pontas e junta espaços repetidos.
+export function limpar(valor: unknown): string {
+  return typeof valor === 'string' ? valor.trim().replace(/\s+/g, ' ') : '';
+}
+
+function conferirTitulo(erros: Erros, campo: string, valor: string, idioma: string): void {
+  if (valor === '') erros[campo] = `Escreva o título em ${idioma}.`;
+  else if (valor.length > TITULO_MAX) erros[campo] = `O título pode ter até ${TITULO_MAX} letras.`;
+}
+
+function umDe<T extends string>(valor: unknown, opcoes: readonly T[]): T | null {
+  return typeof valor === 'string' && (opcoes as readonly string[]).includes(valor) ? (valor as T) : null;
+}
+
+export const TIPOS_DE_CURSO = ['principal', 'complementar'] as const;
+export const MODOS_DE_CURSO = ['livre', 'sequencial'] as const;
+export const SITUACOES = ['rascunho', 'publicado'] as const;
+export type Situacao = (typeof SITUACOES)[number];
+
+export type DadosDoCurso = {
+  titulo_pt: string;
+  titulo_es: string;
+  tipo: (typeof TIPOS_DE_CURSO)[number];
+  modo: (typeof MODOS_DE_CURSO)[number];
+  situacao: Situacao;
+};
+
+export function validarCurso(entrada: Entrada): Resultado<DadosDoCurso> {
+  const erros: Erros = {};
+  const titulo_pt = limpar(entrada.titulo_pt);
+  const titulo_es = limpar(entrada.titulo_es);
+  conferirTitulo(erros, 'titulo_pt', titulo_pt, 'português');
+  conferirTitulo(erros, 'titulo_es', titulo_es, 'espanhol');
+  const tipo = umDe(entrada.tipo, TIPOS_DE_CURSO);
+  const modo = umDe(entrada.modo, MODOS_DE_CURSO);
+  const situacao = umDe(entrada.situacao, SITUACOES);
+  if (!tipo) erros.tipo = 'Escolha o tipo do curso.';
+  if (!modo) erros.modo = 'Escolha como o aluno avança.';
+  if (!situacao) erros.situacao = 'Escolha a situação.';
+  if (!tipo || !modo || !situacao || Object.keys(erros).length > 0) return { ok: false, erros };
+  return { ok: true, valor: { titulo_pt, titulo_es, tipo, modo, situacao } };
+}
+
+export type DadosDoModulo = { titulo_pt: string; titulo_es: string };
+
+export function validarModulo(entrada: Entrada): Resultado<DadosDoModulo> {
+  const erros: Erros = {};
+  const titulo_pt = limpar(entrada.titulo_pt);
+  const titulo_es = limpar(entrada.titulo_es);
+  conferirTitulo(erros, 'titulo_pt', titulo_pt, 'português');
+  conferirTitulo(erros, 'titulo_es', titulo_es, 'espanhol');
+  if (Object.keys(erros).length > 0) return { ok: false, erros };
+  return { ok: true, valor: { titulo_pt, titulo_es } };
+}
+
+// Duração escrita como "12:34" ou "1:02:03". Vazio = sem duração. Devolve os segundos.
+export function lerDuracao(texto: unknown): number | null | 'invalida' {
+  const limpo = limpar(texto);
+  if (limpo === '') return null;
+  const partes = limpo.split(':');
+  if (partes.length < 2 || partes.length > 3) return 'invalida';
+  if (!partes.every((parte) => /^\d{1,3}$/.test(parte))) return 'invalida';
+  const numeros = partes.map(Number);
+  const segundos = numeros[numeros.length - 1] ?? 0;
+  const minutos = numeros[numeros.length - 2] ?? 0;
+  const horas = numeros.length === 3 ? (numeros[0] ?? 0) : 0;
+  if (segundos > 59) return 'invalida';
+  if (numeros.length === 3 && minutos > 59) return 'invalida';
+  return horas * 3600 + minutos * 60 + segundos;
+}
+
+export function formatarDuracao(segundos: number | null | undefined): string {
+  if (segundos === null || segundos === undefined || !Number.isFinite(segundos) || segundos < 0) return '';
+  const total = Math.floor(segundos);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const dois = (n: number) => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${dois(m)}:${dois(s)}` : `${m}:${dois(s)}`;
+}
+
+export type DadosDaAula = {
+  modulo_id: string;
+  numero: number;
+  titulo_pt: string;
+  titulo_es: string;
+  video_id: string | null;
+  duracao_seg: number | null;
+  situacao: Situacao;
+};
+
+// numerosEmUso: números das outras aulas do mesmo curso (fora da lixeira).
+export function validarAula(entrada: Entrada, numerosEmUso: readonly number[] = []): Resultado<DadosDaAula> {
+  const erros: Erros = {};
+
+  const modulo_id = ehUuid(entrada.modulo_id) ? entrada.modulo_id : '';
+  if (modulo_id === '') erros.modulo_id = 'Escolha o módulo da aula.';
+
+  const numeroEscrito = limpar(entrada.numero);
+  const numero = /^\d{1,4}$/.test(numeroEscrito) ? Number(numeroEscrito) : 0;
+  if (numeroEscrito === '') erros.numero = 'Escreva o número da aula.';
+  else if (numero < 1) erros.numero = 'O número da aula vai de 1 a 9999.';
+  else if (numerosEmUso.includes(numero)) erros.numero = `Já existe a aula nº ${numero} neste curso.`;
+
+  const titulo_pt = limpar(entrada.titulo_pt);
+  const titulo_es = limpar(entrada.titulo_es);
+  conferirTitulo(erros, 'titulo_pt', titulo_pt, 'português');
+  conferirTitulo(erros, 'titulo_es', titulo_es, 'espanhol');
+
+  const videoEscrito = limpar(entrada.video_id);
+  if (videoEscrito !== '' && !CODIGO_DO_VIDEO.test(videoEscrito)) {
+    erros.video_id = 'O código do vídeo só tem letras, números e traços, sem espaços.';
+  }
+
+  const duracao = lerDuracao(entrada.duracao);
+  if (duracao === 'invalida') erros.duracao = 'Escreva a duração como minutos:segundos, por exemplo 12:30.';
+
+  const situacao = umDe(entrada.situacao, SITUACOES);
+  if (!situacao) erros.situacao = 'Escolha entre salvar como rascunho e publicar.';
+  // Aula publicada sem vídeo seria uma tela vazia para o aluno.
+  if (situacao === 'publicado' && videoEscrito === '' && !erros.video_id) {
+    erros.video_id = 'Para publicar, a aula precisa de um vídeo. Sem vídeo, salve como rascunho.';
+  }
+
+  if (!situacao || duracao === 'invalida' || Object.keys(erros).length > 0) return { ok: false, erros };
+  return {
+    ok: true,
+    valor: {
+      modulo_id,
+      numero,
+      titulo_pt,
+      titulo_es,
+      video_id: videoEscrito === '' ? null : videoEscrito,
+      duracao_seg: duracao,
+      situacao,
+    },
+  };
+}
+
+// Próximo número livre: um a mais que o maior em uso.
+export function proximoNumero(numeros: readonly number[]): number {
+  return numeros.reduce((maior, n) => (n > maior ? n : maior), 0) + 1;
+}
+
+// Troca um item de lugar com o vizinho de cima ou de baixo. Na ponta, devolve a lista igual.
+export function mover<T>(lista: readonly T[], indice: number, direcao: 'subir' | 'descer'): T[] {
+  const copia = [...lista];
+  const destino = direcao === 'subir' ? indice - 1 : indice + 1;
+  const item = copia[indice];
+  const vizinho = copia[destino];
+  if (item === undefined || vizinho === undefined || indice < 0 || destino < 0) return copia;
+  copia[indice] = vizinho;
+  copia[destino] = item;
+  return copia;
+}
