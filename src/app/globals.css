@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Paleta da marca Português com João Paulo. Contrastes conferidos pela regra WCAG:
+   verde-claro e dourado não servem para texto sobre fundo claro. */
+@theme {
+  --color-fundo: #f5f1e8;
+  --color-cartao: #ffffff;
+  --color-texto: #17211f;
+  --color-apoio: #5b655f;
+  --color-verde: #075e54;
+  --color-verde-link: #0c7562;
+  --color-verde-claro: #16a085;
+  --color-verde-suave: #e7f1ee;
+  --color-dourado: #c9a227;
+  --color-dourado-texto: #7a5f0e;
+  --color-linha: #d8d0c1;
+  --color-borda-campo: #8c8372;
+  --color-carvao: #151515;
+  --color-aviso: #8a4b00;
+  --color-perigo: #b3261e;
+}
+
+/* As fontes vêm do next/font (arquivos servidos pelo próprio aplicativo). */
+@theme inline {
+  --font-titulo: var(--font-playfair), Georgia, serif;
+  --font-interface: var(--font-figtree), system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-fundo);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-verde-link);
+  outline-offset: 2px;
+}

@@ -24,8 +24,6 @@ jobs:
           node-version: 22
       - name: Testes
         run: npm test
-      - name: Tipos
-        run: npx --yes --package typescript@5.9.3 tsc --noEmit -p tsconfig.json
 
   banco:
     name: Banco de dados
@@ -52,3 +50,61 @@ jobs:
       - uses: actions/checkout@v4
       - name: Regras de acesso, reserva e pagamento
         run: ./supabase/tests/rodar.sh
+
+  aplicativo:
+    name: Aplicativo
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar pacotes
+        run: |
+          mkdir -p saida
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi 2>&1 | tee saida/1-instalar.txt
+      - name: Compilar
+        run: npm run build 2>&1 | tee saida/2-compilar.txt
+      - name: Tipos
+        run: npm run typecheck 2>&1 | tee saida/3-tipos.txt
+      - name: Fotografar as telas
+        run: |
+          npx playwright install --with-deps chromium > saida/4-navegador.txt 2>&1
+          npm start > saida/5-servidor.txt 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/entrar > /dev/null; then break; fi
+            sleep 1
+          done
+          npm run capturas 2>&1 | tee saida/6-capturas.txt
+      # As sessões do Claude não conseguem baixar os registros do GitHub Actions.
+      # Esta etapa publica o fim de cada registro, as fotos das telas e o
+      # package-lock.json no ramo "ci-saida", que é sobrescrito a cada execução.
+      - name: Publicar a saída no ramo ci-saida
+        if: always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RAMO: ${{ github.head_ref || github.ref_name }}
+        run: |
+          mkdir -p saida
+          if [ -f package-lock.json ]; then cp package-lock.json saida/; fi
+          if [ -d capturas ]; then cp -r capturas saida/; fi
+          for arquivo in saida/*.txt; do
+            if [ -f "$arquivo" ]; then
+              tail -n 300 "$arquivo" > "$arquivo.fim"
+              mv "$arquivo.fim" "$arquivo"
+            fi
+          done
+          echo "ramo: $RAMO | commit: $GITHUB_SHA | execucao: $GITHUB_RUN_ID" > saida/LEIA.txt
+          cd saida
+          git init -q -b ci-saida
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Saída dos testes de $RAMO ($GITHUB_SHA)"
+          git push -q --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-saida
