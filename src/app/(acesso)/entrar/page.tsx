@@ -7,11 +7,26 @@ import { entrar } from '../acoes';
 
 export const metadata: Metadata = { title: es.entrar.titulo };
 
-export default function PaginaEntrar() {
+type Props = { searchParams: Promise<{ error?: string | string[] }> };
+
+function mensagemDeErro(codigo: string | string[] | undefined): string | null {
+  if (codigo === 'credenciales') return es.entrar.errores.credenciales;
+  if (codigo === 'datos') return es.entrar.errores.datos;
+  return null;
+}
+
+export default async function PaginaEntrar({ searchParams }: Props) {
+  const erro = mensagemDeErro((await searchParams).error);
+
   return (
     <>
       <Cabecalho area={es.acesso.area} titulo={es.entrar.titulo} />
       <form action={entrar} className="flex flex-col gap-5">
+        {erro ? (
+          <p role="alert" className="rounded-xl border border-perigo bg-cartao px-4 py-3 text-[15px] font-semibold text-perigo">
+            {erro}
+          </p>
+        ) : null}
         <CampoDeCorreo rotulo={es.entrar.correo} exemplo={es.entrar.correoEjemplo} />
         <CampoSenha
           rotulo={es.entrar.clave}

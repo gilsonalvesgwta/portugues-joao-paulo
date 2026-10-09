@@ -1,6 +1,9 @@
 // Textos da interface do aluno, em espanhol neutro (Espanha e América Latina).
 
 export const es = {
+  comum: {
+    salir: 'Salir',
+  },
   marca: {
     nome: 'Português',
     com: 'com',
@@ -24,6 +27,15 @@ export const es = {
     boton: 'Acceder a mis clases',
     primerAcceso: '¿Primer acceso? Crear mi contraseña',
     olvide: 'Olvidé mi contraseña',
+    errores: {
+      credenciales: 'El correo o la contraseña no coinciden.',
+      datos: 'Escribe tu correo y una contraseña de al menos 8 caracteres.',
+    },
+  },
+  inicio: {
+    titulo: 'Inicio',
+    saludo: 'Hola',
+    enConstruccion: 'Tu acceso está activo. Estamos preparando tu curso: muy pronto lo verás aquí.',
   },
   primerAcceso: {
     titulo: 'Crea tu contraseña',
