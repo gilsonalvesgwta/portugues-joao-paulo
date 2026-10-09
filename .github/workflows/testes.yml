@@ -69,6 +69,9 @@ jobs:
         run: |
           mkdir -p saida
           if [ -f package-lock.json ]; then npm ci; else npm install; fi 2>&1 | tee saida/1-instalar.txt
+      - name: Auditoria de segurança dos pacotes (só relatório)
+        run: |
+          { echo "== pacotes usados em produção =="; npm audit --omit=dev || true; echo; echo "== todos os pacotes =="; npm audit || true; } > saida/7-auditoria.txt 2>&1
       - name: Compilar
         run: npm run build 2>&1 | tee saida/2-compilar.txt
       - name: Tipos
