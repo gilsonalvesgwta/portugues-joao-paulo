@@ -1,0 +1,18 @@
+# Supabase local, usado nos testes (GitHub Actions) e no desenvolvimento.
+# A produção usa o Supabase auto-hospedado na VPS, com as próprias configurações.
+project_id = "portugues-joao-paulo"
+
+[api]
+port = 54321
+schemas = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["http://localhost:3000"]
+# Ninguém se cadastra sozinho: a conta nasce da compra na Greenn ou da administração.
+enable_signup = false

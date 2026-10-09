@@ -72,6 +72,31 @@ jobs:
       - name: Auditoria de segurança dos pacotes (só relatório)
         run: |
           { echo "== pacotes usados em produção =="; npm audit --omit=dev || true; echo; echo "== todos os pacotes =="; npm audit || true; } > saida/7-auditoria.txt 2>&1
+      - name: Subir o Supabase de teste
+        run: |
+          FALHOU=""
+          npm run supabase:subir > /tmp/supabase-subir.txt 2>&1 || FALHOU="sim"
+          # O registro publicado não leva chaves nem senhas, mesmo sendo as de teste.
+          { grep -v -i -E "key|secret|jwt|password|postgresql://" /tmp/supabase-subir.txt || true; } | tail -n 80 > saida/8-supabase.txt
+          if [ -n "$FALHOU" ]; then echo "O Supabase de teste não subiu."; exit 1; fi
+          npx supabase status -o env > /tmp/supabase.env 2>/dev/null || true
+          { echo; echo "variáveis informadas pelo Supabase:"; cut -d= -f1 /tmp/supabase.env; } >> saida/8-supabase.txt
+          valor() { grep -E "^$1=" /tmp/supabase.env | head -n 1 | cut -d= -f2- | tr -d '"'; }
+          ENDERECO="$(valor API_URL)"
+          PUBLICA="$(valor ANON_KEY)"
+          SERVICO="$(valor SERVICE_ROLE_KEY)"
+          if [ -z "$ENDERECO" ] || [ -z "$PUBLICA" ] || [ -z "$SERVICO" ]; then
+            echo "Não encontrei API_URL, ANON_KEY ou SERVICE_ROLE_KEY na saída do Supabase." | tee -a saida/8-supabase.txt
+            exit 1
+          fi
+          echo "::add-mask::$SERVICO"
+          {
+            echo "SITE_URL=http://127.0.0.1:3000"
+            echo "BASE_URL=http://127.0.0.1:3000"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$ENDERECO"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$PUBLICA"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICO"
+          } >> "$GITHUB_ENV"
       - name: Compilar
         run: npm run build 2>&1 | tee saida/2-compilar.txt
       - name: Tipos
@@ -81,10 +106,12 @@ jobs:
           npx playwright install --with-deps chromium > saida/4-navegador.txt 2>&1
           npm start > saida/5-servidor.txt 2>&1 &
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:3000/entrar > /dev/null; then break; fi
+            if curl -sf "$BASE_URL/entrar" > /dev/null; then break; fi
             sleep 1
           done
           npm run capturas 2>&1 | tee saida/6-capturas.txt
+      - name: Acesso de ponta a ponta
+        run: npm run e2e 2>&1 | tee saida/9-ponta-a-ponta.txt
       # As sessões do Claude não conseguem baixar os registros do GitHub Actions.
       # Esta etapa publica o fim de cada registro, as fotos das telas e o
       # package-lock.json no ramo "ci-saida", que é sobrescrito a cada execução.

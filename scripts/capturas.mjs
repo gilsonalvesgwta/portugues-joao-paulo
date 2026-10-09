@@ -4,7 +4,7 @@
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
-const base = process.env.BASE_URL ?? 'http://localhost:3000';
+const base = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 const rotas = ['entrar', 'primer-acceso', 'recuperar'];
 const telas = [
   { nome: 'computador', width: 1280, height: 800 },
