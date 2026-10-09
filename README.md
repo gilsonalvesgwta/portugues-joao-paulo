@@ -10,17 +10,27 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local |
 | `supabase/tests/` | Testes do banco: 63 verificações de regra e 2 testes de disputa simultânea | Passando |
 | `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol | 43 testes passando |
+| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4: telas de acesso `/entrar`, `/primer-acceso` e `/recuperar`, em espanhol | Só visual: ainda não faz login |
+| `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos e fotos das telas | Passando |
 
-As telas do aplicativo (Next.js) ainda não foram iniciadas. O que está em `src/lib/` é a lógica que elas vão usar.
+## Como rodar o aplicativo
 
-## Como rodar os testes da lógica
-
-Precisa só do Node 22.18 ou mais novo; não há pacotes para instalar.
+Precisa do Node 22.18 ou mais novo.
 
 ```bash
-npm test          # node --test "src/**/*.test.ts"
-npm run typecheck # exige o TypeScript 5.8+ instalado
+npm ci
+npm run dev        # abre em http://localhost:3000
+npm test           # testes da lógica (não precisam de pacotes)
+npm run typecheck
+npm run build && npm start
+npm run capturas   # fotografa as telas; exige o aplicativo no ar e `npx playwright install chromium`
 ```
+
+## Saída dos testes no GitHub
+
+A cada envio, o GitHub publica no ramo `ci-saida` o fim de cada registro, o relatório de segurança dos
+pacotes e as fotos das telas em tamanho de computador e de celular (pasta `capturas`). O ramo é
+sobrescrito a cada execução.
 
 ## Como rodar os testes do banco
 
