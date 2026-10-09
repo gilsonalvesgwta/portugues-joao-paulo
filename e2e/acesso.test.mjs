@@ -1,61 +1,22 @@
 // Teste de ponta a ponta do acesso: um navegador de verdade contra o aplicativo compilado
-// e um Supabase local. Exige as variáveis NEXT_PUBLIC_SUPABASE_URL e
-// SUPABASE_SERVICE_ROLE_KEY e o aplicativo no ar em BASE_URL.
+// e um Supabase local. Exige o aplicativo no ar em BASE_URL e as variáveis do Supabase.
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
 import { createClient } from '@supabase/supabase-js';
 import { chromium } from 'playwright';
+import { admin, base, caminho, chavePublica, criarPessoa, emailDeTeste, entrar, novaPagina, senha, textoDoAviso, url } from './apoio.mjs';
 
-const base = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const chaveDeServico = process.env.SUPABASE_SERVICE_ROLE_KEY;
-assert.ok(url && chaveDeServico, 'faltam NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY');
-
-const admin = createClient(url, chaveDeServico, { auth: { persistSession: false, autoRefreshToken: false } });
-const marca = Date.now();
-const senha = 'senha-de-teste-123';
-const aluna = { email: `aluna-${marca}@exemplo.test`, nome: 'Lucía Prueba' };
-const professor = { email: `professor-${marca}@exemplo.test`, nome: 'Professor Teste' };
+const aluna = { email: emailDeTeste('aluna'), nome: 'Lucía Prueba' };
+const professor = { email: emailDeTeste('professor'), nome: 'Professor Teste', papel: 'professor' };
 
 let navegador;
-
-async function criarPessoa(pessoa, papel) {
-  const { data, error } = await admin.auth.admin.createUser({
-    email: pessoa.email,
-    password: senha,
-    email_confirm: true,
-    user_metadata: { nome: pessoa.nome },
-  });
-  assert.equal(error, null, `criar ${pessoa.email}: ${error?.message}`);
-  if (papel !== 'aluno') {
-    const { error: erroPapel } = await admin.from('perfis').update({ papel }).eq('id', data.user.id);
-    assert.equal(erroPapel, null, `definir papel: ${erroPapel?.message}`);
-  }
-  return data.user.id;
-}
-
-async function novaPagina() {
-  const contexto = await navegador.newContext({ viewport: { width: 1280, height: 800 } });
-  return contexto.newPage();
-}
-
-async function entrar(pagina, email, clave) {
-  await pagina.goto(`${base}/entrar`);
-  await pagina.getByLabel('Correo electrónico de tu compra').fill(email);
-  await pagina.getByLabel('Tu contraseña', { exact: true }).fill(clave);
-  await pagina.getByRole('button', { name: 'Acceder a mis clases' }).click();
-}
-
-function caminho(pagina) {
-  return new URL(pagina.url()).pathname;
-}
 
 before(async () => {
   await mkdir('capturas', { recursive: true });
   navegador = await chromium.launch();
-  await criarPessoa(aluna, 'aluno');
-  await criarPessoa(professor, 'professor');
+  await criarPessoa(aluna);
+  await criarPessoa(professor);
 });
 
 after(async () => {
@@ -69,8 +30,8 @@ test('o perfil nasce junto com o usuário, como aluno e com o nome', async () =>
 });
 
 test('sem login, as áreas internas levam para a tela de acesso', async () => {
-  const pagina = await novaPagina();
-  for (const rota of ['/inicio', '/admin', '/qualquer-coisa']) {
+  const pagina = await novaPagina(navegador);
+  for (const rota of ['/inicio', '/admin', '/nueva-contrasena', '/qualquer-coisa']) {
     await pagina.goto(`${base}${rota}`);
     assert.equal(caminho(pagina), '/entrar', rota);
   }
@@ -79,18 +40,18 @@ test('sem login, as áreas internas levam para a tela de acesso', async () => {
 });
 
 test('senha errada e e-mail desconhecido mostram o mesmo aviso e não entram', async () => {
-  const pagina = await novaPagina();
-  for (const email of [aluna.email, `ninguem-${marca}@exemplo.test`]) {
+  const pagina = await novaPagina(navegador);
+  for (const email of [aluna.email, emailDeTeste('ninguem')]) {
     await entrar(pagina, email, 'senha-errada-999');
     await pagina.waitForURL('**/entrar?error=credenciales');
-    assert.equal(await pagina.getByRole('alert').first().innerText(), 'El correo o la contraseña no coinciden.');
+    assert.equal(await textoDoAviso(pagina), 'El correo o la contraseña no coinciden.');
   }
   await pagina.goto(`${base}/inicio`);
   assert.equal(caminho(pagina), '/entrar');
 });
 
 test('a senha nunca aparece no endereço da página', async () => {
-  const pagina = await novaPagina();
+  const pagina = await novaPagina(navegador);
   const enderecos = [];
   pagina.on('request', (pedido) => enderecos.push(pedido.url()));
   await entrar(pagina, aluna.email, senha);
@@ -99,7 +60,7 @@ test('a senha nunca aparece no endereço da página', async () => {
 });
 
 test('aluna entra, vê a própria área, não entra na administração e sai', async () => {
-  const pagina = await novaPagina();
+  const pagina = await novaPagina(navegador);
   await entrar(pagina, aluna.email, senha);
   await pagina.waitForURL('**/inicio');
   assert.equal(await pagina.getByRole('heading', { level: 1 }).innerText(), 'Hola, Lucía');
@@ -118,7 +79,7 @@ test('aluna entra, vê a própria área, não entra na administração e sai', a
 });
 
 test('professor entra direto na administração', async () => {
-  const pagina = await novaPagina();
+  const pagina = await novaPagina(navegador);
   await entrar(pagina, professor.email, senha);
   await pagina.waitForURL('**/admin');
   assert.equal(await pagina.getByRole('heading', { level: 1 }).innerText(), 'Administração');
@@ -127,15 +88,15 @@ test('professor entra direto na administração', async () => {
 });
 
 test('ninguém se cadastra sozinho pelo Supabase', async () => {
-  const publico = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-  const { data, error } = await publico.auth.signUp({ email: `intruso-${marca}@exemplo.test`, password: senha });
+  const publico = createClient(url, chavePublica, { auth: { persistSession: false } });
+  const { data, error } = await publico.auth.signUp({ email: emailDeTeste('intruso'), password: senha });
   assert.notEqual(error, null, 'o cadastro deveria ser recusado');
   assert.equal(data.user, null);
 });
 
 test('visitante sem login não lê nenhuma tabela pela API', async () => {
-  const publico = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-  for (const tabela of ['perfis', 'matriculas', 'aulas', 'perguntas', 'eventos_pagamento']) {
+  const publico = createClient(url, chavePublica, { auth: { persistSession: false } });
+  for (const tabela of ['perfis', 'matriculas', 'aulas', 'perguntas', 'eventos_pagamento', 'notificacoes']) {
     const { data, error } = await publico.from(tabela).select('*').limit(1);
     assert.ok(error !== null || (data ?? []).length === 0, `${tabela} não pode devolver linhas a um visitante`);
   }

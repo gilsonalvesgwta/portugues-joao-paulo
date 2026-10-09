@@ -19,8 +19,12 @@ export function escaparHtml(valor: string): string {
 }
 
 // Só aceitamos endereços https nos botões; qualquer outra coisa vira erro na hora de montar.
+// A exceção é o próprio computador (127.0.0.1 ou localhost), usado no desenvolvimento e nos testes.
+const ENLACE_HTTPS = /^https:\/\/[^\s"'<>]+$/;
+const ENLACE_LOCAL = /^http:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\/[^\s"'<>]*$/;
+
 function enlaceSeguro(url: string): string {
-  if (!/^https:\/\/[^\s"'<>]+$/.test(url)) throw new Error('enlace_invalido');
+  if (!ENLACE_HTTPS.test(url) && !ENLACE_LOCAL.test(url)) throw new Error('enlace_invalido');
   return url;
 }
 

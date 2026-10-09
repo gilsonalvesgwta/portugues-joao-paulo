@@ -70,3 +70,12 @@ test('link que não é https é recusado', () => {
   }
   assert.throws(() => emailReservaConfirmada({ ...clase, duracionMin: 60, cancelarHastaHoras: 2, material: 'javascript:x' }), /enlace_invalido/);
 });
+
+test('link http só é aceito para o próprio computador, usado nos testes', () => {
+  for (const local of ['http://127.0.0.1:3000/auth/confirmar?token_hash=abc', 'http://localhost:3000/x']) {
+    assert.ok(emailBienvenida({ nombre: 'Ana', enlace: local }).texto.includes(local), local);
+  }
+  for (const ruim of ['http://127.0.0.1.evil.example.com/x', 'http://localhost.evil.example.com/x', 'http://127.0.0.1:3000']) {
+    assert.throws(() => emailBienvenida({ nombre: 'Ana', enlace: ruim }), /enlace_invalido/, ruim);
+  }
+});
