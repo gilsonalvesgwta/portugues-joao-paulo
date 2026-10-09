@@ -9,6 +9,10 @@ export const metadata: Metadata = { title: 'Aulas' };
 type Texto = string | string[] | undefined;
 type Props = { searchParams: Promise<{ aviso?: Texto; modulo?: Texto; situacao?: Texto; busca?: Texto }> };
 
+// "relative" prende à área que rola os textos só para leitor de tela (sr-only) da tabela;
+// sem isso eles alargam a página inteira no celular.
+const classeDaTabela = 'relative overflow-x-auto rounded-2xl border border-linha bg-cartao';
+
 // Compara sem diferenciar maiúsculas nem acentos: "licao" acha "Lição".
 function semAcento(texto: string): string {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -109,7 +113,7 @@ export default async function PaginaAulas({ searchParams }: Props) {
               </p>
             </Cartao>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-linha bg-cartao">
+            <div className={classeDaTabela}>
               <table className="w-full min-w-[640px] border-collapse text-left text-[15px]">
                 <caption className="sr-only">Lista de aulas</caption>
                 <thead>
