@@ -9,9 +9,10 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
 | `supabase/tests/` | Testes do banco: 63 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol | 44 testes passando |
-| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` e `/admin` ainda são telas de espera |
-| `e2e/` | Testes de ponta a ponta do acesso, com navegador de verdade e Supabase local | 14 testes passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo | 60 testes passando |
+| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` ainda é tela de espera |
+| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação) e lixeira | Funcionando. Faltam anotações, envio de vídeo, materiais, quizzes, tarefas e trilha |
+| `e2e/` | Testes de ponta a ponta do acesso e da administração, com navegador de verdade e Supabase local | 24 testes passando |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas e acesso de ponta a ponta | Passando |
 
 ## Como rodar o aplicativo
@@ -39,6 +40,15 @@ Depois, com o aplicativo no ar, `npm run e2e` roda os testes de ponta a ponta.
    conta. No máximo 3 links por e-mail a cada 10 minutos.
 3. O link do e-mail abre uma tela com um botão. Só o clique gasta o link, que vale uma vez.
 4. A pessoa escolhe a senha e entra: aluno em `/inicio`, professor e administrador em `/admin`.
+
+## Como o professor organiza o conteúdo
+
+Em `/admin`, o curso é dividido em módulos e cada módulo reúne aulas.
+
+- A aula nasce como rascunho e só aparece para o aluno depois de publicada, em um curso também publicado.
+- Aula não é publicada sem vídeo, e o número da aula não se repete dentro do curso.
+- "Apagar" é mover para a lixeira: o item some para o aluno, pode ser restaurado e volta como rascunho.
+  Curso só vai para a lixeira sem módulos; módulo, só sem aulas.
 
 ## Saída dos testes no GitHub
 
