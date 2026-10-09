@@ -7,11 +7,12 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
-| `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local |
+| `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
 | `supabase/tests/` | Testes do banco: 63 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol | 43 testes passando |
-| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4: telas de acesso `/entrar`, `/primer-acceso` e `/recuperar`, em espanhol | Só visual: ainda não faz login |
-| `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos e fotos das telas | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol | 44 testes passando |
+| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` e `/admin` ainda são telas de espera |
+| `e2e/` | Testes de ponta a ponta do acesso, com navegador de verdade e Supabase local | 14 testes passando |
+| `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas e acesso de ponta a ponta | Passando |
 
 ## Como rodar o aplicativo
 
@@ -25,6 +26,19 @@ npm run typecheck
 npm run build && npm start
 npm run capturas   # fotografa as telas; exige o aplicativo no ar e `npx playwright install chromium`
 ```
+
+Para o login funcionar, copie `.env.example` para `.env.local` e preencha. Com Docker instalado, um
+Supabase local sobe com `npm run supabase:subir`; o endereço e as chaves saem em `npx supabase status`.
+Depois, com o aplicativo no ar, `npm run e2e` roda os testes de ponta a ponta.
+
+## Como o aluno entra
+
+1. A conta nasce sem senha (pela compra, na fase de pagamento, ou criada pela administração). Ninguém se
+   cadastra sozinho.
+2. Em `/primer-acceso` (ou `/recuperar`), a pessoa informa o e-mail. A tela responde o mesmo exista ou não a
+   conta. No máximo 3 links por e-mail a cada 10 minutos.
+3. O link do e-mail abre uma tela com um botão. Só o clique gasta o link, que vale uma vez.
+4. A pessoa escolhe a senha e entra: aluno em `/inicio`, professor e administrador em `/admin`.
 
 ## Saída dos testes no GitHub
 
@@ -49,6 +63,10 @@ Aplique só os arquivos de `supabase/migrations/`, em ordem. Eles usam `auth.use
 `anon`, `authenticated` e `service_role`, que o Supabase já cria.
 
 ## Pontos provisórios
+
+- O envio de e-mail de verdade ainda não existe: falta escolher o serviço (Resend ou Amazon SES). Com
+  `EMAIL_DRIVER=arquivo`, os e-mails são gravados na pasta `EMAIL_PASTA`, o que serve aos testes. Com qualquer
+  outro valor o aplicativo recusa enviar, para um e-mail nunca se perder em silêncio.
 
 - As funções `registrar_evento_pagamento` e `aplicar_evento_pagamento` seguem a documentação pública do
   webhook da Greenn. Os campos serão conferidos com eventos reais (compra-teste nacional e internacional)
