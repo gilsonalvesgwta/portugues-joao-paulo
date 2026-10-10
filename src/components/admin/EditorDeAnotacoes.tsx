@@ -94,7 +94,11 @@ function CamposDaLista({
         <span />
       </div>
       {bloco.itens.map((item: Item, linha) => (
-        <div key={linha} className={`grid gap-2 border-t border-linha pt-3 first:border-t-0 first:pt-0 sm:border-t-0 sm:pt-0 ${colunas}`}>
+        // No celular, os campos da linha ficam empilhados e o botão de remover fica ao lado do primeiro.
+        <div
+          key={linha}
+          className={`grid grid-cols-[minmax(0,1fr)_44px] gap-2 border-t border-linha pt-3 first:border-t-0 first:pt-0 sm:border-t-0 sm:pt-0 ${colunas}`}
+        >
           {campos.map((campo, c) => (
             <input
               key={campo.chave}
@@ -106,7 +110,7 @@ function CamposDaLista({
               aria-label={`${campo.rotulo}, linha ${linha + 1}`}
               autoFocus={foco && linha === 0 && c === 0}
               onChange={(e) => trocar(linha, campo.chave, e.target.value)}
-              className={classeDaEntrada}
+              className={`${classeDaEntrada} col-start-1 sm:col-auto`}
             />
           ))}
           <button
@@ -114,7 +118,7 @@ function CamposDaLista({
             aria-label={`Remover a linha ${linha + 1}`}
             disabled={bloco.itens.length <= 1}
             onClick={() => aoMudar({ ...bloco, itens: bloco.itens.filter((_, i) => i !== linha) })}
-            className={`${classeDoBotaoMenor} px-0`}
+            className={`${classeDoBotaoMenor} col-start-2 row-start-1 px-0 sm:col-auto sm:row-auto`}
           >
             ✕
           </button>
@@ -433,7 +437,11 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
         </fieldset>
       </form>
 
-      <aside aria-label="Prévia do aluno" className="flex min-w-0 flex-col gap-2.5 xl:sticky xl:top-6">
+      {/* Em tela larga a prévia acompanha a rolagem; se for mais alta que a tela, rola por dentro. */}
+      <aside
+        aria-label="Prévia do aluno"
+        className="flex min-w-0 flex-col gap-2.5 xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto"
+      >
         <p className="text-xs font-bold tracking-[0.12em] text-apoio">PRÉVIA DO ALUNO</p>
         {previa.length === 0 ? (
           <p className="rounded-2xl border border-linha bg-cartao px-5 py-6 text-[15px] leading-normal text-apoio">
