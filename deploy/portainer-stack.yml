@@ -202,10 +202,15 @@ services:
       placement:
         constraints:
           - node.role == manager
+      ## Tenta de novo só se falhar (por exemplo, o banco ainda subindo). Quando termina bem, fica
+      ## parado, e o Portainer mostra 0/1: é o esperado.
       restart_policy:
         condition: on-failure
         delay: 10s
         max_attempts: 30
+      ## Terminar logo depois de subir é o normal deste serviço, não uma falha de atualização.
+      update_config:
+        failure_action: continue
 
 volumes:
   portuguesjp_db_dados:

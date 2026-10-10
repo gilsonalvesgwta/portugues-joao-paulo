@@ -207,7 +207,7 @@ jobs:
           {
             echo
             echo "== preparo do banco pela segunda vez (como em uma atualização) =="
-            docker service update --force --quiet portuguesjp_portuguesjp_banco > /dev/null
+            docker service update --force --detach --quiet portuguesjp_portuguesjp_banco > /dev/null
             DENOVO=""
             for i in $(seq 1 45); do
               if docker service logs portuguesjp_portuguesjp_banco 2>&1 | grep -q "BANCO PRONTO (0 "; then DENOVO="sim"; break; fi
