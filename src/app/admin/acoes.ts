@@ -2,6 +2,9 @@
 
 import { redirect } from 'next/navigation';
 import { ehUuid, mover, validarAula, validarCurso, validarModulo } from '@/lib/conteudo';
+import { enviarEmail } from '@/lib/correio';
+import { emailDeConferencia } from '@/lib/emails';
+import { motivoDaFalha } from '@/lib/smtp';
 import type { EstadoDoFormulario } from '@/lib/formulario';
 import { ehEquipe } from '@/lib/supabase/config';
 import { clienteDoServidor, pessoaLogada } from '@/lib/supabase/servidor';
@@ -256,4 +259,28 @@ export async function restaurar(dados: FormData): Promise<void> {
   if (error) redirect(`${volta}?aviso=falhou`);
   if ((data ?? []).length === 0) redirect(`${volta}?aviso=nao_encontrado`);
   redirect(`${volta}?aviso=${tipo === 'modulo' ? 'modulo_restaurado' : 'restaurado'}`);
+}
+
+// ---------------------------------------------------------------------------
+// E-mail
+// ---------------------------------------------------------------------------
+
+// Manda um e-mail de teste para quem está logado, para conferir a caixa de envio depois da
+// instalação. O detalhe técnico da falha vai para o registro do servidor; a tela mostra o motivo
+// em palavras simples.
+export async function enviarEmailDeTeste(): Promise<void> {
+  await exigirEquipe();
+  const pessoa = await pessoaLogada();
+  if (!pessoa || pessoa.email === '') redirect('/admin?aviso=email_falhou');
+
+  const quando = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date());
+  let motivo: string | null = null;
+  try {
+    await enviarEmail(pessoa.email, emailDeConferencia(quando));
+  } catch (erro) {
+    motivo = motivoDaFalha(erro);
+    console.error(`Falha no e-mail de teste (${motivo}):`, erro instanceof Error ? erro.message : erro);
+  }
+  if (motivo === null) redirect('/admin?aviso=email_enviado');
+  redirect(`/admin?aviso=email_${motivo === 'outro' ? 'falhou' : motivo}`);
 }

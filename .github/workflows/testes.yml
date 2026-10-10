@@ -98,6 +98,8 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICO"
             echo "EMAIL_DRIVER=arquivo"
             echo "EMAIL_PASTA=$GITHUB_WORKSPACE/caixa-de-saida"
+            echo "CAIXA_DE_TESTE_URL=$(valor MAILPIT_URL)"
+            echo "CAIXA_DE_TESTE_SMTP=54325"
           } >> "$GITHUB_ENV"
       - name: Compilar
         run: npm run build 2>&1 | tee saida/2-compilar.txt

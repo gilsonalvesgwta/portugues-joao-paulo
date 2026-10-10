@@ -154,3 +154,20 @@ export function emailClaseCancelada(d: { nombre: string; tema: string; inicio: s
     { rotulo: 'Elegir otra clase', url: d.agenda },
   );
 }
+
+// E-mail de conferência enviado pela administração para testar a caixa de envio. Em português,
+// porque quem recebe é a equipe.
+export function emailDeConferencia(quando: string): Email {
+  const linhas = [
+    'Este é um e-mail de teste da plataforma.',
+    'Se você está lendo esta mensagem, o envio de e-mails está funcionando.',
+    `Enviado em ${quando}.`,
+  ];
+  const html =
+    `<!doctype html><html lang="pt-BR"><body style="margin:0;padding:24px;background:${FUNDO};font-family:Arial,Helvetica,sans-serif">` +
+    `<div style="max-width:560px;margin:0 auto;background:#FFFFFF;border-radius:16px;padding:32px">` +
+    `<p style="margin:0 0 24px;font-size:18px;font-weight:700;color:${VERDE}">${escaparHtml(MARCA)}</p>` +
+    linhas.map((l) => `<p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:${TEXTO}">${escaparHtml(l)}</p>`).join('') +
+    `</div></body></html>`;
+  return { asunto: 'Teste de envio de e-mail', texto: [...linhas, MARCA].join('\n\n'), html };
+}

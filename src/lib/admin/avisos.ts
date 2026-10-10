@@ -27,6 +27,21 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
   },
   nao_encontrado: { tipo: 'erro', texto: 'Não encontrei esse item. Ele pode ter sido alterado por outra pessoa.' },
   falhou: { tipo: 'erro', texto: 'Não foi possível salvar. Tente de novo.' },
+  email_enviado: { tipo: 'ok', texto: 'E-mail de teste enviado. Confira a sua caixa de entrada e a pasta de spam.' },
+  email_configuracao: {
+    tipo: 'erro',
+    texto: 'O envio de e-mail não está configurado por completo. Confira as variáveis de e-mail na instalação.',
+  },
+  email_senha: { tipo: 'erro', texto: 'O servidor de e-mail recusou o usuário ou a senha. Confira os dois na instalação.' },
+  email_conexao: {
+    tipo: 'erro',
+    texto: 'Não consegui conectar ao servidor de e-mail. Confira o endereço do servidor e a porta na instalação.',
+  },
+  email_recusado: {
+    tipo: 'erro',
+    texto: 'O servidor de e-mail recusou a mensagem. Confira se o remetente é o mesmo endereço da caixa de e-mail.',
+  },
+  email_falhou: { tipo: 'erro', texto: 'O e-mail de teste não foi enviado. O motivo está no registro do servidor.' },
 };
 
 export function avisoDe(codigo: string | string[] | undefined): AvisoDaAcao | null {
