@@ -1,3 +1,4 @@
+import type { Bloco } from './anotacoes';
 import type { Erros } from './conteudo';
 
 // O que uma ação de formulário devolve quando há erro: a mensagem de cada campo e o que a
@@ -6,3 +7,15 @@ import type { Erros } from './conteudo';
 export type EstadoDoFormulario = { vez: number; erros: Erros; valores: Record<string, string> };
 
 export const ESTADO_INICIAL: EstadoDoFormulario = { vez: 0, erros: {}, valores: {} };
+
+// Resposta da gravação das anotações. Em caso de erro, "erros" traz a mensagem de cada bloco
+// (pelo id) e "geral" para o que não é de um bloco só. Ao salvar, "blocos" devolve o que ficou
+// gravado, já arrumado, para a tela mostrar exatamente o que está no banco.
+export type EstadoDasAnotacoes = {
+  vez: number;
+  situacao: 'inicial' | 'salvo' | 'erro';
+  erros: Record<string, string>;
+  blocos: Bloco[] | null;
+};
+
+export const ANOTACOES_INICIAL: EstadoDasAnotacoes = { vez: 0, situacao: 'inicial', erros: {}, blocos: null };

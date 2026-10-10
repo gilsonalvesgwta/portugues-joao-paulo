@@ -72,3 +72,34 @@ export function modulosPorCurso(conteudo: Conteudo): { curso: Curso; modulos: Mo
     modulos: modulos.filter((modulo) => modulo.curso_id === curso.id),
   }));
 }
+
+export type AulaComAnotacoes = {
+  id: string;
+  numero: number;
+  titulo_pt: string;
+  titulo_es: string;
+  anotacoes: unknown;
+};
+
+// Uma aula (fora da lixeira) com as anotações. As anotações não entram em carregarConteudo
+// porque são o campo mais pesado e só duas telas precisam delas.
+export async function carregarAulaComAnotacoes(id: string): Promise<AulaComAnotacoes | null> {
+  const supabase = await clienteDoServidor();
+  const { data, error } = await supabase
+    .from('aulas')
+    .select('id, numero, titulo_pt, titulo_es, anotacoes')
+    .eq('id', id)
+    .is('arquivado_em', null)
+    .maybeSingle();
+  if (error) throw new Error(`Não foi possível ler a aula: ${error.message}`);
+  return (data ?? null) as unknown as AulaComAnotacoes | null;
+}
+
+// Quantos blocos de anotação cada aula tem, para a lista de aulas.
+export async function blocosPorAula(): Promise<Map<string, number>> {
+  const supabase = await clienteDoServidor();
+  const { data, error } = await supabase.from('aulas').select('id, anotacoes').is('arquivado_em', null);
+  if (error) throw new Error(`Não foi possível ler as anotações: ${error.message}`);
+  const linhas = (data ?? []) as unknown as { id: string; anotacoes: unknown }[];
+  return new Map(linhas.map((linha) => [linha.id, Array.isArray(linha.anotacoes) ? linha.anotacoes.length : 0]));
+}

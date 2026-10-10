@@ -77,7 +77,7 @@ export default async function PaginaPainel({ searchParams }: Props) {
       <Cartao>
         <h2 className="text-lg font-bold">Ainda em construção</h2>
         <p className="mt-2 text-[15px] leading-normal text-apoio">
-          Anotações da aula, materiais de apoio, quizzes, tarefas, trilha por dia,
+          Materiais de apoio, quizzes, tarefas, trilha por dia,
           conversação, alunos, pagamentos e configurações entram nas próximas etapas.
         </p>
       </Cartao>

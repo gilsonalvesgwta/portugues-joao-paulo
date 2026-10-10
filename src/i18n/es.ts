@@ -57,6 +57,13 @@ export const es = {
     texto: 'Pulsa el botón para elegir tu contraseña.',
     boton: 'Continuar',
   },
+  apuntes: {
+    clase: 'Clase',
+    apuntes: 'Apuntes',
+    notaDelProfesor: 'Nota del profesor',
+    incorrecto: 'Incorrecto',
+    correcto: 'Correcto',
+  },
   nuevaClave: {
     titulo: 'Elige tu contraseña',
     texto: 'La usarás cada vez que entres a tus clases.',

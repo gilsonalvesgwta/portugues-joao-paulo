@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { moverParaLixeira } from '@/app/admin/acoes';
 import { FormularioDaAula } from '@/components/admin/FormularioDaAula';
-import { AvisoDaPagina, Botao, Cartao, Etiqueta, TituloDaPagina, Trilha } from '@/components/admin/ui';
+import { AvisoDaPagina, Botao, Cartao, Etiqueta, LinkBotao, TituloDaPagina, Trilha } from '@/components/admin/ui';
 import { gruposParaAula } from '@/lib/admin/aulas';
 import { avisoDe } from '@/lib/admin/avisos';
-import { ativos, carregarConteudo } from '@/lib/admin/dados';
+import { ativos, blocosPorAula, carregarConteudo } from '@/lib/admin/dados';
 import { formatarDuracao, incorporarYoutube, lerVideoDoYoutube, linkDoYoutube } from '@/lib/conteudo';
 
 export const metadata: Metadata = { title: 'Editar aula' };
@@ -15,12 +15,13 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ aviso?: 
 export default async function PaginaEditarAula({ params, searchParams }: Props) {
   const { id } = await params;
   const { aviso } = await searchParams;
-  const conteudo = await carregarConteudo();
+  const [conteudo, blocos] = await Promise.all([carregarConteudo(), blocosPorAula()]);
   const aula = ativos(conteudo.aulas).find((item) => item.id === id);
   if (!aula) redirect('/admin/aulas?aviso=nao_encontrado');
   // Só monta link e prévia se o que está salvo for mesmo um código do YouTube.
   const codigo = lerVideoDoYoutube(aula.video_id);
   const video = codigo !== null && codigo !== 'invalido' ? codigo : null;
+  const quantos = blocos.get(aula.id) ?? 0;
 
   return (
     <>
@@ -47,6 +48,19 @@ export default async function PaginaEditarAula({ params, searchParams }: Props) 
             duracao: formatarDuracao(aula.duracao_seg),
           }}
         />
+      </Cartao>
+      <Cartao>
+        <h2 className="text-lg font-bold">Anotações da aula</h2>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[15px] leading-normal text-apoio">
+            {quantos === 0
+              ? 'Esta aula ainda não tem anotações. É o resumo que o aluno lê junto com o vídeo.'
+              : `${quantos === 1 ? '1 bloco' : `${quantos} blocos`} de anotações.`}
+          </p>
+          <LinkBotao href={`/admin/aulas/${aula.id}/anotacoes`} variante="secundario">
+            {quantos === 0 ? 'Criar anotações' : 'Editar anotações'}
+          </LinkBotao>
+        </div>
       </Cartao>
       <Cartao>
         <h2 className="text-lg font-bold">Lixeira</h2>
