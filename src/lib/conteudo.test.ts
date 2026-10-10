@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  ehUuid, formatarDuracao, lerDuracao, limpar, mover, proximoNumero, validarAula, validarCurso, validarModulo,
+  ehUuid, formatarDuracao, incorporarYoutube, lerDuracao, lerVideoDoYoutube, limpar, linkDoYoutube, mover, proximoNumero,
+  validarAula, validarCurso, validarModulo,
 } from './conteudo.ts';
 
 const MODULO = '3f2b8a1c-0d4e-4f6a-9b7c-1a2b3c4d5e6f';
 const aulaBoa = {
   modulo_id: MODULO, numero: '18', titulo_pt: 'Verbo ser', titulo_es: 'El verbo ser',
-  video_id: 'a1b2c3d4-e5f6', duracao: '12:30', situacao: 'publicado',
+  video_id: 'https://www.youtube.com/watch?v=aB3dE6gH9jK', duracao: '12:30', situacao: 'publicado',
 };
 
 test('limpar tira espaços das pontas e junta os repetidos', () => {
@@ -64,10 +65,52 @@ test('formatarDuracao desfaz o que lerDuracao leu', () => {
   assert.equal(formatarDuracao(null), '');
 });
 
+test('lerVideoDoYoutube tira o código de qualquer formato de link', () => {
+  const codigo = 'aB3dE6gH9jK';
+  for (const link of [
+    codigo,
+    `https://www.youtube.com/watch?v=${codigo}`,
+    `https://www.youtube.com/watch?v=${codigo}&t=42s&list=PL123`,
+    `https://youtu.be/${codigo}?si=AbCdEf`,
+    `youtu.be/${codigo}`,
+    `www.youtube.com/watch?v=${codigo}`,
+    `https://m.youtube.com/watch?v=${codigo}`,
+    `https://www.youtube.com/embed/${codigo}`,
+    `https://www.youtube-nocookie.com/embed/${codigo}?rel=0`,
+    `https://www.youtube.com/shorts/${codigo}`,
+    `https://www.youtube.com/live/${codigo}`,
+    `  https://youtu.be/${codigo}  `,
+  ]) {
+    assert.equal(lerVideoDoYoutube(link), codigo, link);
+  }
+  assert.equal(lerVideoDoYoutube(''), null);
+  assert.equal(lerVideoDoYoutube(undefined), null);
+});
+
+test('lerVideoDoYoutube recusa o que não é vídeo do YouTube', () => {
+  for (const link of [
+    'https://vimeo.com/123456789',
+    'https://www.youtube.com/playlist?list=PL123',
+    'https://www.youtube.com/@canal',
+    'https://www.youtube.com/watch?v=curto',
+    'https://youtube.com.exemplo.com/watch?v=aB3dE6gH9jK',
+    'https://exemplo.com/?u=https://youtu.be/aB3dE6gH9jK',
+    'tem espaço',
+    'javascript:alert(1)',
+  ]) {
+    assert.equal(lerVideoDoYoutube(link), 'invalido', link);
+  }
+});
+
+test('os endereços montados a partir do código', () => {
+  assert.equal(linkDoYoutube('aB3dE6gH9jK'), 'https://youtu.be/aB3dE6gH9jK');
+  assert.equal(incorporarYoutube('aB3dE6gH9jK'), 'https://www.youtube-nocookie.com/embed/aB3dE6gH9jK');
+});
+
 test('aula válida passa com número e duração convertidos', () => {
   assert.deepEqual(validarAula(aulaBoa, [1, 2, 17]), {
     ok: true,
-    valor: { modulo_id: MODULO, numero: 18, titulo_pt: 'Verbo ser', titulo_es: 'El verbo ser', video_id: 'a1b2c3d4-e5f6', duracao_seg: 750, situacao: 'publicado' },
+    valor: { modulo_id: MODULO, numero: 18, titulo_pt: 'Verbo ser', titulo_es: 'El verbo ser', video_id: 'aB3dE6gH9jK', duracao_seg: 750, situacao: 'publicado' },
   });
 });
 
@@ -94,7 +137,7 @@ test('número repetido no curso é recusado', () => {
 });
 
 test('aula com campos errados aponta cada um', () => {
-  const r = validarAula({ modulo_id: 'x', numero: '0', titulo_pt: '', titulo_es: '', video_id: 'tem espaço', duracao: '99', situacao: 'apagada' });
+  const r = validarAula({ modulo_id: 'x', numero: '0', titulo_pt: '', titulo_es: '', video_id: 'https://vimeo.com/1', duracao: '99', situacao: 'apagada' });
   assert.equal(r.ok, false);
   if (r.ok) return;
   assert.deepEqual(Object.keys(r.erros).sort(), ['duracao', 'modulo_id', 'numero', 'situacao', 'titulo_es', 'titulo_pt', 'video_id']);

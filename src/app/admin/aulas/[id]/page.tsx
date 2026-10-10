@@ -6,7 +6,7 @@ import { AvisoDaPagina, Botao, Cartao, Etiqueta, TituloDaPagina, Trilha } from '
 import { gruposParaAula } from '@/lib/admin/aulas';
 import { avisoDe } from '@/lib/admin/avisos';
 import { ativos, carregarConteudo } from '@/lib/admin/dados';
-import { formatarDuracao } from '@/lib/conteudo';
+import { formatarDuracao, incorporarYoutube, lerVideoDoYoutube, linkDoYoutube } from '@/lib/conteudo';
 
 export const metadata: Metadata = { title: 'Editar aula' };
 
@@ -18,6 +18,9 @@ export default async function PaginaEditarAula({ params, searchParams }: Props) 
   const conteudo = await carregarConteudo();
   const aula = ativos(conteudo.aulas).find((item) => item.id === id);
   if (!aula) redirect('/admin/aulas?aviso=nao_encontrado');
+  // Só monta link e prévia se o que está salvo for mesmo um código do YouTube.
+  const codigo = lerVideoDoYoutube(aula.video_id);
+  const video = codigo !== null && codigo !== 'invalido' ? codigo : null;
 
   return (
     <>
@@ -29,15 +32,18 @@ export default async function PaginaEditarAula({ params, searchParams }: Props) 
       </TituloDaPagina>
       <AvisoDaPagina aviso={avisoDe(aviso)} />
       <Cartao>
+        {/* A chave muda a cada gravação: o formulário recomeça com o que ficou salvo no banco. */}
         <FormularioDaAula
+          key={aula.atualizado_em}
           grupos={gruposParaAula(conteudo)}
+          previa={video ? incorporarYoutube(video) : null}
           aula={{
             id: aula.id,
             modulo_id: aula.modulo_id,
             numero: String(aula.numero),
             titulo_pt: aula.titulo_pt,
             titulo_es: aula.titulo_es,
-            video_id: aula.video_id ?? '',
+            video_id: video ? linkDoYoutube(video) : (aula.video_id ?? ''),
             duracao: formatarDuracao(aula.duracao_seg),
           }}
         />

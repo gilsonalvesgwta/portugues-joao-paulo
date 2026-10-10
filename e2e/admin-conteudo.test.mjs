@@ -6,7 +6,7 @@ import { mkdir } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
 import { createClient } from '@supabase/supabase-js';
 import { chromium } from 'playwright';
-import { admin, base, caminho, chavePublica, criarPessoa, emailDeTeste, entrar, novaPagina, senha, textoDoAviso, url } from './apoio.mjs';
+import { admin, base, caminho, chavePublica, criarPessoa, emailDeTeste, entrar, novaPagina, novoContexto, senha, textoDoAviso, url } from './apoio.mjs';
 
 const sufixo = randomBytes(3).toString('hex');
 const curso = { pt: `Curso de teste ${sufixo}`, es: `Curso de prueba ${sufixo}` };
@@ -124,15 +124,27 @@ test('aula: não publica sem vídeo, salva como rascunho e depois publica com v�
   idAula1 = caminho(pagina).split('/').pop();
   assert.equal((await umaLinha('aulas', 'situacao', { id: idAula1 })).situacao, 'rascunho');
 
-  await campo('Código do vídeo').fill('video-de-teste-1');
+  await campo('Link do vídeo no YouTube').fill('https://vimeo.com/123456');
+  await pagina.getByRole('button', { name: 'Salvar e publicar' }).click();
+  await pagina.getByText('Cole o link de um vídeo do YouTube. Exemplo: https://youtu.be/aB3dE6gH9jK').waitFor();
+  assert.equal((await umaLinha('aulas', 'situacao', { id: idAula1 })).situacao, 'rascunho', 'link de outro site não publica');
+
+  await campo('Link do vídeo no YouTube').fill('https://www.youtube.com/watch?v=aB3dE6gH9jK&t=42s');
   await campo('Duração').fill('12:30');
   await pagina.getByRole('button', { name: 'Salvar e publicar' }).click();
   await pagina.waitForURL('**/admin/aulas/*?aviso=aula_publicada');
   assert.equal(await textoDoAviso(pagina, 'status'), 'Aula salva e publicada.');
   assert.deepEqual(await umaLinha('aulas', 'modulo_id, numero, titulo_pt, titulo_es, video_id, duracao_seg, situacao', { id: idAula1 }), {
-    modulo_id: idA, numero: 1, titulo_pt: aula1.pt, titulo_es: aula1.es, video_id: 'video-de-teste-1', duracao_seg: 750, situacao: 'publicado',
+    modulo_id: idA, numero: 1, titulo_pt: aula1.pt, titulo_es: aula1.es, video_id: 'aB3dE6gH9jK', duracao_seg: 750, situacao: 'publicado',
   });
   assert.equal(await campo('Duração').inputValue(), '12:30');
+  assert.equal(
+    await pagina.getByTitle('Prévia do vídeo da aula').getAttribute('src'),
+    'https://www.youtube-nocookie.com/embed/aB3dE6gH9jK',
+    'a prévia aponta para o vídeo salvo',
+  );
+  await pagina.reload();
+  assert.equal(await campo('Link do vídeo no YouTube').inputValue(), 'https://youtu.be/aB3dE6gH9jK', 'o campo mostra o link limpo');
   await pagina.screenshot({ path: 'capturas/admin-aula-computador.png', fullPage: true });
 });
 
@@ -181,7 +193,7 @@ test('lista de aulas: filtra por módulo, situação e busca sem acento', async 
 });
 
 test('no celular, as telas da administração cabem na largura', async () => {
-  const contexto = await navegador.newContext({ viewport: { width: 390, height: 844 } });
+  const contexto = await novoContexto(navegador, 390, 844);
   const celular = await contexto.newPage();
   await entrar(celular, professor.email, senha);
   await celular.waitForURL('**/admin');
