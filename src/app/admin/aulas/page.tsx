@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { AvisoDaPagina, Botao, Cartao, Etiqueta, LinkBotao, Selecao, Entrada, TituloDaPagina } from '@/components/admin/ui';
 import { avisoDe } from '@/lib/admin/avisos';
-import { ativos, carregarConteudo, modulosPorCurso } from '@/lib/admin/dados';
+import { ativos, blocosPorAula, carregarConteudo, modulosPorCurso } from '@/lib/admin/dados';
 import { formatarDuracao, limpar } from '@/lib/conteudo';
 
 export const metadata: Metadata = { title: 'Aulas' };
@@ -24,7 +24,7 @@ export default async function PaginaAulas({ searchParams }: Props) {
   const situacaoEscolhida = filtros.situacao === 'publicado' || filtros.situacao === 'rascunho' ? filtros.situacao : '';
   const busca = limpar(filtros.busca);
 
-  const conteudo = await carregarConteudo();
+  const [conteudo, blocos] = await Promise.all([carregarConteudo(), blocosPorAula()]);
   const grupos = modulosPorCurso(conteudo);
   const moduloPorId = new Map(grupos.flatMap((grupo) => grupo.modulos.map((modulo) => [modulo.id, { modulo, curso: grupo.curso }] as const)));
   const variosCursos = grupos.length > 1;
@@ -114,7 +114,7 @@ export default async function PaginaAulas({ searchParams }: Props) {
             </Cartao>
           ) : (
             <div className={classeDaTabela}>
-              <table className="w-full min-w-[640px] border-collapse text-left text-[15px]">
+              <table className="w-full min-w-[760px] border-collapse text-left text-[15px]">
                 <caption className="sr-only">Lista de aulas</caption>
                 <thead>
                   <tr className="border-b border-linha text-xs font-semibold tracking-[0.08em] text-apoio">
@@ -122,6 +122,7 @@ export default async function PaginaAulas({ searchParams }: Props) {
                     <th scope="col" className="px-4 py-3">AULA</th>
                     <th scope="col" className="px-4 py-3">MÓDULO</th>
                     <th scope="col" className="px-4 py-3">VÍDEO</th>
+                    <th scope="col" className="px-4 py-3">ANOTAÇÕES</th>
                     <th scope="col" className="px-4 py-3">SITUAÇÃO</th>
                     <th scope="col" className="px-4 py-3">
                       <span className="sr-only">Ações</span>
@@ -131,6 +132,7 @@ export default async function PaginaAulas({ searchParams }: Props) {
                 <tbody>
                   {aulas.map((aula) => {
                     const dono = moduloPorId.get(aula.modulo_id);
+                    const quantos = blocos.get(aula.id) ?? 0;
                     return (
                       <tr key={aula.id} className="border-b border-linha last:border-b-0">
                         <td className="px-4 py-3 font-bold">{aula.numero}</td>
@@ -149,6 +151,13 @@ export default async function PaginaAulas({ searchParams }: Props) {
                             <span>{formatarDuracao(aula.duracao_seg) || 'Com vídeo'}</span>
                           ) : (
                             <span className="font-semibold text-aviso">Sem vídeo</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {quantos === 0 ? (
+                            <span className="text-apoio">Vazias</span>
+                          ) : (
+                            <span>{quantos === 1 ? '1 bloco' : `${quantos} blocos`}</span>
                           )}
                         </td>
                         <td className="px-4 py-3">

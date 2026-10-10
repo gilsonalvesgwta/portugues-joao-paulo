@@ -5,7 +5,8 @@ import { ehUuid, mover, validarAula, validarCurso, validarModulo } from '@/lib/c
 import { enviarEmail } from '@/lib/correio';
 import { emailDeConferencia } from '@/lib/emails';
 import { motivoDaFalha } from '@/lib/smtp';
-import type { EstadoDoFormulario } from '@/lib/formulario';
+import { validarAnotacoes } from '@/lib/anotacoes';
+import type { EstadoDasAnotacoes, EstadoDoFormulario } from '@/lib/formulario';
 import { ehEquipe } from '@/lib/papeis';
 import { clienteDoServidor, pessoaLogada } from '@/lib/supabase/servidor';
 
@@ -182,6 +183,42 @@ export async function salvarAula(anterior: EstadoDoFormulario, dados: FormData):
     idSalvo = data.id;
   }
   redirect(`/admin/aulas/${idSalvo}?aviso=${conferido.valor.situacao === 'publicado' ? 'aula_publicada' : 'aula_salva'}`);
+}
+
+// Grava as anotações da aula (a lista de blocos montada no editor). Confere tudo de novo no
+// servidor: o que o navegador manda nunca é gravado sem passar pela mesma conferência.
+export async function salvarAnotacoes(anterior: EstadoDasAnotacoes, dados: FormData): Promise<EstadoDasAnotacoes> {
+  const supabase = await exigirEquipe();
+  const falha = (erros: Record<string, string>): EstadoDasAnotacoes => ({
+    vez: anterior.vez + 1,
+    situacao: 'erro',
+    erros,
+    blocos: null,
+  });
+
+  const { aula_id: aulaId, anotacoes: texto } = valoresDe(dados, ['aula_id', 'anotacoes']);
+  if (!ehUuid(aulaId)) return falha({ geral: 'Não encontrei esta aula.' });
+  if (typeof texto !== 'string' || texto.length > 400_000) {
+    return falha({ geral: 'As anotações ficaram grandes demais para salvar de uma vez.' });
+  }
+  let lido: unknown;
+  try {
+    lido = JSON.parse(texto);
+  } catch {
+    return falha({ geral: 'As anotações chegaram em um formato inesperado.' });
+  }
+  const conferido = validarAnotacoes(lido);
+  if (!conferido.ok) return falha(conferido.erros);
+
+  const { data, error } = await supabase
+    .from('aulas')
+    .update({ anotacoes: conferido.blocos })
+    .eq('id', aulaId)
+    .is('arquivado_em', null)
+    .select('id');
+  if (error) return falha({ geral: FALHA });
+  if ((data ?? []).length === 0) return falha({ geral: 'Não encontrei esta aula. Ela pode ter ido para a lixeira.' });
+  return { vez: anterior.vez + 1, situacao: 'salvo', erros: {}, blocos: conferido.blocos };
 }
 
 // ---------------------------------------------------------------------------
