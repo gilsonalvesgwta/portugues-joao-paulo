@@ -1,0 +1,4 @@
+# Só o que esta imagem usa entra na construção.
+*
+!supabase/migrations
+!deploy/banco/aplicar.sh

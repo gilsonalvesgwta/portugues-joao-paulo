@@ -1,59 +1,224 @@
 # Stack do Portainer para a plataforma Português com João Paulo.
 #
-# Segue o mesmo padrão dos outros serviços da VPS (Docker Swarm + Traefik):
-# - entra na rede interna que o Traefik já usa;
-# - não abre nenhuma porta da VPS: o acesso é só pelo Traefik, no endereço escolhido;
-# - usa nomes próprios (portuguesjp) no Traefik, para não se misturar com os outros serviços;
-# - não cria volume: os dados ficam no Supabase.
+# Segue o padrão das outras stacks da VPS (Docker Swarm + Traefik + rede Wtatechor3Net) e não
+# encosta em nenhuma delas:
+# - tem banco e login PRÓPRIOS, separados do Supabase que os outros projetos usam;
+# - todo serviço tem nome começado por "portuguesjp_", que não existe em outra stack;
+# - não abre nenhuma porta da VPS: só o aplicativo é alcançado, e só pelo Traefik;
+# - banco, login e dados ficam invisíveis para a internet (não têm rótulo do Traefik);
+# - os dados ficam em dois volumes próprios (portuguesjp_db_dados e portuguesjp_db_config).
 #
 # Os valores entre ${...} são preenchidos no Portainer, em "Environment variables" da stack.
 # Nenhuma senha fica escrita neste arquivo.
 #
-# RASCUNHO: os nomes da rede, do "entrypoint" e do "certresolver" foram copiados do exemplo
-# da Evolution API enviado pelo dono da VPS. Conferir na hora da instalação.
+#   DOMINIO              endereço da plataforma, sem https (ex.: portuguescomjoaopaulo.wtatech.com.br)
+#   SENHA_DO_BANCO       senha nova, só letras e números, 30 ou mais
+#   SEGREDO_JWT          segredo novo, só letras e números, 40 ou mais
+#   ADMIN_EMAIL          e-mail do primeiro administrador
+#   ADMIN_SENHA_INICIAL  senha do primeiro acesso do administrador (8 ou mais)
+#   SMTP_USER            endereço completo da caixa de e-mail da Hostinger
+#   SMTP_PASS            senha dessa caixa
+#
+# Situação: testada no GitHub em Docker Swarm (sem o Traefik). Ainda não instalada na VPS.
 
-version: "3.8"
-
+version: "3.7"
 services:
-  plataforma:
+
+  ## Aplicativo: área do aluno e administração.
+  portuguesjp_app:
     image: ghcr.io/gilsonalvesgwta/portugues-joao-paulo:latest
-    environment:
-      # Endereço público da plataforma, com https e sem barra no fim.
-      SITE_URL: https://${DOMINIO}
-      # Supabase da VPS.
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
-      # E-mail pela caixa da Hostinger.
-      EMAIL_DRIVER: smtp
-      SMTP_HOST: smtp.hostinger.com
-      SMTP_PORT: "465"
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
-      EMAIL_REMETENTE: ${SMTP_USER}
-      EMAIL_NOME_REMETENTE: Português com João Paulo
+
     networks:
-      - Wtatechor3Net
+      - Wtatechor3Net ## Nome da rede interna
+
+    environment:
+      ## Endereço público da plataforma
+      - SITE_URL=https://${DOMINIO}
+
+      ## Login e dados próprios (endereços internos)
+      - SUPABASE_AUTH_URL=http://portuguesjp_auth:9999
+      - SUPABASE_REST_URL=http://portuguesjp_rest:3000
+      - SUPABASE_JWT_SECRET=${SEGREDO_JWT}
+
+      ## Primeiro administrador (só vale enquanto não existir nenhum)
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_SENHA_INICIAL=${ADMIN_SENHA_INICIAL}
+
+      ## E-mail pela caixa da Hostinger
+      - EMAIL_DRIVER=smtp
+      - SMTP_HOST=smtp.hostinger.com
+      - SMTP_PORT=465
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_REMETENTE=${SMTP_USER}
+      - EMAIL_NOME_REMETENTE=Português com João Paulo
+
     deploy:
       mode: replicated
       replicas: 1
-      update_config:
-        order: start-first
+      placement:
+        constraints:
+          - node.role == manager
       resources:
         limits:
           cpus: "1"
           memory: 768M
       labels:
-        - traefik.enable=1
-        - traefik.http.routers.portuguesjp.rule=Host(`${DOMINIO}`)
-        - traefik.http.routers.portuguesjp.entrypoints=websecure
-        - traefik.http.routers.portuguesjp.priority=1
-        - traefik.http.routers.portuguesjp.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.portuguesjp.service=portuguesjp
-        - traefik.http.services.portuguesjp.loadbalancer.server.port=3000
-        - traefik.http.services.portuguesjp.loadbalancer.passHostHeader=true
+        - traefik.enable=true
+        - traefik.http.routers.portuguesjp_app.rule=Host(`${DOMINIO}`)
+        - traefik.http.services.portuguesjp_app.loadbalancer.server.port=3000
+        - traefik.http.services.portuguesjp_app.loadbalancer.passHostHeader=true
+        - traefik.http.routers.portuguesjp_app.service=portuguesjp_app
+        - traefik.http.routers.portuguesjp_app.entrypoints=websecure
+        - traefik.http.routers.portuguesjp_app.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.portuguesjp_app.tls=true
+
+  ## Banco de dados próprio (mesma imagem do Supabase que já roda na VPS).
+  portuguesjp_db:
+    image: supabase/postgres:15.8.1.085
+    command:
+      [
+        "postgres",
+        "-c",
+        "config_file=/etc/postgresql/postgresql.conf"
+      ]
+
+    volumes:
+      - portuguesjp_db_dados:/var/lib/postgresql/data
+      - portuguesjp_db_config:/etc/postgresql-custom
+
+    networks:
+      - Wtatechor3Net ## Nome da rede interna
+
+    environment:
+      - POSTGRES_HOST=/var/run/postgresql
+      - PGPORT=5432
+      - POSTGRES_PORT=5432
+      - PGPASSWORD=${SENHA_DO_BANCO}
+      - POSTGRES_PASSWORD=${SENHA_DO_BANCO}
+      - POSTGRES_DB=postgres
+      - PGDATABASE=postgres
+      - JWT_SECRET=${SEGREDO_JWT}
+      - JWT_EXP=3600
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+
+  ## Login (contas, senhas e sessões).
+  portuguesjp_auth:
+    image: supabase/gotrue:v2.182.1
+
+    networks:
+      - Wtatechor3Net ## Nome da rede interna
+
+    environment:
+      - GOTRUE_API_HOST=0.0.0.0
+      - GOTRUE_API_PORT=9999
+      - API_EXTERNAL_URL=https://${DOMINIO}
+      - GOTRUE_SITE_URL=https://${DOMINIO}
+      - GOTRUE_URI_ALLOW_LIST=
+
+      - GOTRUE_DB_DRIVER=postgres
+      - GOTRUE_DB_DATABASE_URL=postgres://supabase_auth_admin:${SENHA_DO_BANCO}@portuguesjp_db:5432/postgres
+
+      ## Ninguém se cadastra sozinho: a conta nasce da compra ou da administração.
+      - GOTRUE_DISABLE_SIGNUP=true
+      - GOTRUE_EXTERNAL_EMAIL_ENABLED=true
+      - GOTRUE_EXTERNAL_PHONE_ENABLED=false
+      - GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED=false
+      - GOTRUE_MAILER_AUTOCONFIRM=true
+      - GOTRUE_PASSWORD_MIN_LENGTH=8
+
+      ## Sessão: o crachá de acesso vale 1 hora e é renovado sozinho.
+      - GOTRUE_JWT_SECRET=${SEGREDO_JWT}
+      - GOTRUE_JWT_EXP=3600
+      - GOTRUE_JWT_AUD=authenticated
+      - GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated
+      - GOTRUE_JWT_ADMIN_ROLES=service_role
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  ## Dados (leitura e gravação das tabelas, com as regras de acesso do banco).
+  portuguesjp_rest:
+    image: postgrest/postgrest:v13.0.7
+    command:
+      [
+        "postgrest"
+      ]
+
+    networks:
+      - Wtatechor3Net ## Nome da rede interna
+
+    environment:
+      - PGRST_DB_URI=postgres://authenticator:${SENHA_DO_BANCO}@portuguesjp_db:5432/postgres
+      - PGRST_DB_SCHEMAS=public
+      - PGRST_DB_ANON_ROLE=anon
+      - PGRST_DB_MAX_ROWS=1000
+      - PGRST_DB_USE_LEGACY_GUCS=false
+      - PGRST_JWT_SECRET=${SEGREDO_JWT}
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  ## Preparo do banco: cria as tabelas e aplica as atualizações. Sobe, faz o trabalho e termina.
+  portuguesjp_banco:
+    image: ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco:latest
+
+    networks:
+      - Wtatechor3Net ## Nome da rede interna
+
+    environment:
+      - PGHOST=portuguesjp_db
+      - POSTGRES_PASSWORD=${SENHA_DO_BANCO}
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      ## Tenta de novo só se falhar (por exemplo, o banco ainda subindo). Quando termina bem, fica
+      ## parado, e o Portainer mostra 0/1: é o esperado.
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 30
+      ## Terminar logo depois de subir é o normal deste serviço, não uma falha de atualização.
+      update_config:
+        failure_action: continue
+
+volumes:
+  portuguesjp_db_dados:
+    name: portuguesjp_db_dados
+  portuguesjp_db_config:
+    name: portuguesjp_db_config
 
 networks:
-  Wtatechor3Net:
+  Wtatechor3Net: ## Nome da rede interna
     external: true
-    name: Wtatechor3Net
+    name: Wtatechor3Net ## Nome da rede interna

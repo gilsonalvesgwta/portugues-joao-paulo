@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { enviarEmail } from '@/lib/correio';
 import { emailBienvenida, emailRestablecer } from '@/lib/emails';
 import { motivoDaFalha } from '@/lib/smtp';
-import { ehEquipe } from '@/lib/supabase/config';
+import { ehEquipe } from '@/lib/papeis';
 import { clienteDeServico } from '@/lib/supabase/servico';
 import { clienteDoServidor } from '@/lib/supabase/servidor';
 

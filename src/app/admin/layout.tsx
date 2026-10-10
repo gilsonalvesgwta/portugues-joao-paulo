@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { sair } from '@/app/(acesso)/acoes';
 import { MenuAdmin } from '@/components/admin/MenuAdmin';
-import { ehEquipe } from '@/lib/supabase/config';
+import { ehEquipe } from '@/lib/papeis';
 import { pessoaLogada } from '@/lib/supabase/servidor';
 
 export const metadata: Metadata = { title: { default: 'Administração', template: '%s · Administração' } };

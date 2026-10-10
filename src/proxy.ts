@@ -16,10 +16,11 @@ function comeca(caminho: string, prefixos: string[]): boolean {
 // Roda antes de cada página: renova a sessão do Supabase e barra quem não está logado.
 // A regra fina (matrícula, papel) fica no banco e nas páginas; aqui é só a porta de entrada.
 export async function proxy(pedido: NextRequest) {
-  const { url, chavePublica } = configDoSupabase();
+  const { url, chavePublica, opcoes } = configDoSupabase();
   let resposta = NextResponse.next({ request: pedido });
 
   const supabase = createServerClient(url, chavePublica, {
+    ...opcoes,
     cookies: {
       getAll() {
         return pedido.cookies.getAll();

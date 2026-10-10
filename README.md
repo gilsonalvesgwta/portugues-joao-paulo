@@ -9,12 +9,12 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
 | `supabase/tests/` | Testes do banco: 63 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail | 69 testes passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco | 77 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` ainda é tela de espera |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação) e lixeira | Funcionando. Faltam anotações, materiais, quizzes, tarefas e trilha |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade e Supabase local | 29 testes passando |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 30 testes passando nos dois |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
-| `Dockerfile`, `deploy/` | Imagem do aplicativo e rascunho da stack do Portainer (Swarm + Traefik) | Imagem testada no GitHub; instalação na VPS ainda não feita |
+| `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
 ## Como rodar o aplicativo
 
@@ -77,10 +77,29 @@ Aplique só os arquivos de `supabase/migrations/`, em ordem. Eles usam `auth.use
 
 ## Instalação na VPS
 
-O GitHub publica a imagem em `ghcr.io/gilsonalvesgwta/portugues-joao-paulo` a cada mudança no ramo principal.
-A imagem não leva nenhuma chave: endereço, Supabase e e-mail chegam por variável de ambiente (veja
-`.env.example`). `deploy/portainer-stack.yml` é o rascunho da stack para o Portainer, no padrão Swarm + Traefik:
-sem portas abertas, sem volumes e com nomes próprios no Traefik. O passo a passo da instalação ainda será escrito.
+A plataforma roda na VPS com banco e login próprios, separados de qualquer outro projeto. São cinco serviços,
+todos com nome começado por `portuguesjp_`:
+
+| Serviço | O que faz | Memória medida no teste |
+| --- | --- | --- |
+| `portuguesjp_app` | O aplicativo (área do aluno e administração). É o único alcançado pelo Traefik | cerca de 95 MB |
+| `portuguesjp_db` | Banco de dados (mesma imagem do Supabase) | cerca de 90 MB |
+| `portuguesjp_auth` | Login: contas, senhas e sessões | cerca de 20 MB |
+| `portuguesjp_rest` | Leitura e gravação das tabelas, com as regras de acesso do banco | cerca de 26 MB |
+| `portuguesjp_banco` | Prepara o banco e aplica as atualizações. Sobe, faz o trabalho e termina (aparece como 0/1) | — |
+
+A memória foi medida com o banco quase vazio, logo depois dos testes; com alunos de verdade o banco usa mais.
+
+- `deploy/portainer-stack.yml` é a stack para o Portainer (Docker Swarm + Traefik). Não abre porta nenhuma, e
+  as senhas entram pelas variáveis da stack, nunca pelo arquivo.
+- O GitHub publica as duas imagens a cada mudança no ramo principal: `ghcr.io/gilsonalvesgwta/portugues-joao-paulo`
+  e `ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco`. Nenhuma leva chave dentro.
+- O aplicativo assina as próprias chaves de acesso ao banco a partir de `SUPABASE_JWT_SECRET`, e cria o primeiro
+  administrador a partir de `ADMIN_EMAIL` e `ADMIN_SENHA_INICIAL` (só enquanto não existir nenhum).
+- A cada mudança, o GitHub sobe esse mesmo arquivo em Docker Swarm e roda todos os testes de ponta a ponta
+  contra ele. Ficam para a instalação de verdade: o Traefik, o certificado e a caixa de e-mail.
+
+O passo a passo da instalação ainda será escrito.
 
 ## Pontos provisórios
 

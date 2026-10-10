@@ -4,9 +4,8 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
-import { createClient } from '@supabase/supabase-js';
 import { chromium } from 'playwright';
-import { admin, base, caminho, chavePublica, criarPessoa, emailDeTeste, entrar, novaPagina, novoContexto, senha, textoDoAviso, url } from './apoio.mjs';
+import { admin, base, caminho, clientePublico, criarPessoa, emailDeTeste, entrar, novaPagina, novoContexto, senha, textoDoAviso } from './apoio.mjs';
 
 const sufixo = randomBytes(3).toString('hex');
 const curso = { pt: `Curso de teste ${sufixo}`, es: `Curso de prueba ${sufixo}` };
@@ -50,7 +49,7 @@ async function criarModulo(titulo) {
 }
 
 async function comoAluna() {
-  const cliente = createClient(url, chavePublica, { auth: { persistSession: false } });
+  const cliente = clientePublico();
   const { error } = await cliente.auth.signInWithPassword({ email: aluna.email, password: senha });
   assert.equal(error, null, error?.message);
   return cliente;

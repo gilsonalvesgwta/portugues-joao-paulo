@@ -3,8 +3,8 @@
 -- Destino: Postgres do Supabase auto-hospedado (usa auth.users e auth.uid()).
 -- Convenções: datas em UTC (timestamptz); textos do aluno com versão _pt e _es;
 -- conteúdo com progresso é arquivado (arquivado_em), nunca apagado.
-
-begin;
+-- A transação é aberta por quem aplica (deploy/banco/aplicar.sh, Supabase local, testes):
+-- a migração entra inteira ou não entra.
 
 -- ---------------------------------------------------------------------------
 -- 1. Acesso e pagamento
@@ -805,5 +805,3 @@ grant execute on function
   public.reservar_turma(uuid), public.cancelar_reserva(uuid), public.avaliar_aula(uuid, integer, text)
   to authenticated;
 grant execute on all functions in schema public to service_role;
-
-commit;
