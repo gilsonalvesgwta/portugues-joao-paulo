@@ -2,7 +2,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Transporter } from 'nodemailer';
 import type { Email } from './emails';
-import { configDoSmtp, ErroDeConfiguracao } from './smtp';
+// Com a extensão, este arquivo também roda direto no Node, no teste de envio por SMTP.
+import { configDoSmtp, ErroDeConfiguracao } from './smtp.ts';
 
 // Envio de e-mail. O jeito de enviar é escolhido pela variável EMAIL_DRIVER:
 // - "smtp": envia pela caixa de e-mail da hospedagem (SMTP_HOST, SMTP_PORT, SMTP_USER,
