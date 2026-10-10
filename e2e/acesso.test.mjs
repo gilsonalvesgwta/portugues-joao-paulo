@@ -3,9 +3,8 @@
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
-import { createClient } from '@supabase/supabase-js';
 import { chromium } from 'playwright';
-import { admin, base, caminho, chavePublica, criarPessoa, emailDeTeste, entrar, novaPagina, senha, textoDoAviso, url } from './apoio.mjs';
+import { admin, base, caminho, clientePublico, criarPessoa, emailDeTeste, entrar, novaPagina, senha, textoDoAviso } from './apoio.mjs';
 
 const aluna = { email: emailDeTeste('aluna'), nome: 'Lucía Prueba' };
 const professor = { email: emailDeTeste('professor'), nome: 'Professor Teste', papel: 'professor' };
@@ -88,15 +87,35 @@ test('professor entra direto na administração', async () => {
   await pagina.screenshot({ path: 'capturas/admin-computador.png', fullPage: true });
 });
 
+test('o primeiro administrador nasce das variáveis da instalação e entra na administração', async (t) => {
+  const email = process.env.ADMIN_EMAIL;
+  const clave = process.env.ADMIN_SENHA_INICIAL;
+  if (!email || !clave) return t.skip('sem ADMIN_EMAIL e ADMIN_SENHA_INICIAL');
+
+  // O aplicativo cria a conta ao subir; pode levar alguns segundos depois de o banco ficar pronto.
+  let perfil = null;
+  for (let tentativa = 0; tentativa < 40 && !perfil; tentativa += 1) {
+    const { data } = await admin.from('perfis').select('papel').eq('email', email).maybeSingle();
+    perfil = data;
+    if (!perfil) await new Promise((feito) => setTimeout(feito, 1500));
+  }
+  assert.deepEqual(perfil, { papel: 'admin' });
+
+  const pagina = await novaPagina(navegador);
+  await entrar(pagina, email, clave);
+  await pagina.waitForURL('**/admin');
+  assert.match(await pagina.locator('main').innerText(), /Você entrou como Administrador\./);
+});
+
 test('ninguém se cadastra sozinho pelo Supabase', async () => {
-  const publico = createClient(url, chavePublica, { auth: { persistSession: false } });
+  const publico = clientePublico();
   const { data, error } = await publico.auth.signUp({ email: emailDeTeste('intruso'), password: senha });
   assert.notEqual(error, null, 'o cadastro deveria ser recusado');
   assert.equal(data.user, null);
 });
 
 test('visitante sem login não lê nenhuma tabela pela API', async () => {
-  const publico = createClient(url, chavePublica, { auth: { persistSession: false } });
+  const publico = clientePublico();
   for (const tabela of ['perfis', 'matriculas', 'aulas', 'perguntas', 'eventos_pagamento', 'notificacoes']) {
     const { data, error } = await publico.from(tabela).select('*').limit(1);
     assert.ok(error !== null || (data ?? []).length === 0, `${tabela} não pode devolver linhas a um visitante`);

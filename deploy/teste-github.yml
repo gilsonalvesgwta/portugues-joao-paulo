@@ -1,0 +1,25 @@
+# Só para o teste no GitHub. Aplicado por cima de portainer-stack.yml:
+# - usa as imagens recém-construídas em vez das publicadas;
+# - abre portas no computador de teste para o navegador e os testes alcançarem os serviços
+#   (na VPS nenhuma porta é aberta);
+# - grava os e-mails em uma pasta, em vez de enviar.
+version: "3.7"
+services:
+  portuguesjp_app:
+    image: plataforma:teste
+    ports:
+      - "3200:3000"
+    environment:
+      - SITE_URL=http://127.0.0.1:3200
+      - EMAIL_DRIVER=arquivo
+      - EMAIL_PASTA=/caixa
+    volumes:
+      - ${PASTA_DA_CAIXA}:/caixa
+  portuguesjp_auth:
+    ports:
+      - "9999:9999"
+  portuguesjp_rest:
+    ports:
+      - "3001:3000"
+  portuguesjp_banco:
+    image: banco:teste

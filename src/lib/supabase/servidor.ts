@@ -11,9 +11,10 @@ export async function clienteDoServidor() {
   // Os cookies vêm primeiro: é o que avisa o Next.js, na compilação, que a página depende de
   // quem está logado. Assim a imagem é construída sem nenhuma variável do Supabase.
   const guardados = await cookies();
-  const { url, chavePublica } = configDoSupabase();
+  const { url, chavePublica, opcoes } = configDoSupabase();
 
   return createServerClient(url, chavePublica, {
+    ...opcoes,
     cookies: {
       getAll() {
         return guardados.getAll();

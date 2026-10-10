@@ -5,14 +5,23 @@ import { randomBytes } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
+import { configDeServico, configDoSupabase } from '../src/lib/supabase/config.ts';
 
 export const base = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
-export const url = process.env.SUPABASE_URL;
-export const chavePublica = process.env.SUPABASE_ANON_KEY;
-const chaveDeServico = process.env.SUPABASE_SERVICE_ROLE_KEY;
-assert.ok(url && chavePublica && chaveDeServico, 'faltam as variáveis do Supabase (veja .env.example)');
+// Os testes acham o login e os dados do mesmo jeito que o aplicativo (Supabase completo ou
+// banco próprio), usando a mesma configuração.
+const servico = configDeServico();
+const publica = configDoSupabase();
 
-export const admin = createClient(url, chaveDeServico, { auth: { persistSession: false, autoRefreshToken: false } });
+export const admin = createClient(servico.url, servico.chaveDeServico, {
+  ...servico.opcoes,
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+// Cliente como o de um visitante ou aluno: só a chave pública, sujeito às regras do banco.
+export function clientePublico() {
+  return createClient(publica.url, publica.chavePublica, { ...publica.opcoes, auth: { persistSession: false } });
+}
 export const senha = 'senha-de-teste-123';
 
 // Cada arquivo de teste usa e-mails próprios, para poder rodar ao mesmo tempo que os outros.

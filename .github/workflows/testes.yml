@@ -54,7 +54,7 @@ jobs:
   aplicativo:
     name: Aplicativo
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     permissions:
       contents: write
       # Para publicar a imagem da VPS no registro de imagens do GitHub (só no ramo principal).
@@ -102,6 +102,8 @@ jobs:
             echo "EMAIL_PASTA=$GITHUB_WORKSPACE/caixa-de-saida"
             echo "CAIXA_DE_TESTE_URL=$(valor MAILPIT_URL)"
             echo "CAIXA_DE_TESTE_SMTP=54325"
+            echo "ADMIN_EMAIL=dono@exemplo.test"
+            echo "ADMIN_SENHA_INICIAL=senha-inicial-de-teste"
           } >> "$GITHUB_ENV"
       - name: Compilar
         run: npm run build 2>&1 | tee saida/2-compilar.txt
@@ -118,55 +120,111 @@ jobs:
           npm run capturas 2>&1 | tee saida/6-capturas.txt
       - name: Acesso de ponta a ponta
         run: npm run e2e 2>&1 | tee saida/9-ponta-a-ponta.txt
-      # A mesma imagem que vai para a VPS: construída sem nenhuma chave e testada de verdade,
-      # com login pelo navegador, antes de ser publicada.
-      - name: Construir a imagem da VPS
-        run: docker build -t plataforma:teste . 2>&1 | tail -n 60 | tee saida/10-imagem.txt
-      - name: Testar a imagem (login de ponta a ponta dentro do contêiner)
+      # As mesmas imagens e o mesmo arquivo de stack que vão para a VPS: construídos sem nenhuma
+      # chave e testados de verdade em Docker Swarm, com banco e login próprios, antes de publicar.
+      - name: Construir as imagens da VPS
         run: |
           {
-            docker run -d --name plataforma --network host -e PORT=3100 \
-              -e SITE_URL=http://127.0.0.1:3100 -e SUPABASE_URL -e SUPABASE_ANON_KEY -e SUPABASE_SERVICE_ROLE_KEY \
-              -e EMAIL_DRIVER=arquivo -e EMAIL_PASTA=/tmp/caixa-de-saida plataforma:teste
-            for i in $(seq 1 30); do
-              if curl -sf http://127.0.0.1:3100/api/saude > /dev/null; then break; fi
-              sleep 1
-            done
-            echo "sinal de vida: $(curl -s http://127.0.0.1:3100/api/saude)"
-            echo "usuário dentro do contêiner: $(docker exec plataforma whoami)"
-            echo "tamanho da imagem: $(docker image inspect plataforma:teste --format '{{.Size}}') bytes"
+            docker build -t plataforma:teste . 2>&1 | tail -n 40
+            docker build -f deploy/banco/Dockerfile -t banco:teste . 2>&1 | tail -n 20
+            echo "usuário dentro da imagem do aplicativo: $(docker run --rm --entrypoint whoami plataforma:teste)"
+            echo "tamanho da imagem do aplicativo: $(docker image inspect plataforma:teste --format '{{.Size}}') bytes"
+            echo "tamanho da imagem do banco: $(docker image inspect banco:teste --format '{{.Size}}') bytes"
             ACHADOS=$(docker run --rm --entrypoint sh plataforma:teste -c "grep -rlF -e \"$SUPABASE_SERVICE_ROLE_KEY\" -e \"$SUPABASE_ANON_KEY\" /app 2>/dev/null | wc -l")
             echo "arquivos da imagem com alguma chave dentro: $ACHADOS"
             test "$ACHADOS" = "0"
-            test "$(docker exec plataforma whoami)" = "node"
-            curl -sf http://127.0.0.1:3100/api/saude | grep -q '"ok":true'
-            BASE_URL=http://127.0.0.1:3100 node --test e2e/acesso.test.mjs
-            for i in $(seq 1 40); do
-              ESTADO=$(docker inspect plataforma --format '{{.State.Health.Status}}')
-              if [ "$ESTADO" = "healthy" ]; then break; fi
+            test "$(docker run --rm --entrypoint whoami plataforma:teste)" = "node"
+          } 2>&1 | tee saida/10-imagem.txt
+      # Segredos só deste teste, sorteados a cada execução. Ficam escondidos nos registros
+      # e não entram em nenhum arquivo publicado.
+      - name: Sortear os segredos do teste da stack
+        run: |
+          SENHA="$(openssl rand -hex 20)"
+          SEGREDO="$(openssl rand -hex 32)"
+          INICIAL="$(openssl rand -hex 8)"
+          echo "::add-mask::$SENHA"
+          echo "::add-mask::$SEGREDO"
+          echo "::add-mask::$INICIAL"
+          {
+            echo "STACK_SENHA_DO_BANCO=$SENHA"
+            echo "STACK_SEGREDO_JWT=$SEGREDO"
+            echo "STACK_ADMIN_SENHA=$INICIAL"
+            echo "STACK_PASTA_DA_CAIXA=$GITHUB_WORKSPACE/caixa-da-stack"
+          } >> "$GITHUB_ENV"
+      - name: Subir a stack da VPS em Docker Swarm
+        run: |
+          {
+            docker swarm init --advertise-addr 127.0.0.1 > /dev/null
+            docker network create --driver overlay --attachable Wtatechor3Net > /dev/null
+            export DOMINIO=plataforma.exemplo.test
+            export SENHA_DO_BANCO="$STACK_SENHA_DO_BANCO"
+            export SEGREDO_JWT="$STACK_SEGREDO_JWT"
+            export ADMIN_EMAIL=dono@exemplo.test
+            export ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA"
+            export SMTP_USER=aulas@exemplo.test SMTP_PASS=nao-usada-no-teste
+            export PASTA_DA_CAIXA="$STACK_PASTA_DA_CAIXA"
+            mkdir -p "$PASTA_DA_CAIXA" && chmod 777 "$PASTA_DA_CAIXA"
+            docker stack deploy --resolve-image never -c deploy/portainer-stack.yml -c deploy/teste-github.yml portuguesjp 2>&1 | grep -v -i "image .* could not be accessed" || true
+
+            echo "esperando o preparo do banco..."
+            PRONTO=""
+            for i in $(seq 1 90); do
+              if docker service logs portuguesjp_portuguesjp_banco 2>&1 | grep -q "BANCO PRONTO"; then PRONTO="sim"; break; fi
+              sleep 4
+            done
+            docker service logs portuguesjp_portuguesjp_banco 2>&1 | sed -E 's/^[^|]*\| //' | tail -n 25
+            test -n "$PRONTO"
+
+            echo "esperando o aplicativo..."
+            for i in $(seq 1 60); do
+              if curl -sf http://127.0.0.1:3200/api/saude > /dev/null; then break; fi
               sleep 2
             done
-            echo "saúde segundo o Docker: $ESTADO"
-            test "$ESTADO" = "healthy"
-          } 2>&1 | tee -a saida/10-imagem.txt
-      - name: Guardar o registro do contêiner
+            echo "sinal de vida: $(curl -s http://127.0.0.1:3200/api/saude)"
+            curl -sf http://127.0.0.1:3200/api/saude | grep -q '"ok":true'
+            docker service ls --format 'serviço {{.Name}}: {{.Replicas}}'
+          } 2>&1 | tee saida/11-stack.txt
+      - name: Ponta a ponta contra a stack da VPS
+        run: |
+          # Os testes passam a falar com o login e os dados da stack, do mesmo jeito que o aplicativo.
+          env -u SUPABASE_URL -u SUPABASE_ANON_KEY -u SUPABASE_SERVICE_ROLE_KEY \
+            BASE_URL=http://127.0.0.1:3200 \
+            SUPABASE_AUTH_URL=http://127.0.0.1:9999 SUPABASE_REST_URL=http://127.0.0.1:3001 \
+            SUPABASE_JWT_SECRET="$STACK_SEGREDO_JWT" \
+            ADMIN_EMAIL=dono@exemplo.test ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA" \
+            EMAIL_PASTA="$STACK_PASTA_DA_CAIXA" \
+            npm run e2e 2>&1 | tee saida/12-ponta-a-ponta-na-stack.txt
+      - name: Medir a stack e guardar os registros
         if: always()
         run: |
-          if docker inspect plataforma > /dev/null 2>&1; then
-            { echo; echo "== registro do contêiner =="; docker logs plataforma 2>&1 | tail -n 40; } >> saida/10-imagem.txt
+          if docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null | grep -q '^active$'; then
+            {
+              echo
+              echo "== memória e saúde de cada contêiner, depois dos testes =="
+              docker stats --no-stream --format '{{.Name}}: {{.MemUsage}}' | sed -E 's/\.[0-9]+\.[a-z0-9]+:/:/' | grep portuguesjp || true
+              docker ps --filter name=portuguesjp --format '{{.Names}}: {{.Status}}' | sed -E 's/\.[0-9]+\.[a-z0-9]+:/:/'
+              for servico in app auth rest db banco; do
+                echo
+                echo "== registro de portuguesjp_$servico =="
+                docker service logs "portuguesjp_portuguesjp_$servico" 2>&1 | sed -E 's/^[^|]*\| //' | grep -v -i -E "password|secret|jwt|postgres://|$STACK_SENHA_DO_BANCO|$STACK_SEGREDO_JWT" | tail -n 25
+              done
+            } >> saida/11-stack.txt 2>&1
           fi
-      - name: Publicar a imagem (só no ramo principal)
+      - name: Publicar as imagens (só no ramo principal)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          IMAGEM="ghcr.io/${GITHUB_REPOSITORY,,}"
           echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-          docker tag plataforma:teste "$IMAGEM:latest"
-          docker tag plataforma:teste "$IMAGEM:${GITHUB_SHA::12}"
-          docker push "$IMAGEM:latest" 2>&1 | tail -n 3
-          docker push "$IMAGEM:${GITHUB_SHA::12}" 2>&1 | tail -n 3
-          echo "imagem publicada: $IMAGEM:latest e $IMAGEM:${GITHUB_SHA::12}" | tee -a saida/10-imagem.txt
+          publicar() { # imagem local, nome no registro
+            docker tag "$1" "$2:latest"
+            docker tag "$1" "$2:${GITHUB_SHA::12}"
+            docker push "$2:latest" 2>&1 | tail -n 2
+            docker push "$2:${GITHUB_SHA::12}" 2>&1 | tail -n 2
+            echo "imagem publicada: $2:latest e $2:${GITHUB_SHA::12}" | tee -a saida/10-imagem.txt
+          }
+          publicar plataforma:teste "ghcr.io/${GITHUB_REPOSITORY,,}"
+          publicar banco:teste "ghcr.io/${GITHUB_REPOSITORY,,}-banco"
       # As sessões do Claude não conseguem baixar os registros do GitHub Actions.
       # Esta etapa publica o fim de cada registro, as fotos das telas e o
       # package-lock.json no ramo "ci-saida", que é sobrescrito a cada execução.

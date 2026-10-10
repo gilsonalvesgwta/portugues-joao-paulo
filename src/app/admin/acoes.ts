@@ -6,7 +6,7 @@ import { enviarEmail } from '@/lib/correio';
 import { emailDeConferencia } from '@/lib/emails';
 import { motivoDaFalha } from '@/lib/smtp';
 import type { EstadoDoFormulario } from '@/lib/formulario';
-import { ehEquipe } from '@/lib/supabase/config';
+import { ehEquipe } from '@/lib/papeis';
 import { clienteDoServidor, pessoaLogada } from '@/lib/supabase/servidor';
 
 // Ações da administração de conteúdo. Cada uma confere de novo se quem pede é da equipe
