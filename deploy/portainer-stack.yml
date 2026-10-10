@@ -1,0 +1,59 @@
+# Stack do Portainer para a plataforma Português com João Paulo.
+#
+# Segue o mesmo padrão dos outros serviços da VPS (Docker Swarm + Traefik):
+# - entra na rede interna que o Traefik já usa;
+# - não abre nenhuma porta da VPS: o acesso é só pelo Traefik, no endereço escolhido;
+# - usa nomes próprios (portuguesjp) no Traefik, para não se misturar com os outros serviços;
+# - não cria volume: os dados ficam no Supabase.
+#
+# Os valores entre ${...} são preenchidos no Portainer, em "Environment variables" da stack.
+# Nenhuma senha fica escrita neste arquivo.
+#
+# RASCUNHO: os nomes da rede, do "entrypoint" e do "certresolver" foram copiados do exemplo
+# da Evolution API enviado pelo dono da VPS. Conferir na hora da instalação.
+
+version: "3.8"
+
+services:
+  plataforma:
+    image: ghcr.io/gilsonalvesgwta/portugues-joao-paulo:latest
+    environment:
+      # Endereço público da plataforma, com https e sem barra no fim.
+      SITE_URL: https://${DOMINIO}
+      # Supabase da VPS.
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      # E-mail pela caixa da Hostinger.
+      EMAIL_DRIVER: smtp
+      SMTP_HOST: smtp.hostinger.com
+      SMTP_PORT: "465"
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_REMETENTE: ${SMTP_USER}
+      EMAIL_NOME_REMETENTE: Português com João Paulo
+    networks:
+      - Wtatechor3Net
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        order: start-first
+      resources:
+        limits:
+          cpus: "1"
+          memory: 768M
+      labels:
+        - traefik.enable=1
+        - traefik.http.routers.portuguesjp.rule=Host(`${DOMINIO}`)
+        - traefik.http.routers.portuguesjp.entrypoints=websecure
+        - traefik.http.routers.portuguesjp.priority=1
+        - traefik.http.routers.portuguesjp.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.portuguesjp.service=portuguesjp
+        - traefik.http.services.portuguesjp.loadbalancer.server.port=3000
+        - traefik.http.services.portuguesjp.loadbalancer.passHostHeader=true
+
+networks:
+  Wtatechor3Net:
+    external: true
+    name: Wtatechor3Net

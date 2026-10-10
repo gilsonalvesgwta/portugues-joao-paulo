@@ -7,8 +7,8 @@ import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 
 export const base = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
-export const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-export const chavePublica = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+export const url = process.env.SUPABASE_URL;
+export const chavePublica = process.env.SUPABASE_ANON_KEY;
 const chaveDeServico = process.env.SUPABASE_SERVICE_ROLE_KEY;
 assert.ok(url && chavePublica && chaveDeServico, 'faltam as variáveis do Supabase (veja .env.example)');
 
