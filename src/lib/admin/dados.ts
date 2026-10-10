@@ -34,13 +34,14 @@ export type Aula = {
   duracao_seg: number | null;
   situacao: Situacao;
   arquivado_em: string | null;
+  atualizado_em: string;
 };
 
 export type Conteudo = { cursos: Curso[]; modulos: Modulo[]; aulas: Aula[] };
 
 export const COLUNAS_DO_CURSO = 'id, titulo_pt, titulo_es, tipo, situacao, modo, ordem, arquivado_em';
 export const COLUNAS_DO_MODULO = 'id, curso_id, ordem, titulo_pt, titulo_es, arquivado_em';
-export const COLUNAS_DA_AULA = 'id, modulo_id, numero, titulo_pt, titulo_es, video_id, duracao_seg, situacao, arquivado_em';
+export const COLUNAS_DA_AULA = 'id, modulo_id, numero, titulo_pt, titulo_es, video_id, duracao_seg, situacao, arquivado_em, atualizado_em';
 
 // Tudo de uma vez: são poucas centenas de linhas, e as telas cruzam cursos, módulos e aulas.
 export async function carregarConteudo(): Promise<Conteudo> {

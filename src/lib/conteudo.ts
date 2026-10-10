@@ -8,7 +8,7 @@ export type Entrada = Record<string, unknown>;
 export const TITULO_MAX = 160;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CODIGO_DO_VIDEO = /^[A-Za-z0-9_-]{1,100}$/;
+const CODIGO_DO_YOUTUBE = /^[A-Za-z0-9_-]{11}$/;
 
 export function ehUuid(valor: unknown): valor is string {
   return typeof valor === 'string' && UUID.test(valor);
@@ -95,6 +95,41 @@ export function formatarDuracao(segundos: number | null | undefined): string {
   return h > 0 ? `${h}:${dois(m)}:${dois(s)}` : `${m}:${dois(s)}`;
 }
 
+// Os vídeos ficam no YouTube. Aceita o link copiado de qualquer jeito (barra de endereço,
+// botão Compartilhar, incorporar, Shorts, ao vivo) ou só o código de 11 letras, e devolve o código.
+// Vazio = sem vídeo.
+export function lerVideoDoYoutube(texto: unknown): string | null | 'invalido' {
+  const limpo = limpar(texto);
+  if (limpo === '') return null;
+  if (CODIGO_DO_YOUTUBE.test(limpo)) return limpo;
+
+  let endereco: URL;
+  try {
+    endereco = new URL(/^https?:\/\//i.test(limpo) ? limpo : `https://${limpo}`);
+  } catch {
+    return 'invalido';
+  }
+  const site = endereco.hostname.toLowerCase().replace(/^(www|m|music)\./, '');
+  const partes = endereco.pathname.split('/').filter(Boolean);
+  let codigo: string | undefined;
+  if (site === 'youtu.be') {
+    codigo = partes[0];
+  } else if (site === 'youtube.com' || site === 'youtube-nocookie.com') {
+    if (partes[0] === 'watch') codigo = endereco.searchParams.get('v') ?? undefined;
+    else if (partes[0] === 'embed' || partes[0] === 'shorts' || partes[0] === 'live' || partes[0] === 'v') codigo = partes[1];
+  }
+  return codigo !== undefined && CODIGO_DO_YOUTUBE.test(codigo) ? codigo : 'invalido';
+}
+
+export function linkDoYoutube(codigo: string): string {
+  return `https://youtu.be/${codigo}`;
+}
+
+// Endereço do reprodutor incorporado. O domínio "nocookie" não grava cookies até a pessoa dar play.
+export function incorporarYoutube(codigo: string): string {
+  return `https://www.youtube-nocookie.com/embed/${codigo}`;
+}
+
 export type DadosDaAula = {
   modulo_id: string;
   numero: number;
@@ -123,9 +158,9 @@ export function validarAula(entrada: Entrada, numerosEmUso: readonly number[] = 
   conferirTitulo(erros, 'titulo_pt', titulo_pt, 'português');
   conferirTitulo(erros, 'titulo_es', titulo_es, 'espanhol');
 
-  const videoEscrito = limpar(entrada.video_id);
-  if (videoEscrito !== '' && !CODIGO_DO_VIDEO.test(videoEscrito)) {
-    erros.video_id = 'O código do vídeo só tem letras, números e traços, sem espaços.';
+  const video = lerVideoDoYoutube(entrada.video_id);
+  if (video === 'invalido') {
+    erros.video_id = 'Cole o link de um vídeo do YouTube. Exemplo: https://youtu.be/aB3dE6gH9jK';
   }
 
   const duracao = lerDuracao(entrada.duracao);
@@ -134,11 +169,11 @@ export function validarAula(entrada: Entrada, numerosEmUso: readonly number[] = 
   const situacao = umDe(entrada.situacao, SITUACOES);
   if (!situacao) erros.situacao = 'Escolha entre salvar como rascunho e publicar.';
   // Aula publicada sem vídeo seria uma tela vazia para o aluno.
-  if (situacao === 'publicado' && videoEscrito === '' && !erros.video_id) {
+  if (situacao === 'publicado' && video === null) {
     erros.video_id = 'Para publicar, a aula precisa de um vídeo. Sem vídeo, salve como rascunho.';
   }
 
-  if (!situacao || duracao === 'invalida' || Object.keys(erros).length > 0) return { ok: false, erros };
+  if (!situacao || duracao === 'invalida' || video === 'invalido' || Object.keys(erros).length > 0) return { ok: false, erros };
   return {
     ok: true,
     valor: {
@@ -146,7 +181,7 @@ export function validarAula(entrada: Entrada, numerosEmUso: readonly number[] = 
       numero,
       titulo_pt,
       titulo_es,
-      video_id: videoEscrito === '' ? null : videoEscrito,
+      video_id: video,
       duracao_seg: duracao,
       situacao,
     },

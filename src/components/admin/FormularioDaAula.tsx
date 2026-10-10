@@ -17,7 +17,14 @@ export type AulaNoFormulario = {
 
 export type GrupoDeModulos = { curso: string; modulos: { id: string; titulo: string }[] };
 
-export function FormularioDaAula({ aula, grupos }: { aula: AulaNoFormulario; grupos: GrupoDeModulos[] }) {
+type Props = {
+  aula: AulaNoFormulario;
+  grupos: GrupoDeModulos[];
+  // Endereço do reprodutor do vídeo já salvo, para o professor conferir se é o vídeo certo.
+  previa?: string | null;
+};
+
+export function FormularioDaAula({ aula, grupos, previa = null }: Props) {
   const [estado, acao, enviando] = useActionState(salvarAula, ESTADO_INICIAL);
   const valor = (campo: keyof AulaNoFormulario) => estado.valores[campo] ?? aula[campo];
   const erros = estado.erros;
@@ -73,11 +80,13 @@ export function FormularioDaAula({ aula, grupos }: { aula: AulaNoFormulario; gru
           <div className="grid gap-5 sm:grid-cols-[1fr_180px]">
             <Entrada
               id="video_id"
-              rotulo="Código do vídeo"
-              ajuda="Por enquanto, cole aqui o código do vídeo no serviço de vídeo. O envio do arquivo por esta tela entra em uma próxima etapa."
+              rotulo="Link do vídeo no YouTube"
+              ajuda="Copie o link do vídeo no YouTube e cole aqui. O vídeo precisa estar como Não listado ou Público, com a incorporação permitida."
+              placeholder="https://youtu.be/..."
               defaultValue={valor('video_id')}
               erro={erros.video_id}
-              maxLength={100}
+              maxLength={200}
+              inputMode="url"
               autoComplete="off"
               spellCheck={false}
             />
@@ -91,6 +100,20 @@ export function FormularioDaAula({ aula, grupos }: { aula: AulaNoFormulario; gru
               autoComplete="off"
             />
           </div>
+          {previa ? (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm font-semibold">Vídeo salvo nesta aula</p>
+              <iframe
+                src={previa}
+                title="Prévia do vídeo da aula"
+                loading="lazy"
+                allow="encrypted-media; picture-in-picture"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+                className="aspect-video w-full max-w-[560px] rounded-xl border border-linha bg-carvao"
+              />
+            </div>
+          ) : null}
         </section>
       </div>
 

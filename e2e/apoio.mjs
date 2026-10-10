@@ -36,9 +36,15 @@ export async function criarPessoa({ email, nome = '', papel = 'aluno', comSenha 
   return data.user.id;
 }
 
+// Os testes não dependem de sites de fora: a prévia do YouTube fica sem carregar.
+export async function novoContexto(navegador, largura = 1280, altura = 800) {
+  const contexto = await navegador.newContext({ viewport: { width: largura, height: altura } });
+  await contexto.route(/^https?:\/\/([^/]+\.)?(youtube\.com|youtube-nocookie\.com|ytimg\.com|googlevideo\.com)\//, (rota) => rota.abort());
+  return contexto;
+}
+
 export async function novaPagina(navegador) {
-  const contexto = await navegador.newContext({ viewport: { width: 1280, height: 800 } });
-  return contexto.newPage();
+  return (await novoContexto(navegador)).newPage();
 }
 
 export async function entrar(pagina, email, clave) {
