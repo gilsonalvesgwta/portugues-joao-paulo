@@ -11,6 +11,13 @@ max_rows = 1000
 port = 54322
 major_version = 15
 
+# Caixa de e-mail de teste (Mailpit). Os testes mandam e-mail de verdade para a porta SMTP
+# e leem a mensagem pela porta web. Nada sai para a internet.
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+
 [auth]
 site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = ["http://localhost:3000"]

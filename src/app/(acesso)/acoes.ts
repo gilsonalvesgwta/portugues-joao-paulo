@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { enviarEmail } from '@/lib/correio';
 import { emailBienvenida, emailRestablecer } from '@/lib/emails';
+import { motivoDaFalha } from '@/lib/smtp';
 import { ehEquipe } from '@/lib/supabase/config';
 import { clienteDeServico } from '@/lib/supabase/servico';
 import { clienteDoServidor } from '@/lib/supabase/servidor';
@@ -72,7 +73,15 @@ async function enviarLinkDeSenha(correo: string, motivo: 'primeiro_acesso' | 'no
   const nombre = typeof perfil?.nome === 'string' ? perfil.nome : '';
   const email = motivo === 'primeiro_acesso' ? emailBienvenida({ nombre, enlace }) : emailRestablecer({ nombre, enlace });
 
-  await enviarEmail(correo, email);
+  // Se o envio falhar, a tela responde igual (para não revelar que a conta existe) e a falha
+  // fica no registro do servidor e no histórico, onde a administração enxerga.
+  let falha: string | null = null;
+  try {
+    await enviarEmail(correo, email);
+  } catch (erro) {
+    falha = motivoDaFalha(erro);
+    console.error(`Falha ao enviar o link de acesso (${falha}):`, erro instanceof Error ? erro.message : erro);
+  }
   // Registro do envio, sem o link: serve ao limite acima e ao histórico da administração.
   const { error: erroDoRegistro } = await servico.from('notificacoes').insert({
     tipo: 'enlace_acceso',
@@ -80,7 +89,8 @@ async function enviarLinkDeSenha(correo: string, motivo: 'primeiro_acesso' | 'no
     aluno_id: data.user.id,
     destinatario: correo,
     dados: { motivo },
-    enviada_em: new Date().toISOString(),
+    enviada_em: falha === null ? new Date().toISOString() : null,
+    erro: falha,
   });
   // Sem o registro o limite de envios deixa de contar: precisa aparecer no registro do servidor.
   if (erroDoRegistro) console.error('Não foi possível registrar o envio do link de acesso:', erroDoRegistro.message);

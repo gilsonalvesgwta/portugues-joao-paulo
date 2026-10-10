@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { AvisoDaPagina, Cartao, LinkBotao, TituloDaPagina } from '@/components/admin/ui';
+import { enviarEmailDeTeste } from '@/app/admin/acoes';
+import { AvisoDaPagina, Botao, Cartao, LinkBotao, TituloDaPagina } from '@/components/admin/ui';
 import { avisoDe } from '@/lib/admin/avisos';
 import { ativos, carregarConteudo } from '@/lib/admin/dados';
 import { pessoaLogada } from '@/lib/supabase/servidor';
@@ -63,9 +64,20 @@ export default async function PaginaPainel({ searchParams }: Props) {
       ) : null}
 
       <Cartao>
+        <h2 className="text-lg font-bold">Envio de e-mail</h2>
+        <form action={enviarEmailDeTeste} className="mt-2 flex flex-col items-start gap-3">
+          <p className="text-[15px] leading-normal text-apoio">
+            A plataforma envia o link de acesso e os avisos pela caixa de e-mail configurada na instalação. Para
+            conferir se está funcionando, mande um e-mail de teste para {pessoa.email}.
+          </p>
+          <Botao variante="secundario">Enviar e-mail de teste</Botao>
+        </form>
+      </Cartao>
+
+      <Cartao>
         <h2 className="text-lg font-bold">Ainda em construção</h2>
         <p className="mt-2 text-[15px] leading-normal text-apoio">
-          Anotações da aula, envio de vídeo e legendas, materiais de apoio, quizzes, tarefas, trilha por dia,
+          Anotações da aula, materiais de apoio, quizzes, tarefas, trilha por dia,
           conversação, alunos, pagamentos e configurações entram nas próximas etapas.
         </p>
       </Cartao>
