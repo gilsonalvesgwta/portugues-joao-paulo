@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+.next
+capturas
+saida
+caixa-de-saida
+e2e
+scripts
+supabase
+deploy
+*.md
+.env
+.env.*
+Dockerfile
+.dockerignore

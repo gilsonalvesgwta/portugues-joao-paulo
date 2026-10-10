@@ -57,6 +57,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write
+      # Para publicar a imagem da VPS no registro de imagens do GitHub (só no ramo principal).
+      packages: write
     defaults:
       run:
         shell: bash
@@ -93,8 +95,8 @@ jobs:
           {
             echo "SITE_URL=http://127.0.0.1:3000"
             echo "BASE_URL=http://127.0.0.1:3000"
-            echo "NEXT_PUBLIC_SUPABASE_URL=$ENDERECO"
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$PUBLICA"
+            echo "SUPABASE_URL=$ENDERECO"
+            echo "SUPABASE_ANON_KEY=$PUBLICA"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICO"
             echo "EMAIL_DRIVER=arquivo"
             echo "EMAIL_PASTA=$GITHUB_WORKSPACE/caixa-de-saida"
@@ -116,6 +118,55 @@ jobs:
           npm run capturas 2>&1 | tee saida/6-capturas.txt
       - name: Acesso de ponta a ponta
         run: npm run e2e 2>&1 | tee saida/9-ponta-a-ponta.txt
+      # A mesma imagem que vai para a VPS: construída sem nenhuma chave e testada de verdade,
+      # com login pelo navegador, antes de ser publicada.
+      - name: Construir a imagem da VPS
+        run: docker build -t plataforma:teste . 2>&1 | tail -n 60 | tee saida/10-imagem.txt
+      - name: Testar a imagem (login de ponta a ponta dentro do contêiner)
+        run: |
+          {
+            docker run -d --name plataforma --network host -e PORT=3100 \
+              -e SITE_URL=http://127.0.0.1:3100 -e SUPABASE_URL -e SUPABASE_ANON_KEY -e SUPABASE_SERVICE_ROLE_KEY \
+              -e EMAIL_DRIVER=arquivo -e EMAIL_PASTA=/tmp/caixa-de-saida plataforma:teste
+            for i in $(seq 1 30); do
+              if curl -sf http://127.0.0.1:3100/api/saude > /dev/null; then break; fi
+              sleep 1
+            done
+            echo "sinal de vida: $(curl -s http://127.0.0.1:3100/api/saude)"
+            echo "usuário dentro do contêiner: $(docker exec plataforma whoami)"
+            echo "tamanho da imagem: $(docker image inspect plataforma:teste --format '{{.Size}}') bytes"
+            ACHADOS=$(docker run --rm --entrypoint sh plataforma:teste -c "grep -rlF -e \"$SUPABASE_SERVICE_ROLE_KEY\" -e \"$SUPABASE_ANON_KEY\" /app 2>/dev/null | wc -l")
+            echo "arquivos da imagem com alguma chave dentro: $ACHADOS"
+            test "$ACHADOS" = "0"
+            test "$(docker exec plataforma whoami)" = "node"
+            curl -sf http://127.0.0.1:3100/api/saude | grep -q '"ok":true'
+            BASE_URL=http://127.0.0.1:3100 node --test e2e/acesso.test.mjs
+            for i in $(seq 1 40); do
+              ESTADO=$(docker inspect plataforma --format '{{.State.Health.Status}}')
+              if [ "$ESTADO" = "healthy" ]; then break; fi
+              sleep 2
+            done
+            echo "saúde segundo o Docker: $ESTADO"
+            test "$ESTADO" = "healthy"
+          } 2>&1 | tee -a saida/10-imagem.txt
+      - name: Guardar o registro do contêiner
+        if: always()
+        run: |
+          if docker inspect plataforma > /dev/null 2>&1; then
+            { echo; echo "== registro do contêiner =="; docker logs plataforma 2>&1 | tail -n 40; } >> saida/10-imagem.txt
+          fi
+      - name: Publicar a imagem (só no ramo principal)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          IMAGEM="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker tag plataforma:teste "$IMAGEM:latest"
+          docker tag plataforma:teste "$IMAGEM:${GITHUB_SHA::12}"
+          docker push "$IMAGEM:latest" 2>&1 | tail -n 3
+          docker push "$IMAGEM:${GITHUB_SHA::12}" 2>&1 | tail -n 3
+          echo "imagem publicada: $IMAGEM:latest e $IMAGEM:${GITHUB_SHA::12}" | tee -a saida/10-imagem.txt
       # As sessões do Claude não conseguem baixar os registros do GitHub Actions.
       # Esta etapa publica o fim de cada registro, as fotos das telas e o
       # package-lock.json no ramo "ci-saida", que é sobrescrito a cada execução.

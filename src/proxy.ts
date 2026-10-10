@@ -5,7 +5,7 @@ import { configDoSupabase } from '@/lib/supabase/config';
 type CookieParaGravar = { name: string; value: string; options: CookieOptions };
 
 // Telas que qualquer pessoa abre sem estar logada.
-const PUBLICAS = ['/entrar', '/primer-acceso', '/recuperar', '/auth', '/bienvenida'];
+const PUBLICAS = ['/entrar', '/primer-acceso', '/recuperar', '/auth', '/bienvenida', '/api/saude'];
 // Telas de acesso: quem já está logado não precisa vê-las.
 const SO_PARA_VISITANTE = ['/entrar', '/primer-acceso', '/recuperar'];
 

@@ -8,8 +8,10 @@ type CookieParaGravar = { name: string; value: string; options: CookieOptions };
 // Cliente do Supabase para páginas e ações do servidor. Age sempre como o usuário
 // logado (sessão nos cookies), então todas as regras de acesso do banco valem.
 export async function clienteDoServidor() {
-  const { url, chavePublica } = configDoSupabase();
+  // Os cookies vêm primeiro: é o que avisa o Next.js, na compilação, que a página depende de
+  // quem está logado. Assim a imagem é construída sem nenhuma variável do Supabase.
   const guardados = await cookies();
+  const { url, chavePublica } = configDoSupabase();
 
   return createServerClient(url, chavePublica, {
     cookies: {
