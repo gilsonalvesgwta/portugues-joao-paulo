@@ -14,7 +14,7 @@ psql -q -d postgres -c "drop database if exists $BANCO" -c "create database $BAN
 P=(psql -q -v ON_ERROR_STOP=1 -d "$BANCO")
 
 "${P[@]}" -f "$AQUI/00_ambiente_local.sql"
-for m in "$RAIZ"/supabase/migrations/*.sql; do "${P[@]}" -f "$m"; done
+for m in "$RAIZ"/supabase/migrations/*.sql; do "${P[@]}" --single-transaction -f "$m"; done
 "${P[@]}" -f "$AQUI/01_dados_de_teste.sql"
 
 echo "== Regras de acesso, reserva e pagamento =="

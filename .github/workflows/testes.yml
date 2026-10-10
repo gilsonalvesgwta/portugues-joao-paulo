@@ -175,11 +175,20 @@ jobs:
             docker service logs portuguesjp_portuguesjp_banco 2>&1 | sed -E 's/^[^|]*\| //' | tail -n 25
             test -n "$PRONTO"
 
-            echo "esperando o aplicativo..."
-            for i in $(seq 1 60); do
-              if curl -sf http://127.0.0.1:3200/api/saude > /dev/null; then break; fi
+            # Login e dados reiniciam sozinhos até o banco aceitar a senha deles; os testes só
+            # começam depois de os três responderem várias vezes seguidas.
+            echo "esperando o aplicativo, o login e os dados..."
+            SEGUIDAS=0
+            for i in $(seq 1 90); do
+              APP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3200/api/saude || true)
+              LOGIN=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:9999/health || true)
+              DADOS=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/ || true)
+              if [ "$APP" = "200" ] && [ "$LOGIN" = "200" ] && [ "$DADOS" = "200" ]; then SEGUIDAS=$((SEGUIDAS + 1)); else SEGUIDAS=0; fi
+              if [ "$SEGUIDAS" -ge 4 ]; then break; fi
               sleep 2
             done
+            echo "respostas: aplicativo $APP, login $LOGIN, dados $DADOS"
+            test "$SEGUIDAS" -ge 4
             echo "sinal de vida: $(curl -s http://127.0.0.1:3200/api/saude)"
             curl -sf http://127.0.0.1:3200/api/saude | grep -q '"ok":true'
             docker service ls --format 'serviço {{.Name}}: {{.Replicas}}'
@@ -206,7 +215,7 @@ jobs:
               for servico in app auth rest db banco; do
                 echo
                 echo "== registro de portuguesjp_$servico =="
-                docker service logs "portuguesjp_portuguesjp_$servico" 2>&1 | sed -E 's/^[^|]*\| //' | grep -v -i -E "password|secret|jwt|postgres://|$STACK_SENHA_DO_BANCO|$STACK_SEGREDO_JWT" | tail -n 25
+                docker service logs "portuguesjp_portuguesjp_$servico" 2>&1 | sed -E 's/^[^|]*\| //' | grep -v -i -E "password|secret|jwt|postgres://|$STACK_SENHA_DO_BANCO|$STACK_SEGREDO_JWT" | tail -n 12 | cut -c1-400
               done
             } >> saida/11-stack.txt 2>&1
           fi
