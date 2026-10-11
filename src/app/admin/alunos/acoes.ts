@@ -165,6 +165,47 @@ export async function mudarPapel(dados: FormData): Promise<void> {
   redirect(ficha(id, 'papel_salvo'));
 }
 
+// Apaga a conta de vez, a pedido da pessoa: o login, o perfil, as matrículas, o progresso, as
+// reservas e as conversas somem; os avisos de compra ficam, sem o nome e o e-mail. Não tem volta,
+// por isso a tela pede que o administrador escreva o e-mail da pessoa para confirmar.
+export async function apagarConta(anterior: EstadoDoFormulario, dados: FormData): Promise<EstadoDoFormulario> {
+  const { pessoa, supabase } = await exigirAdmin();
+  const valores = valoresDe(dados, ['id', 'confirmacao']);
+  if (!ehUuid(valores.id)) redirect(`${LISTA}?aviso=nao_encontrado`);
+  if (valores.id === pessoa.id) return comErros(anterior, { geral: 'Ninguém apaga a própria conta por aqui.' }, valores);
+
+  const { data: alvo } = await supabase.from('perfis').select('email, papel').eq('id', valores.id).maybeSingle();
+  if (typeof alvo?.email !== 'string') redirect(`${LISTA}?aviso=nao_encontrado`);
+  if (alvo.papel !== 'aluno') {
+    return comErros(anterior, { geral: 'Esta pessoa é da equipe. Mude o papel dela para aluno antes de apagar a conta.' }, valores);
+  }
+  if ((valores.confirmacao ?? '').trim().toLowerCase() !== alvo.email.toLowerCase()) {
+    return comErros(anterior, { confirmacao: 'Escreva o e-mail desta pessoa, igual ao que aparece no cadastro.' }, valores);
+  }
+
+  const servico = clienteDeServico();
+  const { error: erroDaLimpeza } = await servico.rpc('apagar_dados_de_compra', { p_pessoa: valores.id, p_email: alvo.email });
+  if (erroDaLimpeza) {
+    console.error('Não foi possível limpar os dados de compra:', erroDaLimpeza.message);
+    return comErros(anterior, { geral: 'Não foi possível apagar a conta. Nada foi apagado; tente de novo.' }, valores);
+  }
+  const { error } = await servico.auth.admin.deleteUser(valores.id);
+  if (error) {
+    console.error('Não foi possível apagar a conta:', error.message);
+    return comErros(anterior, { geral: 'Não foi possível apagar a conta. Tente de novo.' }, valores);
+  }
+  // Fica no histórico que uma conta foi apagada e por quem, sem nenhum dado da pessoa.
+  const { error: erroDoRegistro } = await servico.from('registro_alteracoes').insert({
+    pessoa_id: pessoa.id,
+    tabela: 'contas_apagadas',
+    registro: valores.id,
+    antes: null,
+    depois: null,
+  });
+  if (erroDoRegistro) console.error('Conta apagada, mas o registro não entrou no histórico:', erroDoRegistro.message);
+  redirect(`${LISTA}?aviso=conta_apagada`);
+}
+
 // ---------------------------------------------------------------------------
 // Matrículas
 // ---------------------------------------------------------------------------

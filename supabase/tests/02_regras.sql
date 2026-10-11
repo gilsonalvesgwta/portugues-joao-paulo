@@ -670,4 +670,60 @@ begin
 end $$;
 reset role;
 
+-- ============ 15. Apagar a conta: os avisos de compra ficam sem o nome e o e-mail ============
+reset role;
+select set_config('request.jwt.claims', '', false);
+insert into public.eventos_pagamento (tipo, evento, status_atual, chave_idempotencia, payload, aluno_id, processado_em) values
+  ('sale', 'saleUpdated', 'paid', 'teste-apagar-1',
+   '{"type": "sale", "client": {"name": "Pessoa Sete", "email": "pessoa7@exemplo.test"}, "product": {"id": 7001, "name": "Curso"}}', teste.uid(7), now()),
+  ('sale', 'saleUpdated', 'paid', 'teste-apagar-2',
+   '{"type": "sale", "client": {"name": "Pessoa Sete", "email": "PESSOA7@exemplo.test"}, "product": {"id": 7001, "name": "Curso"}}', null, null),
+  ('sale', 'saleUpdated', 'paid', 'teste-apagar-3',
+   '{"type": "sale", "client": {"name": "Pessoa Oito", "email": "pessoa8@exemplo.test"}, "product": {"id": 7001, "name": "Curso"}}', teste.uid(8), now());
+insert into public.registro_alteracoes (tabela, registro, antes, depois) values
+  ('perfis', teste.uid(7)::text, '{"email": "antigo7@exemplo.test"}', '{"email": "pessoa7@exemplo.test"}'),
+  ('perfis', teste.uid(8)::text, '{"email": "antigo8@exemplo.test"}', '{"email": "pessoa8@exemplo.test"}');
+insert into public.notificacoes (tipo, canal, aluno_id, destinatario) values
+  ('enlace_acceso', 'email', null, 'pessoa7@exemplo.test'),
+  ('enlace_acceso', 'email', null, 'pessoa8@exemplo.test');
+set role service_role;
+do $$
+begin
+  perform teste.confere(apagar_dados_de_compra(teste.uid(7), ' Pessoa7@exemplo.test ') = 2,
+    'apagar os dados de compra alcança os avisos ligados à conta e os que só têm o e-mail');
+  perform teste.confere((select bool_and(not payload ? 'client' and payload -> 'product' ->> 'id' = '7001')
+                         from eventos_pagamento where chave_idempotencia in ('teste-apagar-1', 'teste-apagar-2')),
+    'os avisos ficam sem o comprador e continuam com o produto');
+  perform teste.confere((select payload -> 'client' ->> 'email' from eventos_pagamento where chave_idempotencia = 'teste-apagar-3') = 'pessoa8@exemplo.test',
+    'os avisos de outra pessoa não são tocados');
+  perform teste.confere(not exists (select 1 from notificacoes where destinatario = 'pessoa7@exemplo.test')
+                        and exists (select 1 from notificacoes where destinatario = 'pessoa8@exemplo.test'),
+    'os registros de e-mail daquele endereço saem; os dos outros ficam');
+  perform teste.confere(not exists (select 1 from registro_alteracoes where tabela = 'perfis' and registro = teste.uid(7)::text)
+                        and exists (select 1 from registro_alteracoes where tabela = 'perfis' and registro = teste.uid(8)::text),
+    'o histórico de trocas de e-mail daquela pessoa sai; o dos outros fica');
+  perform teste.confere(apagar_dados_de_compra(teste.uid(7), 'pessoa7@exemplo.test') = 0, 'repetir não muda mais nada');
+end $$;
+reset role;
+-- A conta some pelo serviço de login; aqui, o mesmo efeito no banco: tudo o que é da pessoa vai junto.
+do $$
+declare
+  v_antes integer := (select count(*) from reservas where aluno_id = teste.uid(5));
+begin
+  delete from auth.users where id = teste.uid(5);
+  perform teste.confere(v_antes > 0 and not exists (select 1 from perfis where id = teste.uid(5))
+                        and not exists (select 1 from matriculas where aluno_id = teste.uid(5))
+                        and not exists (select 1 from reservas where aluno_id = teste.uid(5))
+                        and not exists (select 1 from notificacoes where aluno_id = teste.uid(5)),
+    'apagada a conta, somem o perfil, as matrículas, as reservas e os registros de e-mail da pessoa');
+end $$;
+select teste.entrar(900);
+set role authenticated;
+do $$
+begin
+  perform teste.espera_erro($q$select apagar_dados_de_compra(gen_random_uuid(), 'x@exemplo.test')$q$, 'permission denied',
+    'nem o administrador logado chama direto a limpeza dos dados de compra');
+end $$;
+reset role;
+
 \echo 'REGRAS: todos os testes passaram'

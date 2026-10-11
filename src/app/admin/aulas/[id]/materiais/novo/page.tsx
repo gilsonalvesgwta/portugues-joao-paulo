@@ -19,7 +19,7 @@ export default async function PaginaNovoMaterial({ params }: Props) {
       <Trilha href={`/admin/aulas/${aula.id}#materiais`} rotulo={`Editar aula ${aula.numero}`} />
       <TituloDaPagina titulo="Novo material de apoio" texto={`Para a aula ${aula.numero}: ${aula.titulo_pt}.`} />
       <Cartao>
-        <FormularioDoMaterial material={{ id: '', aula_id: aula.id, titulo_pt: '', titulo_es: '', descricao_es: '', link: '' }} />
+        <FormularioDoMaterial material={{ id: '', aula_id: aula.id, curso_id: '', titulo_pt: '', titulo_es: '', descricao_es: '', link: '' }} />
       </Cartao>
     </>
   );

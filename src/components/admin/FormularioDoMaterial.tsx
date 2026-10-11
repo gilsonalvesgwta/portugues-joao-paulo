@@ -5,9 +5,11 @@ import { salvarMaterial } from '@/app/admin/acoes';
 import { Botao, Entrada, LinkBotao } from '@/components/admin/ui';
 import { ESTADO_INICIAL } from '@/lib/formulario';
 
+// O material é de uma aula ou do curso inteiro: um dos dois vem preenchido.
 export type MaterialNoFormulario = {
   id: string;
   aula_id: string;
+  curso_id: string;
   titulo_pt: string;
   titulo_es: string;
   descricao_es: string;
@@ -28,6 +30,7 @@ export function FormularioDoMaterial({ material }: { material: MaterialNoFormula
       ) : null}
       <input type="hidden" name="id" value={material.id} />
       <input type="hidden" name="aula_id" value={material.aula_id} />
+      <input type="hidden" name="curso_id" value={material.curso_id} />
       <div key={estado.vez} className="flex flex-col gap-5">
         <div className="grid gap-5 sm:grid-cols-2">
           <Entrada id="titulo_pt" rotulo="Título em português" defaultValue={valor('titulo_pt')} erro={erros.titulo_pt} maxLength={160} />
@@ -65,7 +68,7 @@ export function FormularioDoMaterial({ material }: { material: MaterialNoFormula
       </div>
       <div className="flex flex-wrap gap-3">
         <Botao disabled={enviando}>Salvar material</Botao>
-        <LinkBotao href={`/admin/aulas/${material.aula_id}#materiais`} variante="secundario">
+        <LinkBotao href={material.aula_id !== '' ? `/admin/aulas/${material.aula_id}#materiais` : `/admin/cursos/${material.curso_id}#materiais`} variante="secundario">
           Cancelar
         </LinkBotao>
       </div>

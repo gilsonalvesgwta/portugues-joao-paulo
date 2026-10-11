@@ -108,6 +108,7 @@ export async function blocosPorAula(): Promise<Map<string, number>> {
 export type Material = {
   id: string;
   aula_id: string | null;
+  curso_id: string | null;
   titulo_pt: string;
   titulo_es: string;
   descricao_es: string | null;
@@ -115,13 +116,27 @@ export type Material = {
   ordem: number;
 };
 
-const COLUNAS_DO_MATERIAL = 'id, aula_id, titulo_pt, titulo_es, descricao_es, link, ordem';
+const COLUNAS_DO_MATERIAL = 'id, aula_id, curso_id, titulo_pt, titulo_es, descricao_es, link, ordem';
 
 // Materiais de apoio de uma aula, na ordem em que o aluno os vê.
 export async function carregarMateriaisDaAula(aulaId: string): Promise<Material[]> {
   const supabase = await clienteDoServidor();
   const { data, error } = await supabase.from('materiais').select(COLUNAS_DO_MATERIAL).eq('aula_id', aulaId).order('ordem').order('id');
   if (error) throw new Error(`Não foi possível ler os materiais: ${error.message}`);
+  return (data ?? []) as unknown as Material[];
+}
+
+// Materiais do curso inteiro (os que não são de nenhuma aula), na ordem em que o aluno os vê.
+export async function carregarMateriaisDoCurso(cursoId: string): Promise<Material[]> {
+  const supabase = await clienteDoServidor();
+  const { data, error } = await supabase
+    .from('materiais')
+    .select(COLUNAS_DO_MATERIAL)
+    .eq('curso_id', cursoId)
+    .is('aula_id', null)
+    .order('ordem')
+    .order('id');
+  if (error) throw new Error(`Não foi possível ler os materiais do curso: ${error.message}`);
   return (data ?? []) as unknown as Material[];
 }
 

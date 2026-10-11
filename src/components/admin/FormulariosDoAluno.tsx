@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useActionState, useState } from 'react';
-import { corrigirEmail, criarPessoa, matricular, salvarMatricula, salvarNome } from '@/app/admin/alunos/acoes';
+import { apagarConta, corrigirEmail, criarPessoa, matricular, salvarMatricula, salvarNome } from '@/app/admin/alunos/acoes';
 import { Botao, Caixa, Entrada, LinkBotao, Selecao } from '@/components/admin/ui';
 import { ESTADO_INICIAL, type EstadoDoFormulario } from '@/lib/formulario';
 
@@ -175,6 +175,37 @@ export function FormularioDoEmail({ id, email }: { id: string; email: string }) 
         <Botao variante="secundario" disabled={enviando}>
           Trocar e-mail
         </Botao>
+      </div>
+    </form>
+  );
+}
+
+// Apagar a conta não tem volta: o botão só funciona com o e-mail da pessoa escrito no campo.
+export function FormularioApagarConta({ id }: { id: string }) {
+  const [estado, acao, enviando] = useActionState(apagarConta, ESTADO_INICIAL);
+  return (
+    <form action={acao} noValidate data-vez={estado.vez} className="flex flex-col gap-4">
+      <ErroGeral texto={estado.erros.geral} />
+      <input type="hidden" name="id" value={id} />
+      <div key={estado.vez} className="w-full sm:w-96">
+        <Entrada
+          id="confirmacao"
+          rotulo="Para confirmar, escreva o e-mail desta pessoa"
+          defaultValue={estado.valores.confirmacao ?? ''}
+          erro={estado.erros.confirmacao}
+          maxLength={254}
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </div>
+      <div>
+        <button
+          type="submit"
+          disabled={enviando}
+          className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-perigo bg-cartao px-4 text-[15px] font-bold text-perigo hover:bg-fundo disabled:cursor-default disabled:opacity-50"
+        >
+          Apagar a conta de vez
+        </button>
       </div>
     </form>
   );
