@@ -162,6 +162,14 @@ test('o que não é aviso é recusado; carrinho abandonado não é guardado', as
   assert.deepEqual(await avisar(carrinho), { status: 200, resultado: 'ignorado', motivo: null });
   const { data } = await admin.from('eventos_pagamento').select('id').eq('payload->lead->>email', curioso.email.toUpperCase());
   assert.deepEqual(data, []);
+
+  // Tipo de aviso que a plataforma não usa: fica guardado como resolvido, fora dos pendentes.
+  const reclamacao = { type: 'complaint', event: 'complaintOpened', client: cliente(curioso), product: { id: produto } };
+  assert.deepEqual(await avisar(reclamacao), { status: 200, resultado: 'ignorado', motivo: null });
+  const [guardada] = await avisosDe(curioso.email);
+  assert.equal(guardada.erro, 'tipo_desconhecido');
+  assert.notEqual(guardada.processado_em, null);
+  assert.equal(await perfilDe(curioso.email), null);
 });
 
 test('compra de produto sem oferta: o aviso fica pendente e nenhuma conta é criada; o que é sensível não é guardado', async () => {

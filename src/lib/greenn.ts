@@ -133,10 +133,13 @@ export function segredoConfere(recebido: string, esperado: string): boolean {
 // O que fica guardado e como aparece na administração
 // ---------------------------------------------------------------------------
 
-// O aviso da Greenn traz documento, endereço e telefone do comprador. A plataforma não usa
-// nada disso, então esses campos saem antes de o aviso ser guardado. O resto fica como veio.
+// O aviso da Greenn traz documento, endereço e telefone do comprador, dados do boleto e do Pix,
+// e os rastros de anúncio da venda (saleMetas). A plataforma não usa nada disso, então esses
+// campos saem antes de o aviso ser guardado. O resto fica como veio.
 const CAMPOS_QUE_NAO_FICAM = new Set([
-  'cpf_cnpj', 'document', 'street', 'number', 'complement', 'neighborhood', 'zipcode', 'city', 'uf', 'cellphone', 'phone',
+  'cpf_cnpj', 'document', 'document_type', 'street', 'number', 'complement', 'neighborhood', 'zipcode', 'city', 'uf', 'cellphone', 'phone',
+  'boleto_url', 'boleto_barcode', 'boleto_expiration_date', 'qrcode', 'imgQrcode',
+  'saleMetas', 'productMetas', 'proposalMetas', 'sf_trk', 'description',
 ]);
 const PROFUNDIDADE_MAX = 8;
 
@@ -178,7 +181,6 @@ const MOTIVO_PENDENTE: Record<string, string> = {
   conta_nao_criada: 'Não foi possível criar a conta da pessoa',
   falha_ao_aplicar: 'Não foi possível gravar a matrícula',
   corpo_invalido: 'Aviso em formato inesperado',
-  tipo_desconhecido: 'Tipo de aviso desconhecido',
   email_invalido: 'O e-mail do comprador não é um endereço válido',
   produto_ausente: 'O aviso veio sem o produto',
   cliente_ausente: 'O aviso veio sem o comprador',
@@ -190,6 +192,7 @@ export function situacaoDoAviso(aviso: { processado_em: string | null; erro: str
   if (aviso.processado_em !== null) {
     if (aviso.erro === 'aluno_desconhecido') return { pendente: false, texto: 'Processado: não havia conta com esse e-mail' };
     if (aviso.erro === 'dispensado') return { pendente: false, texto: 'Dispensado pela administração' };
+    if (aviso.erro === 'tipo_desconhecido') return { pendente: false, texto: 'Guardado: tipo de aviso que a plataforma não usa' };
     return { pendente: false, texto: 'Processado' };
   }
   if (aviso.erro === null) return { pendente: true, texto: 'Recebido, ainda não processado' };

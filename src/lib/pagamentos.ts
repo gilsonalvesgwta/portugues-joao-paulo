@@ -91,6 +91,12 @@ export async function processarAviso(eventoId: number, servico: Servico = client
 
   const leitura = lerEventoGreenn(guardado.payload);
   if (!leitura.ok) {
+    // Tipo de aviso que a plataforma não usa (reclamação aberta, por exemplo): fica guardado, sem
+    // pedir atenção. Os outros defeitos ficam pendentes para a administração olhar.
+    if (leitura.motivo === 'tipo_desconhecido') {
+      await concluir('tipo_desconhecido');
+      return 'ignorado';
+    }
     await pendente(leitura.motivo);
     return 'invalido';
   }

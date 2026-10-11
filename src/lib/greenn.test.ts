@@ -106,6 +106,58 @@ test('normaliza e-mail e confere o segredo do webhook', () => {
   assert.equal(segredoConfere('', ''), false);
 });
 
+// Mesmos campos de um aviso de venda de verdade (recebido em outubro de 2026), com dados inventados.
+const vendaDeVerdade = {
+  type: 'sale', event: 'saleUpdated', oldStatus: 'paid', currentStatus: 'paid',
+  sale: {
+    id: 10000001, type: 'TRANSACTION', status: 'paid', created_at: '2026-10-10T18:18:30.000000Z', updated_at: '2026-10-10T18:18:32.000000Z',
+    seller_id: 900001, installments: 4, method: 'CREDIT_CARD', client_id: 6000001, fee: 2.98, seller_balance: 36.72, total: 43.12, amount: 39.7,
+    proposal_id: null, subscription_id: null, boleto_url: 'https://boleto.exemplo.test/abc', boleto_barcode: '0000', boleto_expiration_date: null,
+    qrcode: '000201', imgQrcode: 'data:image/png;base64,AAAA', paid_at: '2026-10-10T18:18:31.000000Z', bump_id: null, is_smart_sale: 0,
+    shipping_amount: null, shipping_selected: null, base_currency_id: 1, coupon: null,
+  },
+  currency_id: 1, currency: 'BRL',
+  client: {
+    id: 6000001, name: 'Pessoa de Exemplo', email: 'Pessoa.Exemplo@Exemplo.test', cellphone: '+5500000000000', document: '000.000.000-00',
+    zipcode: null, street: '', number: '', complement: '', neighborhood: '', city: '', uf: '',
+    created_at: '2026-10-10T18:18:30.000000Z', updated_at: '2026-10-10T18:18:30.000000Z', document_type: 'cpf', cpf_cnpj: '000.000.000-00',
+  },
+  product: {
+    id: 180001, name: 'Produto de exemplo', description: 'Texto longo de venda.', type: 'TRANSACTION', amount: 39.7, period: 30,
+    thank_you_page: 'https://exemplo.test/obrigado', method: 'CREDIT_CARD,BOLETO,PIX', url_callback: null, trial: null, is_active: 1, deleted_at: null,
+  },
+  oferta: 'Produto de exemplo',
+  offer: { hash: 'aBcDeF', amount: 39.7, method: 'CREDIT_CARD,BOLETO,PIX', name: 'Produto de exemplo', created_at: '2026-08-13T11:09:16.000000Z' },
+  seller: { id: 900001, name: 'Vendedor', email: 'vendedor@exemplo.test', cellphone: '+5500000000001' },
+  affiliate: null,
+  productMetas: { utm_source: '{get.utm_source}' },
+  proposalMetas: [],
+  saleMetas: [{ id: 1, sale_id: 10000001, meta_key: 'fbp', meta_value: 'fb.2.0.0' }, { id: 2, sale_id: 10000001, meta_key: 'authorization', meta_value: '000000' }],
+  sf_trk: null,
+  client_has_contract_id: null,
+};
+
+test('aviso de venda no formato de verdade: é lido, libera o acesso e é guardado sem o que é sensível', () => {
+  const guardado = semDadosSensiveis(vendaDeVerdade) as Record<string, Record<string, unknown>>;
+  assert.deepEqual(guardado.client, {
+    id: 6000001, name: 'Pessoa de Exemplo', email: 'Pessoa.Exemplo@Exemplo.test',
+    created_at: '2026-10-10T18:18:30.000000Z', updated_at: '2026-10-10T18:18:30.000000Z',
+  });
+  const texto = JSON.stringify(guardado);
+  for (const sensivel of ['000.000.000-00', '+5500000000000', 'boleto.exemplo.test', 'data:image', 'fb.2.0.0', 'Texto longo de venda']) {
+    assert.equal(texto.includes(sensivel), false, sensivel);
+  }
+  assert.equal('saleMetas' in guardado, false);
+  assert.equal(guardado.offer?.hash, 'aBcDeF', 'o código da oferta fica, para conferência');
+
+  const evento = ler(guardado);
+  assert.deepEqual(evento, {
+    tipo: 'sale', status: 'paid', produtoId: 180001, assinatura: false, vendaId: 10000001, contratoId: null, fimDoPeriodo: null,
+    cliente: { email: 'pessoa.exemplo@exemplo.test', nome: 'Pessoa de Exemplo', telefone: null },
+  });
+  assert.equal(acaoDoEvento(evento), 'liberar');
+});
+
 test('documento, endereço e telefone do comprador saem antes de o aviso ser guardado', () => {
   const bruto = {
     type: 'sale', currentStatus: 'paid',
@@ -125,7 +177,6 @@ test('documento, endereço e telefone do comprador saem antes de o aviso ser gua
     sale: { id: 777, amount: 99, coupon: { id: 1, name: 'BEMVINDO' } },
     seller: { id: 1, name: 'Vendedor', email: 'vendedor@exemplo.com' },
     client: { id: 1, name: 'Lucía Martín', email: 'lucia@exemplo.com' },
-    saleMetas: [{ id: 1, meta_key: 'utm_source', meta_value: 'instagram' }],
   });
   // O que o servidor precisa continua lá.
   const lido = lerEventoGreenn(limpo);
@@ -152,6 +203,9 @@ test('nome do aviso e situação, como aparecem na administração', () => {
     pendente: false, texto: 'Processado: não havia conta com esse e-mail',
   });
   assert.deepEqual(situacaoDoAviso({ processado_em: '2026-10-10T12:00:00Z', erro: 'dispensado' }), { pendente: false, texto: 'Dispensado pela administração' });
+  assert.deepEqual(situacaoDoAviso({ processado_em: '2026-10-10T12:00:00Z', erro: 'tipo_desconhecido' }), {
+    pendente: false, texto: 'Guardado: tipo de aviso que a plataforma não usa',
+  });
   assert.deepEqual(situacaoDoAviso({ processado_em: null, erro: 'oferta_desconhecida' }), {
     pendente: true, texto: 'Produto sem oferta cadastrada (ou com a oferta desativada)',
   });

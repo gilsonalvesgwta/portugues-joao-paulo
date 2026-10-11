@@ -9,7 +9,7 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
 | `supabase/tests/` | Testes do banco: 133 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas | 131 testes passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas | 132 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` ainda é tela de espera |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) e pagamentos (ofertas e avisos da Greenn) | Funcionando |
 | `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 94 testes passando nos dois |
@@ -101,7 +101,9 @@ de uma página que não existe.
 - **Aviso repetido** não é aplicado duas vezes. **Carrinho abandonado** não é guardado.
 - **Produto sem oferta** (ou com a oferta desativada): o aviso fica pendente, sem criar conta. Depois de cadastrar
   a oferta, o administrador manda processar de novo; ou dispensa o aviso.
-- Do aviso da Greenn, documento, endereço e telefone do comprador são descartados antes de guardar.
+- Do aviso da Greenn, são descartados antes de guardar: documento, endereço e telefone do comprador, dados de
+  boleto e Pix e os rastros de anúncio da venda.
+- Tipo de aviso que a plataforma não usa (reclamação aberta, por exemplo) fica guardado, sem pedir atenção.
 
 ## Saída dos testes no GitHub
 
@@ -156,10 +158,11 @@ O passo a passo da instalação ainda será escrito.
 - O envio de e-mail por SMTP (`EMAIL_DRIVER=smtp`) foi testado contra uma caixa de teste, sem senha e sem
   cifra. Usuário, senha e cifra da caixa de verdade (Hostinger) só são conferidos na instalação, pelo botão
   "Enviar e-mail de teste" do painel. Com `EMAIL_DRIVER=arquivo`, os e-mails são gravados em `EMAIL_PASTA`.
-- O recebimento dos avisos da Greenn segue a documentação pública do webhook, que não descreve assinatura, senha
-  nem repetição de envio. Tudo foi testado com avisos simulados nesse formato. Antes de vender, falta uma
-  compra de teste de verdade (nacional e internacional) para conferir os campos e como a Greenn se comporta
-  quando a plataforma responde com erro.
+- O recebimento dos avisos da Greenn foi conferido com um aviso de venda de verdade (outubro de 2026): o formato
+  bate com o que a plataforma lê. Continua testado só com avisos simulados. A Greenn manda também um cabeçalho
+  `x-webhook-token`, que a plataforma ainda não confere (a proteção é o segredo do endereço). Antes de vender,
+  falta uma compra de teste do próprio produto, o reembolso dela, e saber como a Greenn se comporta quando a
+  plataforma responde com erro.
 - No Supabase, toda função e toda tabela nova do esquema `public` nasce liberada para quem está logado. As
   migrações fecham tudo e liberam só o que as telas usam; os testes do banco conferem a lista (seção "Nada fica
   liberado por esquecimento"). Ao criar função nova em uma migração: tirar a permissão de `public` e `anon` e

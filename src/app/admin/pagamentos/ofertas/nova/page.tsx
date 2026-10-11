@@ -26,7 +26,7 @@ export default async function PaginaNovaOferta() {
             nome: '',
             greenn_product_id: '',
             curso_id: cursos[0]?.id ?? '',
-            dias_de_acesso: '',
+            dias_de_acesso: '365',
             inclui_conversacao: true,
             reservas_por_semana: '2',
             ativa: true,
