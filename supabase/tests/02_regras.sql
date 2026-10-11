@@ -22,6 +22,9 @@ begin
     'row-level security', 'aluno não cria aula');
   perform teste.espera_erro($q$update perfis set papel = 'admin' where id = teste.uid(1)$q$,
     'permission denied', 'aluno não muda o próprio papel');
+  perform teste.espera_erro($q$select salvar_quiz(teste.tid(20), 'facil', 70, 'publicado', '[]'::jsonb)$q$,
+    'sem_permissao', 'aluno não grava quiz');
+  perform teste.confere((select count(*) from resumo_dos_quizzes()) = 0, 'aluno não recebe o resumo dos quizzes');
   update perfis set nome = 'Aluno Um', fuso = 'America/Bogota' where id = teste.uid(1);
   perform teste.confere((select nome from perfis where id = teste.uid(1)) = 'Aluno Um', 'aluno altera nome e fuso');
   perform teste.espera_erro($q$update perfis set fuso = 'Lugar/Inexistente' where id = teste.uid(1)$q$,
@@ -61,6 +64,24 @@ do $$
 begin
   perform teste.confere((select count(*) from aulas) = 3, 'professor vê todas as aulas, inclusive rascunhos');
   perform teste.confere((select count(*) from perguntas) = 1, 'professor lê as perguntas');
+  perform salvar_quiz(teste.tid(21), 'medio', 80, 'rascunho',
+    '[{"tipo": "ordenar", "palavras": ["a", "b"], "traducao": "c"}, {"tipo": "completar", "frase": "x ___", "opcoes": ["a", "b"], "correta": 0}]'::jsonb);
+  perform teste.confere((select count(*) from perguntas p join quizzes q on q.id = p.quiz_id where q.aula_id = teste.tid(21)) = 2,
+    'professor grava o quiz com as perguntas');
+  perform teste.confere((select p.conteudo from perguntas p join quizzes q on q.id = p.quiz_id where q.aula_id = teste.tid(21) and p.ordem = 1)
+    = '{"palavras": ["a", "b"], "traducao": "c"}'::jsonb, 'a pergunta guarda o conteúdo sem repetir o tipo');
+  perform salvar_quiz(teste.tid(21), 'facil', 70, 'publicado', '[{"tipo": "ordenar", "palavras": ["d", "e"], "traducao": "f"}]'::jsonb);
+  perform teste.confere((select count(*) from quizzes where aula_id = teste.tid(21)) = 1
+    and (select count(*) from perguntas p join quizzes q on q.id = p.quiz_id where q.aula_id = teste.tid(21)) = 1,
+    'gravar de novo troca as perguntas sem duplicar o quiz');
+  perform teste.espera_erro($q$select salvar_quiz(teste.tid(21), 'facil', 70, 'publicado', '[{"tipo": "ordenar", "palavras": ["g"]}, {"tipo": "inventado"}]'::jsonb)$q$,
+    'perguntas_tipo_check', 'pergunta de tipo desconhecido é recusada');
+  perform teste.confere((select p.conteudo ->> 'traducao' from perguntas p join quizzes q on q.id = p.quiz_id where q.aula_id = teste.tid(21)) = 'f',
+    'quando a gravação falha, o quiz anterior continua inteiro');
+  perform teste.espera_erro($q$select salvar_quiz(gen_random_uuid(), 'facil', 70, 'rascunho', '[]'::jsonb)$q$,
+    'aula_inexistente', 'quiz de aula que não existe é recusado');
+  perform teste.confere((select perguntas from resumo_dos_quizzes() where aula_id = teste.tid(21)) = 1
+    and (select count(*) from resumo_dos_quizzes()) = 2, 'o resumo conta as perguntas de cada quiz');
   insert into aulas (modulo_id, numero, titulo_pt, titulo_es) values (teste.tid(10), 3, 'Aula 3', 'Clase 3');
   perform teste.confere((select count(*) from aulas) = 4, 'professor cria aula');
   perform teste.confere((select count(*) from eventos_pagamento) = 0 and (select count(*) from ofertas) = 0, 'professor não vê pagamentos nem ofertas');

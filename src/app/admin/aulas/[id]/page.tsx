@@ -6,7 +6,7 @@ import { FormularioDaAula } from '@/components/admin/FormularioDaAula';
 import { AvisoDaPagina, Botao, Cartao, Etiqueta, LinkBotao, TituloDaPagina, Trilha } from '@/components/admin/ui';
 import { gruposParaAula } from '@/lib/admin/aulas';
 import { avisoDe } from '@/lib/admin/avisos';
-import { ativos, blocosPorAula, carregarConteudo, carregarMateriaisDaAula } from '@/lib/admin/dados';
+import { ativos, blocosPorAula, carregarConteudo, carregarMateriaisDaAula, quizzesPorAula } from '@/lib/admin/dados';
 import { formatarDuracao, incorporarYoutube, lerVideoDoYoutube, linkDoYoutube } from '@/lib/conteudo';
 
 export const metadata: Metadata = { title: 'Editar aula' };
@@ -23,6 +23,7 @@ export default async function PaginaEditarAula({ params, searchParams }: Props) 
   const codigo = lerVideoDoYoutube(aula.video_id);
   const video = codigo !== null && codigo !== 'invalido' ? codigo : null;
   const quantos = blocos.get(aula.id) ?? 0;
+  const quiz = (await quizzesPorAula()).get(aula.id) ?? null;
   const materiais = await carregarMateriaisDaAula(aula.id);
 
   return (
@@ -61,6 +62,19 @@ export default async function PaginaEditarAula({ params, searchParams }: Props) 
           </p>
           <LinkBotao href={`/admin/aulas/${aula.id}/anotacoes`} variante="secundario">
             {quantos === 0 ? 'Criar anotações' : 'Editar anotações'}
+          </LinkBotao>
+        </div>
+      </Cartao>
+      <Cartao>
+        <h2 className="text-lg font-bold">Quiz da aula</h2>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[15px] leading-normal text-apoio">
+            {quiz === null
+              ? 'Esta aula ainda não tem quiz. São as perguntas que o aluno responde depois de assistir.'
+              : `${quiz.perguntas === 1 ? '1 pergunta' : `${quiz.perguntas} perguntas`} · ${quiz.situacao === 'publicado' ? 'Publicado' : 'Rascunho'}`}
+          </p>
+          <LinkBotao href={`/admin/aulas/${aula.id}/quiz`} variante="secundario">
+            {quiz === null ? 'Criar quiz' : 'Editar quiz'}
           </LinkBotao>
         </div>
       </Cartao>

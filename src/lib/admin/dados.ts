@@ -131,3 +131,46 @@ export async function carregarMaterial(id: string): Promise<Material | null> {
   return (data ?? null) as unknown as Material | null;
 }
 
+export type QuizDaAula = {
+  dificuldade: 'facil' | 'medio' | 'dificil';
+  nota_minima: number;
+  situacao: Situacao;
+  perguntas: { tipo: string; conteudo: unknown }[];
+};
+
+// O quiz de uma aula com as perguntas em ordem, ou null se a aula ainda não tem quiz.
+// Só a equipe recebe as perguntas: elas guardam o gabarito.
+export async function carregarQuizDaAula(aulaId: string): Promise<QuizDaAula | null> {
+  const supabase = await clienteDoServidor();
+  const { data: quiz, error } = await supabase
+    .from('quizzes')
+    .select('id, dificuldade, nota_minima, situacao')
+    .eq('aula_id', aulaId)
+    .maybeSingle();
+  if (error) throw new Error(`Não foi possível ler o quiz: ${error.message}`);
+  if (!quiz) return null;
+  const { data: perguntas, error: erroDasPerguntas } = await supabase
+    .from('perguntas')
+    .select('tipo, conteudo')
+    .eq('quiz_id', quiz.id)
+    .order('ordem');
+  if (erroDasPerguntas) throw new Error(`Não foi possível ler as perguntas: ${erroDasPerguntas.message}`);
+  return {
+    dificuldade: quiz.dificuldade as QuizDaAula['dificuldade'],
+    nota_minima: Number(quiz.nota_minima),
+    situacao: quiz.situacao as Situacao,
+    perguntas: (perguntas ?? []) as unknown as QuizDaAula['perguntas'],
+  };
+}
+
+export type ResumoDoQuiz = { perguntas: number; situacao: Situacao };
+
+// Quantas perguntas tem o quiz de cada aula, para a lista de aulas e a tela da aula.
+// A contagem vem pronta do banco (função resumo_dos_quizzes), uma linha por quiz.
+export async function quizzesPorAula(): Promise<Map<string, ResumoDoQuiz>> {
+  const supabase = await clienteDoServidor();
+  const { data, error } = await supabase.rpc('resumo_dos_quizzes');
+  if (error) throw new Error(`Não foi possível ler os quizzes: ${error.message}`);
+  const linhas = (data ?? []) as unknown as { aula_id: string; situacao: Situacao; perguntas: number }[];
+  return new Map(linhas.map((linha) => [linha.aula_id, { perguntas: Number(linha.perguntas), situacao: linha.situacao }]));
+}

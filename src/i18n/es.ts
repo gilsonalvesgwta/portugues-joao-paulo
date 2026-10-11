@@ -64,6 +64,12 @@ export const es = {
     incorrecto: 'Incorrecto',
     correcto: 'Correcto',
   },
+  quiz: {
+    titulo: 'Quiz',
+    elige: 'Elige la respuesta correcta',
+    completa: 'Completa la frase',
+    ordena: 'Ordena las palabras para formar la frase',
+  },
   nuevaClave: {
     titulo: 'Elige tu contraseña',
     texto: 'La usarás cada vez que entres a tus clases.',
