@@ -58,7 +58,9 @@ export default async function PaginaInicio({ searchParams }: Props) {
   const aulaDoQuiz = new Map(curso.quizzes.map((quiz) => [quiz.id, aulaPorId.get(quiz.aula_id)]));
   const tarefaPorId = new Map(curso.tarefas.map((tarefa) => [tarefa.id, tarefa]));
   const hoje = painel.dias.find((dia) => dia.numero === painel.resumo.hoje);
-  const volta = `/inicio?curso=${curso.curso.id}#hoy`;
+  // Sem âncora, de propósito: voltar para o mesmo endereço mudando só a âncora não recarrega os
+  // dados da tela, e a tarefa continuaria aparecendo como estava.
+  const volta = `/inicio?curso=${curso.curso.id}`;
   const outros = cursos.filter((item) => item.id !== curso.curso.id);
   const mensagem = avisoDe(aviso);
 

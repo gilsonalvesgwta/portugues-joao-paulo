@@ -27,12 +27,11 @@ async function exigirPessoa() {
 
 // Para onde voltar depois de marcar uma tarefa: só a tela de início ou a de uma aula.
 function voltaSegura(pedida: string): string {
-  return /^\/(inicio|clase\/[0-9a-f-]{36})(\?curso=[0-9a-f-]{36})?(#[a-z-]{1,20})?$/.test(pedida) ? pedida : '/inicio';
+  return /^\/(inicio|clase\/[0-9a-f-]{36})(\?curso=[0-9a-f-]{36})?$/.test(pedida) ? pedida : '/inicio';
 }
 
 function comAviso(caminho: string, aviso: string): string {
-  const [semAncora = ''] = caminho.split('#');
-  return `${semAncora}${semAncora.includes('?') ? '&' : '?'}aviso=${aviso}`;
+  return `${caminho}${caminho.includes('?') ? '&' : '?'}aviso=${aviso}`;
 }
 
 // ---------------------------------------------------------------------------
