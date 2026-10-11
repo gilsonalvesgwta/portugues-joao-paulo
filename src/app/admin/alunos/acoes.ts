@@ -179,7 +179,7 @@ export async function apagarConta(anterior: EstadoDoFormulario, dados: FormData)
   if (alvo.papel !== 'aluno') {
     return comErros(anterior, { geral: 'Esta pessoa é da equipe. Mude o papel dela para aluno antes de apagar a conta.' }, valores);
   }
-  if (valores.confirmacao.trim().toLowerCase() !== alvo.email.toLowerCase()) {
+  if ((valores.confirmacao ?? '').trim().toLowerCase() !== alvo.email.toLowerCase()) {
     return comErros(anterior, { confirmacao: 'Escreva o e-mail desta pessoa, igual ao que aparece no cadastro.' }, valores);
   }
 
