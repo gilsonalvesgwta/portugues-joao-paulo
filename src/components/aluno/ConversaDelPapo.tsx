@@ -120,7 +120,7 @@ function Burbuja({ autor, texto }: { autor: Autor; texto: string }) {
         {delAlumno ? t.tu.toUpperCase() : 'PAPO'}
       </span>
       {/* O texto do tutor é sempre texto: nunca vira HTML. As quebras de linha são mantidas. */}
-      <span className="whitespace-pre-wrap break-words text-base leading-normal" lang={delAlumno ? undefined : 'pt-BR'}>
+      <span className="whitespace-pre-wrap break-words text-base leading-normal">
         {texto}
       </span>
     </li>

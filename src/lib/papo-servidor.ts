@@ -1,5 +1,5 @@
 import {
-  cabecalhosDoPedido, configDoPapo, corpoDoPedido, lerMensagem, lerResposta, motivoDaFalhaDoPapo, type MensagemDoPapo, type MotivoDoPapo,
+  cabecalhosDoPedido, configDoPapo, corpoDoPedido, lerMensagem, lerResposta, motivoDaFalhaDoPapo, semMarcacoes, type MensagemDoPapo, type MotivoDoPapo,
 } from './papo';
 import { clienteDeServico } from './supabase/servico';
 import { clienteDoServidor } from './supabase/servidor';
@@ -48,7 +48,10 @@ export async function conversaAtual(pessoaId: string): Promise<{ id: string | nu
     .eq('conversa_id', conversa.id)
     .order('id', { ascending: false })
     .limit(MENSAGENS_NA_TELA);
-  const mensagens = ((data ?? []) as unknown as MensagemNaTela[]).reverse();
+  // Respostas guardadas antes de as marcações serem tiradas na chegada também aparecem limpas.
+  const mensagens = ((data ?? []) as unknown as MensagemNaTela[])
+    .reverse()
+    .map((mensagem) => (mensagem.autor === 'papo' ? { ...mensagem, texto: semMarcacoes(mensagem.texto) } : mensagem));
   return { id: conversa.id, mensagens };
 }
 

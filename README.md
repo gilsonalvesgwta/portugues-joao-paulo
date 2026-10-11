@@ -12,7 +12,7 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
 | `supabase/tests/` | Testes do banco: 235 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno, limite de tentativas de senha e o Papo | 192 testes passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno, limite de tentativas de senha e o Papo | 193 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas), quiz corrigido pelo servidor, conversação (agenda no fuso do aluno, reservar, cancelar, avaliar), Papo (tutor com IA) e «Mi cuenta» |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
 | `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 174 testes: 173 passando no Supabase local (com o Papo ligado, falando com um serviço de imitação) e 165 na stack (com o Papo desligado, como fica sem a chave). Parte deles roda de novo com a stack atrás de um Traefik, por https |
@@ -131,8 +131,8 @@ ou turma cancelada não recebe. Se o envio falhar, o servidor tenta de novo depo
 
 ## Papo, o tutor com inteligência artificial
 
-Em `/papo`, o aluno com curso ativo pratica português por escrito. O tutor responde em português simples e
-explica as correções em espanhol.
+Em `/papo`, o aluno com curso ativo pratica português por escrito. O tutor explica em espanhol (o
+idioma do aluno) e dá as palavras, as frases corrigidas e os exemplos em português.
 
 - **Opcional.** Só existe quando a instalação tem a chave de API da OpenAI (`OPENAI_API_KEY`; na stack,
   `CHAVE_DA_OPENAI`) ou, no lugar dela, a da Anthropic (`ANTHROPIC_API_KEY`; na stack, `CHAVE_DA_ANTHROPIC`). Com

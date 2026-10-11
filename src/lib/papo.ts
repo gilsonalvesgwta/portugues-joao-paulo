@@ -1,5 +1,5 @@
 // "Papo": o tutor com inteligência artificial do aluno. Conversa por texto para praticar
-// português, com correções explicadas em espanhol. Aqui ficam as regras que não dependem de
+// português: as explicações vêm em espanhol e os exemplos, em português. Aqui ficam as regras que não dependem de
 // nada: a configuração, o que é dito ao modelo, o recorte do histórico e a leitura da resposta.
 // Sem dependências, para valer igual no servidor e nos testes.
 
@@ -71,12 +71,13 @@ export function instrucoesDoPapo(nomeDoAluno: string): string {
     nome === '' ? '' : `O aluno com quem você conversa se chama ${nome}.`,
     '',
     'Como responder:',
-    '- Escreva em português do Brasil simples e natural, com frases curtas. Respostas de até 120 palavras.',
-    '- Quando o aluno escrever em português com erros, responda primeiro à conversa e depois mostre a frase corrigida, com uma explicação curta EM ESPANHOL do porquê (falsos amigos, conjugação, preposições, ortografia).',
-    '- Quando o aluno escrever em espanhol, responda em português simples e ponha entre parênteses, em espanhol, a tradução das palavras difíceis.',
-    '- Dê exemplos do dia a dia no Brasil. Aponte as diferenças entre o português e o espanhol quando ajudarem.',
-    '- Termine, quando fizer sentido, com uma pergunta curta que convide o aluno a continuar escrevendo em português.',
-    '- Texto simples, sem títulos, sem tabelas e sem marcações; listas só com hífen.',
+    '- Escreva a explicação EM ESPANHOL claro e natural, que é o idioma do aluno, com frases curtas. Respostas de até 120 palavras.',
+    '- Só as palavras, as frases e os exemplos em português do Brasil ficam em português, sempre entre aspas. Dê pelo menos um exemplo em português em cada resposta, do dia a dia no Brasil.',
+    '- Quando o aluno escrever em português com erros, mostre a frase corrigida em português, entre aspas, e explique em espanhol o porquê (falsos amigos, conjugação, preposições, ortografia).',
+    '- Quando o aluno escrever em português sem erros, diga em espanhol que está certo e continue a conversa do mesmo jeito: explicação em espanhol, exemplos em português.',
+    '- Aponte as diferenças entre o português e o espanhol quando ajudarem.',
+    '- Termine, quando fizer sentido, com uma pergunta curta em espanhol que convide o aluno a escrever uma frase em português.',
+    '- Texto simples: nunca use asteriscos, sublinhados, crases nem cerquilhas para destacar ou formatar (nada de negrito, itálico ou títulos). Para destacar uma palavra, ponha entre aspas. Sem tabelas; listas só com hífen.',
     '',
     'Limites:',
     '- Seu assunto é aprender português: idioma, pronúncia explicada por escrito, cultura e costumes do Brasil, e prática de conversa.',
@@ -151,6 +152,20 @@ function inteiro(valor: unknown): number | null {
   return typeof valor === 'number' && Number.isInteger(valor) && valor >= 0 ? valor : null;
 }
 
+// A tela mostra a resposta do tutor como texto puro. Mesmo instruído a não usar marcações, o
+// modelo às vezes destaca palavras com asteriscos ou sublinhados (**assim** ou *assim*), que
+// apareceriam crus na conversa: aqui eles saem, e o texto fica.
+export function semMarcacoes(texto: string): string {
+  return texto
+    .replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, '')
+    .replace(/^([ \t]*)[*+][ \t]+/gm, '$1- ')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+    .replace(/__([^_\n]+)__/g, '$1')
+    .replace(/(^|[^\w*])\*([^*\s][^*\n]*?)\*(?![\w*])/gm, '$1$2')
+    .replace(/(^|[^\w_])_([^_\s][^_\n]*?)_(?![\w_])/gm, '$1$2')
+    .replace(/`([^`\n]+)`/g, '$1');
+}
+
 function objeto(valor: unknown): Record<string, unknown> {
   return typeof valor === 'object' && valor !== null ? (valor as Record<string, unknown>) : {};
 }
@@ -171,12 +186,12 @@ export function lerResposta(corpo: unknown, provedor: Provedor = 'anthropic'): R
   const uso = objeto(raiz.usage);
   if (provedor === 'openai') {
     const escolhas = Array.isArray(raiz.choices) ? raiz.choices : [];
-    const texto = textoDasPartes(objeto(objeto(escolhas[0]).message).content).trim();
+    const texto = semMarcacoes(textoDasPartes(objeto(objeto(escolhas[0]).message).content)).trim();
     if (texto === '') return null;
     return { texto: texto.slice(0, 8000), tokensEntrada: inteiro(uso.prompt_tokens), tokensSaida: inteiro(uso.completion_tokens) };
   }
   if (!Array.isArray(raiz.content)) return null;
-  const texto = textoDasPartes(raiz.content).trim();
+  const texto = semMarcacoes(textoDasPartes(raiz.content)).trim();
   if (texto === '') return null;
   return { texto: texto.slice(0, 8000), tokensEntrada: inteiro(uso.input_tokens), tokensSaida: inteiro(uso.output_tokens) };
 }
