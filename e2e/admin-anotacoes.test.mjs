@@ -68,12 +68,12 @@ test('monta os blocos, a prévia acompanha e o que é salvo confere com o banco'
   await adicionar('Capa');
   await bloco(1, 'Capa').getByLabel('Título (em espanhol)').fill('  El verbo   ser ');
   await bloco(1, 'Capa').getByLabel('Resumo (opcional)').fill('Cómo decir quién eres.');
-  await previa().getByText('CLASE 7 — APUNTES').waitFor();
+  await previa().getByText('Apuntes de la clase 7').waitFor();
   await previa().getByRole('heading', { name: 'El verbo ser' }).waitFor();
 
   await adicionar('Seção numerada');
   await bloco(2, 'Seção numerada').getByLabel('Título da seção (em espanhol)').fill('En la práctica');
-  await previa().getByText('01 — EN LA PRÁCTICA').waitFor();
+  await previa().getByRole('heading', { name: '01 En la práctica' }).waitFor();
   // Enter em campo de uma linha não salva: salvar é só pelo botão.
   await bloco(2, 'Seção numerada').getByLabel('Título da seção (em espanhol)').press('Enter');
   await situacao('Há alterações que ainda não foram salvas.');

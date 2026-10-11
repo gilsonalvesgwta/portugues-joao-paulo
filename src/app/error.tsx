@@ -10,8 +10,8 @@ export default function TelaDeErro({ error, reset }: { error: Error & { digest?:
   }, [error]);
 
   return (
-    <main className="mx-auto flex min-h-[70dvh] max-w-[560px] flex-col items-start justify-center gap-4 px-4 py-10">
-      <h1 className="font-titulo text-4xl font-bold leading-tight">Algo no salió bien</h1>
+    <main className="mx-auto flex min-h-[70dvh] max-w-[560px] flex-col items-start justify-center gap-4 px-5 py-10">
+      <h1 className="font-titulo text-[34px] font-bold leading-[1.1] lg:text-[46px] lg:leading-[1.08]">Algo no salió bien</h1>
       <p role="alert" className="text-base leading-normal text-apoio">
         No pudimos cargar esta página. Suele resolverse en unos segundos: inténtalo de nuevo.
       </p>
@@ -19,13 +19,13 @@ export default function TelaDeErro({ error, reset }: { error: Error & { digest?:
         <button
           type="button"
           onClick={reset}
-          className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-verde bg-verde px-5 text-base font-bold text-white hover:bg-verde-link"
+          className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[14px] border border-verde bg-verde px-6 text-base font-bold text-white hover:bg-verde-link"
         >
           Intentar de nuevo
         </button>
         <a
           href="/"
-          className="inline-flex min-h-12 items-center justify-center rounded-xl border border-borda-campo bg-cartao px-5 text-base font-bold text-texto no-underline hover:bg-fundo"
+          className="inline-flex min-h-12 items-center justify-center rounded-[14px] border border-linha bg-cartao px-6 text-base font-bold text-texto no-underline hover:bg-fundo"
         >
           Volver al inicio
         </a>

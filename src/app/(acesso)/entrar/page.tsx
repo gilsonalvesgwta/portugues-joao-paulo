@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Aviso, BotaoPrincipal, Cabecalho, CampoDeCorreo, LinkDeTexto } from '@/components/acesso/campos';
+import { Aviso, BotaoPrincipal, Cabecalho, CampoDeCorreo, classeDoLink } from '@/components/acesso/campos';
 import { CampoSenha } from '@/components/acesso/CampoSenha';
+import { IconoLlave } from '@/components/aluno/iconos';
 import { es } from '@/i18n/es';
 import { entrar } from '../acoes';
 
@@ -21,32 +22,36 @@ export default async function PaginaEntrar({ searchParams }: Props) {
 
   return (
     <>
-      <Cabecalho area={es.acesso.area} titulo={es.entrar.titulo} />
-      <form action={entrar} className="flex flex-col gap-5">
+      <Cabecalho area={es.acesso.area} titulo={es.entrar.titulo} texto={es.entrar.texto} tituloOculto soNoComputador />
+      <form action={entrar} className="flex flex-col gap-4 lg:gap-[18px]">
         {erro ? <Aviso tipo="erro">{erro}</Aviso> : null}
-        <CampoDeCorreo rotulo={es.entrar.correo} exemplo={es.entrar.correoEjemplo} />
+        <CampoDeCorreo rotulo={es.entrar.correoCorto} exemplo={es.entrar.correoEjemplo} />
         <CampoSenha
           rotulo={es.entrar.clave}
           exemplo={es.entrar.claveEjemplo}
           mostrar={es.entrar.mostrarClave}
           ocultar={es.entrar.ocultarClave}
+          enlace={
+            <Link href="/recuperar" className={`${classeDoLink} -my-3`}>
+              <span className="lg:hidden">{es.entrar.olvideCorto}</span>
+              <span className="hidden lg:inline">{es.entrar.olvide}</span>
+            </Link>
+          }
         />
         <BotaoPrincipal>{es.entrar.boton}</BotaoPrincipal>
-        <Link
-          href="/primer-acceso"
-          className="flex min-h-[52px] items-center justify-center gap-2.5 rounded-[14px] border border-verde bg-cartao px-4 py-2 text-center text-[15px] font-semibold text-verde hover:bg-verde-suave"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="8" cy="15" r="4" />
-            <path d="M11 12l9-9" />
-            <path d="M16 7l3 3" />
-          </svg>
-          <span>{es.entrar.primerAcceso}</span>
-        </Link>
       </form>
-      <div className="flex justify-center">
-        <LinkDeTexto href="/recuperar">{es.entrar.olvide}</LinkDeTexto>
-      </div>
+      <Link
+        href="/primer-acceso"
+        className="flex items-center gap-3.5 rounded-2xl border border-borda bg-papel px-4 py-3.5 text-texto no-underline transition-colors hover:border-verde lg:gap-4 lg:px-5 lg:py-[18px]"
+      >
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-verde-suave text-verde">
+          <IconoLlave />
+        </span>
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[15px] font-bold lg:text-base">{es.entrar.primeraVez}</span>
+          <span className="text-[15px] font-semibold text-verde-link underline underline-offset-2 lg:text-base">{es.entrar.crearClave}</span>
+        </span>
+      </Link>
     </>
   );
 }

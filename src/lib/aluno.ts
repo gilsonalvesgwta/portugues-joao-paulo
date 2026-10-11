@@ -123,6 +123,42 @@ export function itemDaTarefa(dias: readonly DiaDoAluno[], tarefaId: string): str
   return null;
 }
 
+// O dia da trilha em que uma aula (ou um quiz) aparece: é o dia em que ela abre para o aluno.
+export function diaDeApertura(dias: readonly DiaDoAluno[], alvoId: string): number | null {
+  for (const dia of dias) {
+    if (dia.itens.some((item) => item.aulaId === alvoId || item.quizId === alvoId)) return dia.numero;
+  }
+  return null;
+}
+
+// O que falta fazer hoje para o dia virar: só o que é obrigatório.
+export type PendientesDeHoy = { clases: number; quizzes: number; tareas: number };
+
+export function pendientesDeHoy(painel: Pick<Painel, 'dias' | 'feitos' | 'resumo'>): PendientesDeHoy {
+  const falta: PendientesDeHoy = { clases: 0, quizzes: 0, tareas: 0 };
+  const hoje = painel.resumo.concluida ? undefined : painel.dias.find((dia) => dia.numero === painel.resumo.hoje);
+  for (const item of hoje?.itens ?? []) {
+    if (!item.obrigatorio || painel.feitos.has(item.id)) continue;
+    if (item.tipo === 'aula') falta.clases += 1;
+    else if (item.tipo === 'quiz') falta.quizzes += 1;
+    else falta.tareas += 1;
+  }
+  return falta;
+}
+
+// "Hoy te esperan una clase, un quiz y 2 tareas." Sem nada pendente, texto vazio.
+export function fraseDeHoy(falta: PendientesDeHoy): string {
+  const partes = [
+    falta.clases === 1 ? 'una clase' : falta.clases > 1 ? `${falta.clases} clases` : '',
+    falta.quizzes === 1 ? 'un quiz' : falta.quizzes > 1 ? `${falta.quizzes} quizzes` : '',
+    falta.tareas === 1 ? 'una tarea' : falta.tareas > 1 ? `${falta.tareas} tareas` : '',
+  ].filter((parte) => parte !== '');
+  if (partes.length === 0) return '';
+  const total = falta.clases + falta.quizzes + falta.tareas;
+  const lista = partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}`;
+  return `Hoy te ${total === 1 ? 'espera' : 'esperan'} ${lista}.`;
+}
+
 // ---------------------------------------------------------------------------
 // Vídeo
 // ---------------------------------------------------------------------------
@@ -147,10 +183,47 @@ export function lerPosicao(valor: unknown): number | null {
   return Math.floor(valor);
 }
 
+// A miniatura que o YouTube guarda de cada vídeo. A "hqdefault" existe para todos os vídeos; vem
+// com faixas pretas em cima e embaixo, que a tela corta ao mostrar em formato de vídeo (16:9).
+export function miniaturaDoYoutube(codigo: string): string {
+  return `https://i.ytimg.com/vi/${encodeURIComponent(codigo)}/hqdefault.jpg`;
+}
+
+// "12 minutos", "1 hora y 5 minutos": a duração por extenso, para as frases.
+export function duracionEnPalabras(segundos: number | null): string {
+  if (segundos === null || segundos <= 0) return '';
+  const minutos = Math.max(1, Math.round(segundos / 60));
+  const horas = Math.floor(minutos / 60);
+  const resto = minutos % 60;
+  const emMinutos = resto === 1 ? '1 minuto' : `${resto} minutos`;
+  if (horas === 0) return emMinutos;
+  const emHoras = horas === 1 ? '1 hora' : `${horas} horas`;
+  return resto === 0 ? emHoras : `${emHoras} y ${emMinutos}`;
+}
+
 // "12 min", "1 h 05 min" ou "" (em espanhol e em português é igual).
 export function duracaoCurta(segundos: number | null): string {
   if (segundos === null || segundos <= 0) return '';
   const minutos = Math.max(1, Math.round(segundos / 60));
   if (minutos < 60) return `${minutos} min`;
   return `${Math.floor(minutos / 60)} h ${String(minutos % 60).padStart(2, '0')} min`;
+}
+
+// ---------------------------------------------------------------------------
+// Quem está logado, no topo da tela
+// ---------------------------------------------------------------------------
+
+// O nome que cabe na faixa do topo: o nome inteiro se for curto; senão, só o primeiro nome.
+// Sem nome cadastrado, a parte do e-mail antes da arroba. Nunca passa de "max" letras.
+export function nombreCorto(nome: string, email: string, max = 22): string {
+  const limpo = nome.trim().replace(/\s+/g, ' ');
+  const escolhido = limpo === '' ? (email.split('@')[0] ?? '') : limpo.length <= max ? limpo : (limpo.split(' ')[0] ?? limpo);
+  return escolhido.length <= max ? escolhido : `${escolhido.slice(0, max - 1)}…`;
+}
+
+// A letra do círculo ao lado do nome.
+export function inicialDe(nome: string, email: string): string {
+  const fonte = nome.trim() || email.trim();
+  const letra = [...fonte].find((sinal) => /\p{L}|\p{N}/u.test(sinal));
+  return letra ? letra.toLocaleUpperCase('es') : '?';
 }

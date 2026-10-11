@@ -184,7 +184,7 @@ function PreviaDoQuiz({ numero, perguntas }: { numero: number; perguntas: Pergun
   return (
     <article lang="es" className="flex flex-col gap-5 rounded-2xl border border-linha bg-cartao px-5 pb-7 pt-6">
       <p className="self-start rounded border border-verde px-2.5 py-1.5 text-[11px] font-bold tracking-[0.16em] text-verde">
-        {es.apuntes.clase.toUpperCase()} {numero} — {es.quiz.titulo.toUpperCase()}
+        {es.clase.clase.toUpperCase()} {numero} — {es.quiz.titulo.toUpperCase()}
       </p>
       {perguntas.map((pergunta, i) => (
         <section key={pergunta.id} className="flex flex-col gap-2.5">

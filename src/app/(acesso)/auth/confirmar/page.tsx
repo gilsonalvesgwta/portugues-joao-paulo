@@ -17,7 +17,7 @@ export default async function PaginaConfirmar({ searchParams }: Props) {
   return (
     <>
       <Cabecalho area={es.acesso.area} titulo={es.confirmar.titulo} texto={es.confirmar.texto} />
-      <form action={confirmarEnlace} className="flex flex-col gap-5">
+      <form action={confirmarEnlace} className="flex flex-col gap-4 lg:gap-[18px]">
         <input type="hidden" name="token_hash" value={tokenHash} />
         <BotaoPrincipal>{es.confirmar.boton}</BotaoPrincipal>
       </form>

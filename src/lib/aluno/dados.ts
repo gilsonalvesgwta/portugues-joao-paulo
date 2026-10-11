@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { SEM_PROGRESSO, type CursoDoAluno, type Progresso } from '@/lib/aluno';
 import { lerAnotacoes, paraPrevia, type Bloco } from '@/lib/anotacoes';
 import { ehUuid } from '@/lib/conteudo';
+import { separarReservas, zonaValida, type ReservaDoAluno } from '@/lib/reservas';
 import { clienteDoServidor } from '@/lib/supabase/servidor';
 
 // Leitura para as telas do aluno. Tudo com a sessão de quem está logado: as regras do banco só
@@ -112,6 +113,36 @@ export async function carregarAulaNoCurso(aulaId: string): Promise<{ aula: AulaD
   const carregado = await carregarCurso(aula.curso_id);
   if (!carregado || !carregado.curso.aulas.some((item) => item.id === aula.id)) return null;
   return { aula, curso: carregado.curso, progresso: carregado.progresso };
+}
+
+// O código do vídeo de uma aula publicada, para mostrar a miniatura na tela de início.
+export async function carregarVideoDaAula(aulaId: string): Promise<string | null> {
+  if (!ehUuid(aulaId)) return null;
+  const supabase = await clienteDoServidor();
+  const { data } = await supabase.from('aulas').select('video_id').eq('id', aulaId).eq('situacao', 'publicado').is('arquivado_em', null).maybeSingle();
+  return typeof data?.video_id === 'string' && data.video_id !== '' ? data.video_id : null;
+}
+
+// As aulas ao vivo, para o cartão da tela de início: se a matrícula inclui conversação ("limite"
+// maior que zero), o fuso da pessoa e a próxima aula reservada (ou null). Se a leitura falhar, a
+// tela de início segue sem o cartão: ela não depende disto.
+export type EnVivo = { limite: number; fuso: string; proxima: ReservaDoAluno | null };
+
+export async function carregarEnVivo(pessoaId: string): Promise<EnVivo> {
+  const supabase = await clienteDoServidor();
+  const [perfil, matriculas, reservas] = await Promise.all([
+    supabase.from('perfis').select('fuso').eq('id', pessoaId).maybeSingle(),
+    supabase.from('matriculas').select('situacao, expira_em, inclui_conversacao, reservas_por_semana').eq('aluno_id', pessoaId),
+    supabase.rpc('minhas_reservas'),
+  ]);
+  const agora = new Date();
+  const linhas = (Array.isArray(matriculas.data) ? matriculas.data : []) as unknown as { situacao: string; expira_em: string | null; inclui_conversacao: boolean; reservas_por_semana: number }[];
+  const limite = linhas
+    .filter((m) => m.situacao === 'ativa' && m.inclui_conversacao && (m.expira_em === null || Date.parse(m.expira_em) > agora.getTime()))
+    .reduce((maior, m) => Math.max(maior, m.reservas_por_semana), 0);
+  const minhas = (Array.isArray(reservas.data) ? reservas.data : []) as unknown as ReservaDoAluno[];
+  const fuso: unknown = perfil.data?.fuso;
+  return { limite, fuso: zonaValida(fuso) ? fuso : 'Europe/Madrid', proxima: separarReservas(minhas, agora).proximas[0] ?? null };
 }
 
 export type QuizDoAluno = { id: string; aula_id: string; nota_minima: number };

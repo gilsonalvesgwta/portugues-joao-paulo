@@ -117,7 +117,7 @@ export function VideoDeLaClase({ aulaId, codigo, titulo, inicio, origem, registr
   if (inicio > 0) parametros.set('start', String(inicio));
 
   return (
-    <div className="aspect-video w-full overflow-hidden rounded-[20px] bg-carvao">
+    <div className="aspect-video w-full overflow-hidden bg-noite sm:rounded-3xl sm:shadow-video">
       <iframe
         id={idDoQuadro}
         src={`https://www.youtube-nocookie.com/embed/${codigo}?${parametros.toString()}`}

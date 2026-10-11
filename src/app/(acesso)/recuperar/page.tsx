@@ -13,14 +13,14 @@ export default async function PaginaRecuperar({ searchParams }: Props) {
   return (
     <>
       <Cabecalho area={es.acesso.area} titulo={es.recuperar.titulo} texto={es.recuperar.texto} />
-      <form action={pedirNovaSenha} className="flex flex-col gap-5">
+      <form action={pedirNovaSenha} className="flex flex-col gap-4 lg:gap-[18px]">
         {enviado ? <Aviso tipo="ok">{es.enlace.enviado}</Aviso> : null}
         {error === 'correo' ? <Aviso tipo="erro">{es.enlace.correoInvalido}</Aviso> : null}
         {error === 'enlace' ? <Aviso tipo="erro">{es.enlace.invalido}</Aviso> : null}
         <CampoDeCorreo rotulo={es.entrar.correo} exemplo={es.entrar.correoEjemplo} />
         <BotaoPrincipal>{es.recuperar.boton}</BotaoPrincipal>
       </form>
-      <div className="flex justify-center">
+      <div>
         <LinkDeTexto href="/entrar">{es.acesso.volver}</LinkDeTexto>
       </div>
     </>

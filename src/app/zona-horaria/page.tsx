@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { ElegirZona } from '@/components/aluno/ElegirZona';
-import { Aviso, Tarjeta } from '@/components/aluno/ui';
+import { Aviso, Tarjeta, TEXTO_DE_PAGINA, TITULO_DE_PAGINA } from '@/components/aluno/ui';
 import { CabecalhoInterno } from '@/components/Cabecalho';
 import { es } from '@/i18n/es';
 import { rotuloDoFuso, zonaValida, ZONAS_COMUNES } from '@/lib/reservas';
@@ -42,11 +42,11 @@ export default async function PaginaDaZonaHoraria({ searchParams }: Props) {
 
   return (
     <div className="min-h-dvh">
-      <CabecalhoInterno inicio="/zona-horaria" nome={pessoa.nome || pessoa.email} rotuloSair={es.comum.salir} />
-      <main className="mx-auto flex max-w-[640px] flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12">
-        <header className="flex flex-col gap-2">
-          <h1 className="font-titulo text-4xl font-bold leading-tight">{t.titulo}</h1>
-          <p className="text-base leading-normal text-apoio">{t.texto}</p>
+      <CabecalhoInterno inicio="/zona-horaria" nome={pessoa.nome} email={pessoa.email} rotuloSair={es.comum.salir} />
+      <main className="mx-auto flex max-w-[680px] flex-col gap-5 px-5 pb-10 pt-6 sm:px-8 lg:gap-6 lg:pb-[72px] lg:pt-12">
+        <header className="flex flex-col gap-1.5 lg:gap-2.5">
+          <h1 className={TITULO_DE_PAGINA}>{t.titulo}</h1>
+          <p className={TEXTO_DE_PAGINA}>{t.texto}</p>
         </header>
         {ruim ? <Aviso tipo="error">{ruim}</Aviso> : null}
         <Tarjeta>

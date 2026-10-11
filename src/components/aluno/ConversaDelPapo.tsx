@@ -46,7 +46,7 @@ export function ConversaDelPapo({ mensagens, puedeEscribir }: { mensagens: Mensa
       <div ref={fim} />
 
       {erro ? (
-        <p role="alert" className="rounded-xl border border-perigo bg-cartao px-4 py-3 text-[15px] font-semibold text-perigo">
+        <p role="alert" className="rounded-2xl border border-perigo bg-cartao px-4 py-3 text-[15px] font-semibold leading-normal text-perigo">
           {erro}
         </p>
       ) : null}
@@ -65,7 +65,7 @@ export function ConversaDelPapo({ mensagens, puedeEscribir }: { mensagens: Mensa
           className="flex flex-col gap-3"
         >
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="mensaje" className="text-sm font-semibold">
+            <label htmlFor="mensaje" className="text-[15px] font-semibold">
               {t.tuMensaje}
             </label>
             <textarea
@@ -86,7 +86,7 @@ export function ConversaDelPapo({ mensagens, puedeEscribir }: { mensagens: Mensa
                   formulario.current?.requestSubmit();
                 }
               }}
-              className="box-border min-h-24 w-full rounded-xl border border-borda-campo bg-cartao px-3.5 py-3 text-base leading-normal text-texto placeholder:text-apoio"
+              className="box-border min-h-28 w-full rounded-[14px] border border-borda-campo bg-cartao px-4 py-3 text-[17px] leading-normal text-texto placeholder:text-apoio"
             />
             <p id="mensaje-ayuda" className="text-sm leading-normal text-apoio">
               {t.ayuda}
@@ -96,7 +96,7 @@ export function ConversaDelPapo({ mensagens, puedeEscribir }: { mensagens: Mensa
             <button
               type="submit"
               disabled={enviando}
-              className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-verde bg-verde px-5 text-base font-bold text-white hover:bg-verde-link disabled:cursor-default disabled:opacity-50"
+              className="inline-flex min-h-[52px] w-full cursor-pointer items-center justify-center rounded-[14px] border border-verde bg-verde px-7 text-[17px] font-bold text-white shadow-botao transition-colors hover:bg-verde-link disabled:cursor-default disabled:opacity-50 sm:w-auto"
             >
               {enviando ? t.enviando : t.enviar}
             </button>
@@ -112,13 +112,11 @@ function Burbuja({ autor, texto }: { autor: Autor; texto: string }) {
   return (
     <li
       data-autor={autor}
-      className={`flex max-w-[92%] flex-col gap-1 rounded-2xl px-4 py-3 sm:max-w-[80%] ${
-        delAlumno ? 'self-end bg-verde text-white' : 'self-start border border-linha bg-cartao text-texto'
+      className={`flex max-w-[92%] flex-col gap-1 rounded-[18px] px-4 py-3 sm:max-w-[80%] ${
+        delAlumno ? 'self-end rounded-br-md bg-verde text-white' : 'self-start rounded-bl-md border border-borda bg-cartao text-texto'
       }`}
     >
-      <span className={`text-xs font-bold tracking-[0.1em] ${delAlumno ? 'text-white' : 'text-dourado-texto'}`}>
-        {delAlumno ? t.tu.toUpperCase() : 'PAPO'}
-      </span>
+      <span className={`text-[13px] font-bold ${delAlumno ? 'text-menta' : 'text-dourado-texto'}`}>{delAlumno ? t.tu : es.comum.papo}</span>
       {/* O texto do tutor é sempre texto: nunca vira HTML. As quebras de linha são mantidas. */}
       <span className="whitespace-pre-wrap break-words text-base leading-normal">
         {texto}

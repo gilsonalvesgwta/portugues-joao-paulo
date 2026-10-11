@@ -145,7 +145,7 @@ test('início: o curso, o dia 1 de 2 com o que fazer hoje, e a aula de depois fe
 
   assert.equal(await pagina.getByRole('link', { name: A1, exact: true }).count(), 1);
   assert.equal(await pagina.getByRole('link', { name: A2, exact: true }).count(), 0, 'a aula 2 ainda não abre');
-  assert.match(await linhaDaAula(A2).innerText(), /Se abre más adelante/);
+  assert.match(await linhaDaAula(A2).innerText(), /Se abre el día 2/);
   assert.equal((await pagina.content()).includes(A3), false, 'a aula em rascunho não aparece em lugar nenhum');
   assert.equal(await pagina.getByRole('link', { name: 'Empezar' }).getAttribute('href'), `/clase/${ids.aula1}`);
   await pagina.screenshot({ path: 'capturas/aluno-inicio-computador.png', fullPage: true });
@@ -201,14 +201,14 @@ test('o reprodutor guarda onde a aluna parou, retoma dali e marca a aula como vi
 
   await pagina.reload();
   assert.equal(new URL(await pagina.locator('iframe').getAttribute('src')).searchParams.get('start'), '125');
-  await pagina.getByRole('button', { name: 'Marcar como vista' }).waitFor();
+  await pagina.getByRole('button', { name: 'Marcar la clase como vista' }).waitFor();
 
   await pagina.waitForFunction(() => window.__reprodutor !== undefined);
   await pagina.evaluate(() => {
     window.__reprodutor.tempo = 545;
     window.__reprodutor.mudar(2);
   });
-  await pagina.getByText('✓ Clase vista').waitFor();
+  await pagina.getByText('Clase vista', { exact: true }).waitFor();
   const depois = await progressoDaAula(ids.aula1);
   assert.equal(depois.posicao_seg, 545);
   assert.notEqual(depois.concluida_em, null);
@@ -216,12 +216,12 @@ test('o reprodutor guarda onde a aluna parou, retoma dali e marca a aula como vi
 
 test('o botão desmarca e marca a aula como vista', async () => {
   await pagina.getByRole('button', { name: 'Marcar como no vista' }).click();
-  await pagina.getByRole('button', { name: 'Marcar como vista' }).waitFor();
+  await pagina.getByRole('button', { name: 'Marcar la clase como vista' }).waitFor();
   assert.equal((await progressoDaAula(ids.aula1)).concluida_em, null);
-  assert.equal(await pagina.getByText('✓ Clase vista').count(), 0);
+  assert.equal(await pagina.getByText('Clase vista', { exact: true }).count(), 0);
 
-  await pagina.getByRole('button', { name: 'Marcar como vista' }).click();
-  await pagina.getByText('✓ Clase vista').waitFor();
+  await pagina.getByRole('button', { name: 'Marcar la clase como vista' }).click();
+  await pagina.getByText('Clase vista', { exact: true }).waitFor();
   assert.notEqual((await progressoDaAula(ids.aula1)).concluida_em, null);
 });
 
@@ -280,7 +280,7 @@ test('tentar de novo e acertar tudo: aprovada; o início marca a aula e o quiz c
   await pagina.waitForURL(`**/clase/${ids.aula1}`);
   await pagina.getByText('Tu mejor resultado: 100 %').waitFor();
   await pagina.getByRole('link', { name: 'Repetir el quiz' }).waitFor();
-  await pagina.getByRole('link', { name: /Volver al inicio/ }).click();
+  await pagina.getByRole('link', { name: /Volver al curso/ }).click();
   await pagina.waitForURL(`**/inicio?curso=${cursoId}`);
   assert.equal(await itemDeHoje(`Ver la clase 1: ${A1}`).getByText('Hecho', { exact: true }).count(), 1);
   assert.equal(await itemDeHoje('Hacer el quiz de la clase 1').getByText('Hecho', { exact: true }).count(), 1);
@@ -314,13 +314,13 @@ test('tarefa feita: o dia vira, a aula 2 abre; a tarefa opcional não segurou; d
 });
 
 test('última aula vista: curso completo, 100 %, e tudo continua aberto para repassar', async () => {
-  await pagina.getByRole('button', { name: 'Marcar como vista' }).click();
-  await pagina.getByText('✓ Clase vista').waitFor();
-  await pagina.getByRole('link', { name: /Volver al inicio/ }).click();
+  await pagina.getByRole('button', { name: 'Marcar la clase como vista' }).click();
+  await pagina.getByText('Clase vista', { exact: true }).waitFor();
+  await pagina.getByRole('link', { name: /Volver al curso/ }).click();
   await pagina.getByText('¡Completaste todos los días del curso!').waitFor();
   await pagina.getByText('2 de 2 clases vistas').waitFor();
   assert.equal(await pagina.getByRole('progressbar').getAttribute('aria-valuenow'), '100');
-  assert.equal(await pagina.getByText('Se abre más adelante').count(), 0);
+  assert.equal(await pagina.getByText(/Se abre el día/).count(), 0);
   assert.equal(await pagina.getByRole('link', { name: 'Continuar' }).count(), 0);
   await pagina.screenshot({ path: 'capturas/aluno-inicio-completo-computador.png', fullPage: true });
 });
@@ -368,13 +368,13 @@ test('a equipe vê o curso como o aluno, com tudo aberto, e nada do que faz fica
   await dele.waitForURL('**/inicio');
   await dele.goto(`${base}/inicio?curso=${cursoId}`);
   await dele.getByText('Vista previa del equipo: ves el curso como lo ve un alumno. Tu progreso no se guarda.').waitFor();
-  assert.equal(await dele.getByText('Se abre más adelante').count(), 0);
+  assert.equal(await dele.getByText(/Se abre el día/).count(), 0);
   assert.equal(await dele.getByRole('button', { name: /Marcar como hecha/ }).count(), 0);
   assert.equal((await dele.content()).includes(A3), false, 'nem a equipe vê rascunho na visão do aluno');
 
   await dele.goto(`${base}/clase/${ids.aula2}`);
   assert.equal(await dele.getByRole('heading', { level: 1 }).innerText(), A2);
-  assert.equal(await dele.getByRole('button', { name: 'Marcar como vista' }).count(), 0);
+  assert.equal(await dele.getByRole('button', { name: 'Marcar la clase como vista' }).count(), 0);
 
   await dele.goto(`${base}/quiz/${ids.quiz1}`);
   await dele.getByText('Vista previa del equipo: este intento no se guarda.').waitFor();
@@ -400,5 +400,24 @@ test('no celular, o início, a aula e o quiz cabem na largura', async () => {
     assert.ok(sobra <= 0, `${rota} passa ${sobra}px da largura no celular`);
     await celular.screenshot({ path: `capturas/aluno-${nome}-celular.png`, fullPage: true });
   }
+
+  // No celular, as seções ficam em uma barra fixa no pé da tela, e o fim da página não fica atrás dela.
+  await celular.goto(`${base}/inicio?curso=${cursoId}`, { waitUntil: 'networkidle' });
+  const barra = celular.getByRole('navigation', { name: 'Secciones' });
+  assert.equal(await barra.evaluate((nav) => getComputedStyle(nav).position), 'fixed');
+  assert.ok((await barra.getByRole('link').count()) >= 3, 'Curso, En vivo e Mi cuenta (e o Papo, quando ligado)');
+  assert.equal(await barra.getByRole('link', { name: 'Curso' }).getAttribute('aria-current'), 'page');
+  await celular.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const folga = await celular.evaluate(() => {
+    const fixa = [...document.querySelectorAll('nav')].find((nav) => getComputedStyle(nav).position === 'fixed');
+    return fixa.getBoundingClientRect().top - document.querySelector('main').lastElementChild.getBoundingClientRect().bottom;
+  });
+  assert.ok(folga >= 0, `a barra de baixo cobre ${-folga}px do fim da página`);
+
+  // O «Salir» não cabe no topo do celular: fica em «Mi cuenta».
+  assert.equal(await celular.getByRole('button', { name: 'Salir' }).count(), 0);
+  await barra.getByRole('link', { name: 'Mi cuenta' }).click();
+  await celular.waitForURL('**/cuenta');
+  await celular.getByRole('button', { name: 'Salir' }).waitFor();
   await contexto.close();
 });

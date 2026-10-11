@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { QuizDelAlumno } from '@/components/aluno/QuizDelAlumno';
-import { Antetitulo, Tarjeta } from '@/components/aluno/ui';
+import { IconoAtras } from '@/components/aluno/iconos';
+import { Antetitulo, Tarjeta, TITULO_DE_PAGINA } from '@/components/aluno/ui';
 import { es } from '@/i18n/es';
 import { montarPainel } from '@/lib/aluno';
 import { carregarAulaNoCurso, carregarQuiz } from '@/lib/aluno/dados';
@@ -36,15 +37,16 @@ export default async function PaginaDoQuiz({ params }: Props) {
   const perguntas = entregar((linhas ?? []) as unknown as LinhaDePergunta[]);
 
   return (
-    <div className="mx-auto flex max-w-[760px] flex-col gap-6">
-      <Link href={`/clase/${aula.id}`} className="self-start text-[15px] font-semibold text-verde-link underline hover:text-verde">
-        ← {es.quiz.volverClase}
+    <div className="mx-auto flex max-w-[760px] flex-col gap-5 lg:gap-6">
+      <Link href={`/clase/${aula.id}`} className="-my-2 inline-flex min-h-11 items-center gap-1.5 self-start text-[15px] font-semibold text-verde-link no-underline hover:text-verde">
+        <IconoAtras />
+        <span>{es.quiz.volverClase}</span>
       </Link>
       <header className="flex flex-col gap-1.5">
         <Antetitulo>
-          {es.clase.clase.toUpperCase()} {aula.numero} — {es.quiz.titulo.toUpperCase()}
+          {es.quiz.deLaClase} {aula.numero}
         </Antetitulo>
-        <h1 className="font-titulo text-4xl font-bold leading-tight">{aula.titulo_es}</h1>
+        <h1 className={TITULO_DE_PAGINA}>{aula.titulo_es}</h1>
       </header>
       {perguntas.length === 0 ? (
         <Tarjeta>
