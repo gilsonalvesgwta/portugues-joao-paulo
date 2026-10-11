@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import type { AvisoDaAcao } from '@/lib/admin/avisos';
 
 // Peças visuais da administração (em português). Mesma paleta da área do aluno,
@@ -163,6 +163,28 @@ export function Selecao({
       >
         {children}
       </select>
+    </Moldura>
+  );
+}
+
+// Campo de texto de várias linhas.
+export function AreaDeTexto({
+  id,
+  rotulo,
+  erro,
+  ajuda,
+  ...resto
+}: PropsDoCampo & Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'id' | 'name'>) {
+  return (
+    <Moldura id={id} rotulo={rotulo} erro={erro} ajuda={ajuda}>
+      <textarea
+        {...resto}
+        id={id}
+        name={id}
+        aria-invalid={erro ? true : undefined}
+        aria-describedby={descricao(id, erro, ajuda)}
+        className="box-border min-h-32 w-full min-w-0 rounded-[10px] border border-borda-campo bg-cartao px-3 py-2.5 text-[15px] leading-normal text-texto placeholder:text-apoio aria-[invalid=true]:border-perigo"
+      />
     </Moldura>
   );
 }

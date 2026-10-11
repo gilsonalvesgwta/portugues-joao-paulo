@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { ehUuid, mover, validarAula, validarCurso, validarMaterial, validarModulo } from '@/lib/conteudo';
+import { ehUuid, mover, validarAula, validarCurso, validarMaterial, validarModulo, validarTarefa } from '@/lib/conteudo';
 import { enviarEmail } from '@/lib/correio';
 import { emailDeConferencia } from '@/lib/emails';
 import { motivoDaFalha } from '@/lib/smtp';
@@ -339,15 +339,61 @@ export async function salvarQuiz(anterior: EstadoDoQuiz, dados: FormData): Promi
 }
 
 // ---------------------------------------------------------------------------
+// Tarefas
+// ---------------------------------------------------------------------------
+
+// A aula ligada à tarefa precisa ser do mesmo curso e estar fora da lixeira.
+async function aulaEhDoCurso(supabase: Cliente, aulaId: string, cursoId: string): Promise<boolean> {
+  const { data: aula } = await supabase.from('aulas').select('modulo_id').eq('id', aulaId).is('arquivado_em', null).maybeSingle();
+  if (typeof aula?.modulo_id !== 'string') return false;
+  const { data: modulo } = await supabase.from('modulos').select('curso_id').eq('id', aula.modulo_id).maybeSingle();
+  return modulo?.curso_id === cursoId;
+}
+
+export async function salvarTarefa(anterior: EstadoDoFormulario, dados: FormData): Promise<EstadoDoFormulario> {
+  const supabase = await exigirEquipe();
+  const valores = valoresDe(dados, ['id', 'curso_id', 'aula_id', 'titulo_es', 'instrucao_es', 'link']);
+  const conferido = validarTarefa(valores);
+  if (!conferido.ok) return comErros(anterior, conferido.erros, valores);
+
+  // O curso de uma tarefa não muda depois de criada: vem do banco na edição e do formulário na criação.
+  let cursoId: string;
+  if (valores.id) {
+    if (!ehUuid(valores.id)) redirect('/admin/tarefas?aviso=nao_encontrado');
+    const { data: atual } = await supabase.from('tarefas').select('curso_id').eq('id', valores.id).is('arquivado_em', null).maybeSingle();
+    if (typeof atual?.curso_id !== 'string') redirect('/admin/tarefas?aviso=nao_encontrado');
+    cursoId = String(atual.curso_id);
+  } else {
+    if (!ehUuid(valores.curso_id)) redirect('/admin/tarefas?aviso=nao_encontrado');
+    cursoId = valores.curso_id;
+    const { data: curso } = await supabase.from('cursos').select('id').eq('id', cursoId).is('arquivado_em', null).maybeSingle();
+    if (!curso) redirect('/admin/tarefas?aviso=nao_encontrado');
+  }
+  if (conferido.valor.aula_id !== null && !(await aulaEhDoCurso(supabase, conferido.valor.aula_id, cursoId))) {
+    return comErros(anterior, { aula_id: 'Essa aula não existe mais neste curso. Escolha outra.' }, valores);
+  }
+
+  if (valores.id) {
+    const { data, error } = await supabase.from('tarefas').update(conferido.valor).eq('id', valores.id).select('id');
+    if (error) return comErros(anterior, { geral: FALHA }, valores);
+    if ((data ?? []).length === 0) redirect('/admin/tarefas?aviso=nao_encontrado');
+  } else {
+    const { error } = await supabase.from('tarefas').insert({ ...conferido.valor, curso_id: cursoId });
+    if (error) return comErros(anterior, { geral: FALHA }, valores);
+  }
+  redirect(`/admin/tarefas?curso=${cursoId}&aviso=tarefa_salva`);
+}
+
+// ---------------------------------------------------------------------------
 // Lixeira
 // ---------------------------------------------------------------------------
 
-const TABELA = { curso: 'cursos', modulo: 'modulos', aula: 'aulas' } as const;
+const TABELA = { curso: 'cursos', modulo: 'modulos', aula: 'aulas', tarefa: 'tarefas' } as const;
 type Tipo = keyof typeof TABELA;
-const VOLTA: Record<Tipo, string> = { curso: '/admin/cursos', modulo: '/admin/cursos', aula: '/admin/aulas' };
+const VOLTA: Record<Tipo, string> = { curso: '/admin/cursos', modulo: '/admin/cursos', aula: '/admin/aulas', tarefa: '/admin/tarefas' };
 
 function tipoDe(valor: string | undefined): Tipo | null {
-  return valor === 'curso' || valor === 'modulo' || valor === 'aula' ? valor : null;
+  return valor === 'curso' || valor === 'modulo' || valor === 'aula' || valor === 'tarefa' ? valor : null;
 }
 
 export async function moverParaLixeira(dados: FormData): Promise<void> {
@@ -376,7 +422,7 @@ export async function moverParaLixeira(dados: FormData): Promise<void> {
 
   // Curso e aula saem da lixeira como rascunho: restaurar nunca publica nada sozinho.
   const mudanca: Record<string, string> = { arquivado_em: new Date().toISOString() };
-  if (tipo !== 'modulo') mudanca.situacao = 'rascunho';
+  if (tipo === 'curso' || tipo === 'aula') mudanca.situacao = 'rascunho';
   const { data, error } = await supabase.from(TABELA[tipo]).update(mudanca).eq('id', id).is('arquivado_em', null).select('id');
   if (error) redirect(`${volta}?aviso=falhou`);
   if ((data ?? []).length === 0) redirect(`${volta}?aviso=nao_encontrado`);
@@ -404,6 +450,13 @@ export async function restaurar(dados: FormData): Promise<void> {
     if (numeros.includes(Number(aula.numero))) redirect(`${volta}?aviso=numero_ocupado`);
   }
 
+  if (tipo === 'tarefa') {
+    const { data: tarefa } = await supabase.from('tarefas').select('curso_id').eq('id', id).maybeSingle();
+    if (typeof tarefa?.curso_id !== 'string') redirect(`${volta}?aviso=nao_encontrado`);
+    const { data: curso } = await supabase.from('cursos').select('arquivado_em').eq('id', tarefa.curso_id).maybeSingle();
+    if (!curso || curso.arquivado_em !== null) redirect(`${volta}?aviso=restaurar_curso_da_tarefa`);
+  }
+
   const { data, error } = await supabase
     .from(TABELA[tipo])
     .update({ arquivado_em: null })
@@ -412,7 +465,7 @@ export async function restaurar(dados: FormData): Promise<void> {
     .select('id');
   if (error) redirect(`${volta}?aviso=falhou`);
   if ((data ?? []).length === 0) redirect(`${volta}?aviso=nao_encontrado`);
-  redirect(`${volta}?aviso=${tipo === 'modulo' ? 'modulo_restaurado' : 'restaurado'}`);
+  redirect(`${volta}?aviso=${tipo === 'modulo' ? 'modulo_restaurado' : tipo === 'tarefa' ? 'tarefa_restaurada' : 'restaurado'}`);
 }
 
 // ---------------------------------------------------------------------------

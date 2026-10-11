@@ -8,7 +8,8 @@ import { usePathname } from 'next/navigation';
 const ITENS = [
   { href: '/admin', rotulo: 'Painel', prefixos: [] as string[] },
   { href: '/admin/cursos', rotulo: 'Cursos e módulos', prefixos: ['/admin/cursos', '/admin/modulos'] },
-  { href: '/admin/aulas', rotulo: 'Aulas', prefixos: ['/admin/aulas'] },
+  { href: '/admin/aulas', rotulo: 'Aulas', prefixos: ['/admin/aulas', '/admin/materiais'] },
+  { href: '/admin/tarefas', rotulo: 'Tarefas', prefixos: ['/admin/tarefas'] },
   { href: '/admin/lixeira', rotulo: 'Lixeira', prefixos: ['/admin/lixeira'] },
 ];
 

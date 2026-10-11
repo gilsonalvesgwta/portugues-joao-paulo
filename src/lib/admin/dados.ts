@@ -174,3 +174,37 @@ export async function quizzesPorAula(): Promise<Map<string, ResumoDoQuiz>> {
   const linhas = (data ?? []) as unknown as { aula_id: string; situacao: Situacao; perguntas: number }[];
   return new Map(linhas.map((linha) => [linha.aula_id, { perguntas: Number(linha.perguntas), situacao: linha.situacao }]));
 }
+
+export type Tarefa = {
+  id: string;
+  curso_id: string;
+  aula_id: string | null;
+  titulo_es: string;
+  instrucao_es: string;
+  link: string | null;
+  arquivado_em: string | null;
+};
+
+const COLUNAS_DA_TAREFA = 'id, curso_id, aula_id, titulo_es, instrucao_es, link, arquivado_em';
+
+// Todas as tarefas, inclusive as da lixeira (as telas filtram com "ativos").
+export async function carregarTarefas(): Promise<Tarefa[]> {
+  const supabase = await clienteDoServidor();
+  const { data, error } = await supabase.from('tarefas').select(COLUNAS_DA_TAREFA).order('titulo_es');
+  if (error) throw new Error(`Não foi possível ler as tarefas: ${error.message}`);
+  return (data ?? []) as unknown as Tarefa[];
+}
+
+// Aulas (fora da lixeira) de um curso, em ordem de número.
+export function aulasDoCurso(conteudo: Conteudo, cursoId: string): Aula[] {
+  const modulos = new Set(conteudo.modulos.filter((modulo) => modulo.curso_id === cursoId).map((modulo) => modulo.id));
+  return ativos(conteudo.aulas)
+    .filter((aula) => modulos.has(aula.modulo_id))
+    .sort((a, b) => a.numero - b.numero);
+}
+
+// Curso a que uma aula pertence, ou null.
+export function cursoDaAula(conteudo: Conteudo, aulaId: string): string | null {
+  const moduloId = conteudo.aulas.find((aula) => aula.id === aulaId)?.modulo_id;
+  return conteudo.modulos.find((modulo) => modulo.id === moduloId)?.curso_id ?? null;
+}

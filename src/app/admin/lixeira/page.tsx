@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import { restaurar } from '@/app/admin/acoes';
 import { AvisoDaPagina, Botao, Cartao, TituloDaPagina } from '@/components/admin/ui';
 import { avisoDe } from '@/lib/admin/avisos';
-import { carregarConteudo } from '@/lib/admin/dados';
+import { carregarConteudo, carregarTarefas } from '@/lib/admin/dados';
 
 export const metadata: Metadata = { title: 'Lixeira' };
 
 type Props = { searchParams: Promise<{ aviso?: string | string[] }> };
-type Item = { tipo: 'curso' | 'modulo' | 'aula'; id: string; titulo: string; detalhe: string; quando: string };
+type Item = { tipo: 'curso' | 'modulo' | 'aula' | 'tarefa'; id: string; titulo: string; detalhe: string; quando: string };
 
-const NOME: Record<Item['tipo'], string> = { curso: 'Curso', modulo: 'Módulo', aula: 'Aula' };
+const NOME: Record<Item['tipo'], string> = { curso: 'Curso', modulo: 'Módulo', aula: 'Aula', tarefa: 'Tarefa' };
 
 function dataCurta(iso: string): string {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date(iso));
@@ -17,7 +17,7 @@ function dataCurta(iso: string): string {
 
 export default async function PaginaLixeira({ searchParams }: Props) {
   const { aviso } = await searchParams;
-  const conteudo = await carregarConteudo();
+  const [conteudo, tarefas] = await Promise.all([carregarConteudo(), carregarTarefas()]);
   const cursoPorId = new Map(conteudo.cursos.map((curso) => [curso.id, curso]));
   const moduloPorId = new Map(conteudo.modulos.map((modulo) => [modulo.id, modulo]));
 
@@ -44,6 +44,17 @@ export default async function PaginaLixeira({ searchParams }: Props) {
         titulo: `${aula.numero}. ${aula.titulo_pt}`,
         detalhe: `Módulo: ${moduloPorId.get(aula.modulo_id)?.titulo_pt ?? '?'}`,
         quando: aula.arquivado_em,
+      });
+    }
+  }
+  for (const tarefa of tarefas) {
+    if (tarefa.arquivado_em) {
+      itens.push({
+        tipo: 'tarefa',
+        id: tarefa.id,
+        titulo: tarefa.titulo_es,
+        detalhe: `Curso: ${cursoPorId.get(tarefa.curso_id)?.titulo_pt ?? '?'}`,
+        quando: tarefa.arquivado_em,
       });
     }
   }
