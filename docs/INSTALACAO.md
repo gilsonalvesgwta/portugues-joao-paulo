@@ -273,8 +273,8 @@ O roteiro pede que você escreva `RESTAURAR` antes de mexer em qualquer coisa. S
 
 ## Passo 12 — Ligar o Papo (opcional)
 
-O Papo é o tutor com inteligência artificial: o aluno escreve em português e recebe a resposta na hora, na própria
-página, com as correções explicadas em espanhol. Quem responde é um serviço pago de inteligência artificial, a
+O Papo é o tutor com inteligência artificial: o aluno escreve e recebe a resposta na hora, na própria página: a
+explicação vem em espanhol e as palavras, as correções e os exemplos, em português. Quem responde é um serviço pago de inteligência artificial, a
 **OpenAI**, e não uma pessoa. Cada mensagem tem um custo pequeno na conta da OpenAI de vocês.
 
 A chave necessária é uma **chave de API**. A assinatura do ChatGPT (Plus, Pro) **não** serve e não dá crédito de

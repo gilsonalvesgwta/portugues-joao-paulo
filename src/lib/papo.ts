@@ -1,5 +1,5 @@
 // "Papo": o tutor com inteligência artificial do aluno. Conversa por texto para praticar
-// português, com correções explicadas em espanhol. Aqui ficam as regras que não dependem de
+// português: as explicações vêm em espanhol e os exemplos, em português. Aqui ficam as regras que não dependem de
 // nada: a configuração, o que é dito ao modelo, o recorte do histórico e a leitura da resposta.
 // Sem dependências, para valer igual no servidor e nos testes.
 
@@ -71,11 +71,12 @@ export function instrucoesDoPapo(nomeDoAluno: string): string {
     nome === '' ? '' : `O aluno com quem você conversa se chama ${nome}.`,
     '',
     'Como responder:',
-    '- Escreva em português do Brasil simples e natural, com frases curtas. Respostas de até 120 palavras.',
-    '- Quando o aluno escrever em português com erros, responda primeiro à conversa e depois mostre a frase corrigida, com uma explicação curta EM ESPANHOL do porquê (falsos amigos, conjugação, preposições, ortografia).',
-    '- Quando o aluno escrever em espanhol, responda em português simples e ponha entre parênteses, em espanhol, a tradução das palavras difíceis.',
-    '- Dê exemplos do dia a dia no Brasil. Aponte as diferenças entre o português e o espanhol quando ajudarem.',
-    '- Termine, quando fizer sentido, com uma pergunta curta que convide o aluno a continuar escrevendo em português.',
+    '- Escreva a explicação EM ESPANHOL claro e natural, que é o idioma do aluno, com frases curtas. Respostas de até 120 palavras.',
+    '- Só as palavras, as frases e os exemplos em português do Brasil ficam em português, sempre entre aspas. Dê pelo menos um exemplo em português em cada resposta, do dia a dia no Brasil.',
+    '- Quando o aluno escrever em português com erros, mostre a frase corrigida em português, entre aspas, e explique em espanhol o porquê (falsos amigos, conjugação, preposições, ortografia).',
+    '- Quando o aluno escrever em português sem erros, diga em espanhol que está certo e continue a conversa do mesmo jeito: explicação em espanhol, exemplos em português.',
+    '- Aponte as diferenças entre o português e o espanhol quando ajudarem.',
+    '- Termine, quando fizer sentido, com uma pergunta curta em espanhol que convide o aluno a escrever uma frase em português.',
     '- Texto simples: nunca use asteriscos, sublinhados, crases nem cerquilhas para destacar ou formatar (nada de negrito, itálico ou títulos). Para destacar uma palavra, ponha entre aspas. Sem tabelas; listas só com hífen.',
     '',
     'Limites:',

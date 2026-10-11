@@ -131,8 +131,8 @@ ou turma cancelada não recebe. Se o envio falhar, o servidor tenta de novo depo
 
 ## Papo, o tutor com inteligência artificial
 
-Em `/papo`, o aluno com curso ativo pratica português por escrito. O tutor responde em português simples e
-explica as correções em espanhol.
+Em `/papo`, o aluno com curso ativo pratica português por escrito. O tutor explica em espanhol (o
+idioma do aluno) e dá as palavras, as frases corrigidas e os exemplos em português.
 
 - **Opcional.** Só existe quando a instalação tem a chave de API da OpenAI (`OPENAI_API_KEY`; na stack,
   `CHAVE_DA_OPENAI`) ou, no lugar dela, a da Anthropic (`ANTHROPIC_API_KEY`; na stack, `CHAVE_DA_ANTHROPIC`). Com

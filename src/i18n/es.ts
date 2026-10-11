@@ -220,7 +220,7 @@ export const es = {
   },
   papo: {
     titulo: 'Papo, tu tutor',
-    texto: 'Papo es un tutor de inteligencia artificial, no una persona: le escribes aquí y te responde en esta misma página, en unos segundos. Practica portugués cuando quieras; te contesta en portugués y te explica las correcciones en español.',
+    texto: 'Papo es un tutor de inteligencia artificial, no una persona: le escribes aquí y te responde en esta misma página, en unos segundos. Practica portugués cuando quieras: te explica en español y te da las palabras y los ejemplos en portugués.',
     apagado: 'El tutor todavía no está disponible',
     apagadoTexto: 'Estamos preparándolo. Mientras tanto, sigue con tus clases y con la conversación en grupo.',
     sinAcceso: 'Tu acceso no incluye el tutor',
