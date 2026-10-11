@@ -112,11 +112,13 @@ test('o link abre em outra aba, sem levar dados da plataforma', async () => {
 
 test('segundo material entra no fim; subir, descer e editar funcionam', async () => {
   await pagina.getByRole('link', { name: 'Adicionar material' }).click();
+  // A tela da aula também tem um campo "Título em português": só preencher depois de trocar de tela.
+  await pagina.waitForURL(`**/admin/aulas/${aulaId}/materiais/novo`);
   await campo('Título em português').fill(ficha.pt);
   await campo('Título em espanhol').fill(ficha.es);
   await campo('Link do material').fill('https://www.dropbox.com/s/xyz/ficha.pdf?dl=0');
   await pagina.getByRole('button', { name: 'Salvar material' }).click();
-  await pagina.waitForURL('**?aviso=material_salvo#materiais');
+  await pagina.waitForURL(`**/admin/aulas/${aulaId}?aviso=material_salvo#materiais`);
   assert.deepEqual((await noBanco()).map((m) => m.titulo_pt), [lista.pt, ficha.pt]);
 
   await pagina.getByRole('button', { name: `Subir o material ${ficha.pt}` }).click();
@@ -178,7 +180,7 @@ test('apagar pede confirmação: recusando, fica; aceitando, some', async () => 
 
   aoPerguntar = 'aceitar';
   await pagina.getByRole('button', { name: `Apagar o material ${ficha.pt}` }).click();
-  await pagina.waitForURL('**?aviso=material_apagado#materiais');
+  await pagina.waitForURL(`**/admin/aulas/${aulaId}?aviso=material_apagado#materiais`);
   assert.equal(await textoDoAviso(pagina, 'status'), 'Material apagado.');
   assert.deepEqual((await noBanco()).map((m) => m.titulo_pt), [lista.pt]);
   assert.equal(await itens().count(), 1);
