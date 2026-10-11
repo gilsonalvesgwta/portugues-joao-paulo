@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cancelar, reservar, valorar } from '@/app/(aluno)/conversacion/acoes';
 import { SugerenciaDeZona } from '@/components/aluno/SugerenciaDeZona';
-import { Antetitulo, Aviso, Boton, Sello, Tarjeta } from '@/components/aluno/ui';
+import { IconoHecho } from '@/components/aluno/iconos';
+import { Antetitulo, Aviso, Boton, CLASE_DEL_ENLACE, CLASE_DEL_ROTULO, Sello, Tarjeta, TEXTO_DE_PAGINA, TITULO_DE_PAGINA, TITULO_DE_TARJETA } from '@/components/aluno/ui';
 import { es } from '@/i18n/es';
 import { diasDaAgenda } from '@/lib/agenda';
 import { carregarConversacion } from '@/lib/aluno/conversacion';
@@ -28,7 +29,7 @@ const PERIODOS = [
 const classeDaAba = (atual: boolean) =>
   atual
     ? 'inline-flex min-h-11 items-center rounded-full bg-verde px-4 text-[15px] font-bold text-white no-underline'
-    : 'inline-flex min-h-11 items-center rounded-full border border-borda-campo bg-cartao px-4 text-[15px] font-semibold text-texto no-underline hover:bg-fundo';
+    : 'inline-flex min-h-11 items-center rounded-full border border-linha bg-cartao px-4 text-[15px] font-semibold text-texto no-underline transition-colors hover:bg-fundo';
 
 function endereco(dia: string, nivel: string): string {
   const partes = new URLSearchParams();
@@ -50,10 +51,10 @@ export default async function PaginaConversacion({ searchParams }: Props) {
   const dados = await carregarConversacion(pessoa.id, nivel);
   if (dados.limite === 0 && !equipe) {
     return (
-      <div className="flex flex-col gap-6">
-        <h1 className="font-titulo text-4xl font-bold leading-tight">{t.titulo}</h1>
+      <div className="flex flex-col gap-5 lg:gap-6">
+        <h1 className={TITULO_DE_PAGINA}>{t.titulo}</h1>
         <Tarjeta>
-          <h2 className="text-xl font-bold">{t.sinDerecho}</h2>
+          <h2 className={TITULO_DE_TARJETA}>{t.sinDerecho}</h2>
           <p className="mt-2 text-base leading-normal text-apoio">{t.sinDerechoTexto}</p>
         </Tarjeta>
       </div>
@@ -83,10 +84,10 @@ export default async function PaginaConversacion({ searchParams }: Props) {
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1.5">
-        <h1 className="font-titulo text-4xl font-bold leading-tight">{t.titulo}</h1>
-        <p className="text-base leading-normal text-apoio">{t.texto}</p>
+    <div className="flex flex-col gap-5 lg:gap-6">
+      <header className="flex flex-col gap-1.5 lg:gap-2.5">
+        <h1 className={TITULO_DE_PAGINA}>{t.titulo}</h1>
+        <p className={TEXTO_DE_PAGINA}>{t.texto}</p>
       </header>
       {bom ? <Aviso tipo="info">{bom}</Aviso> : null}
       {ruim ? <Aviso tipo="error">{ruim}</Aviso> : null}
@@ -94,7 +95,7 @@ export default async function PaginaConversacion({ searchParams }: Props) {
 
       {equipe ? null : (
         <Tarjeta id="mis-reservas" className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold">{t.misReservas}</h2>
+          <h2 className={TITULO_DE_TARJETA}>{t.misReservas}</h2>
           {proximas.length === 0 ? (
             <p className="text-base text-apoio">{t.sinMisReservas}</p>
           ) : (
@@ -102,12 +103,12 @@ export default async function PaginaConversacion({ searchParams }: Props) {
               {proximas.map((reserva) => {
                 const doNivel = lerNivel(reserva.nivel);
                 return (
-                  <li key={reserva.reserva_id} className="flex flex-col gap-3 rounded-xl border border-linha p-4">
+                  <li key={reserva.reserva_id} className="flex flex-col gap-3 rounded-2xl border border-borda p-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="flex min-w-0 flex-col gap-1">
                         <h3 className="text-lg font-bold">{reserva.titulo_es}</h3>
                         <p className="text-[15px] text-apoio">
-                          {fechaYHora(reserva.inicio, dados.fuso)} · {reserva.duracao_min} {t.minutos}
+                          {fechaYHora(reserva.inicio, dados.fuso)}, {reserva.duracao_min} {t.minutos}
                         </p>
                       </div>
                       {doNivel ? <Sello>{NOMBRE_DEL_NIVEL[doNivel]}</Sello> : null}
@@ -118,13 +119,13 @@ export default async function PaginaConversacion({ searchParams }: Props) {
                           href={reserva.meet_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex min-h-12 items-center justify-center rounded-xl border border-verde bg-verde px-5 text-base font-bold text-white no-underline hover:bg-verde-link"
+                          className="inline-flex min-h-12 items-center justify-center rounded-[14px] border border-verde bg-verde px-5 text-base font-bold text-white no-underline transition-colors hover:bg-verde-link"
                         >
                           {t.entrar}
                         </a>
                       ) : null}
                       {reserva.material ? (
-                        <a href={reserva.material} target="_blank" rel="noopener noreferrer" className="text-[15px] font-semibold text-verde-link underline hover:text-verde">
+                        <a href={reserva.material} target="_blank" rel="noopener noreferrer" className={CLASE_DEL_ENLACE}>
                           {t.material}
                         </a>
                       ) : null}
@@ -148,9 +149,9 @@ export default async function PaginaConversacion({ searchParams }: Props) {
         </Tarjeta>
       )}
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-6">
         <Tarjeta className="flex flex-col gap-3">
-          <h2 className="text-xl font-bold">{t.antes}</h2>
+          <h2 className={TITULO_DE_TARJETA}>{t.antes}</h2>
           <ul className="flex list-disc flex-col gap-2 pl-5 text-[15px] leading-normal text-apoio">
             <li>{t.reglaGrupo}</li>
             <li>{t.reglaEnlace}</li>
@@ -159,7 +160,7 @@ export default async function PaginaConversacion({ searchParams }: Props) {
             </li>
           </ul>
           {equipe ? null : (
-            <p className="rounded-xl bg-fundo px-4 py-3 text-[15px] leading-normal">
+            <p className="rounded-2xl bg-fundo px-4 py-3 text-[15px] leading-normal">
               {t.semana}: {t.teQuedan} <span className="font-bold">{restam}</span> {t.reservasDe} {dados.limite} {t.reservas}.
             </p>
           )}
@@ -168,7 +169,7 @@ export default async function PaginaConversacion({ searchParams }: Props) {
         <Tarjeta id="agenda" className="flex min-w-0 flex-col gap-5">
           {/* Em que hora a agenda está: o lugar do fuso do aluno e que horas são lá agora, para ele
               conferir com o próprio relógio. */}
-          <p className="rounded-xl bg-fundo px-4 py-3 text-[15px] leading-normal">
+          <p className="rounded-2xl bg-fundo px-4 py-3 text-[15px] leading-normal">
             {t.zona}: <span className="font-bold">{rotuloDoFuso(dados.fuso, agora)}</span>. {t.ahoraSon}{' '}
             <span className="font-bold">{horaEn(agora, dados.fuso)}</span>.{' '}
             <Link href="/cuenta" className="font-semibold text-verde-link underline hover:text-verde">
@@ -187,7 +188,7 @@ export default async function PaginaConversacion({ searchParams }: Props) {
           </nav>
 
           <div className="flex flex-col gap-2">
-            <Antetitulo>{t.eligeDia.toUpperCase()}</Antetitulo>
+            <Antetitulo>{t.eligeDia}</Antetitulo>
             <nav aria-label={t.eligeDia} className="grid grid-cols-4 gap-2 sm:grid-cols-7">
               {dias.map((dia) => {
                 const atual = dia.data === diaAtual;
@@ -198,11 +199,11 @@ export default async function PaginaConversacion({ searchParams }: Props) {
                     href={endereco(dia.data, nivelAtual)}
                     aria-current={atual ? 'page' : undefined}
                     aria-label={`${fechaLarga(dia.data)}: ${total === 0 ? t.sinClases : `${dia.turmasComVaga} ${t.conPlazas}`}`}
-                    className={`flex min-h-[88px] flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-2 text-center no-underline ${
-                      atual ? 'border-verde bg-verde-suave text-verde' : 'border-linha bg-cartao text-texto hover:bg-fundo'
+                    className={`flex min-h-[88px] flex-col items-center justify-center gap-0.5 rounded-[14px] border px-1 py-2 text-center no-underline transition-colors ${
+                      atual ? 'border-verde bg-verde-suave text-verde' : 'border-borda bg-cartao text-texto hover:bg-fundo'
                     }`}
                   >
-                    <span className="text-xs font-bold tracking-[0.1em]">{dia.ehHoje ? t.hoy : DIAS_CORTOS[dia.diaDaSemana]}</span>
+                    <span className="text-[13px] font-bold">{(dia.ehHoje ? t.hoy : (DIAS_CORTOS[dia.diaDaSemana] ?? '')).toLocaleLowerCase('es')}</span>
                     <span className="font-titulo text-2xl font-bold leading-none">{dia.diaDoMes}</span>
                     <span className="text-xs leading-tight text-apoio">{total === 0 ? t.sinClases : `${dia.turmasComVaga} ${t.conPlazas}`}</span>
                   </Link>
@@ -213,7 +214,7 @@ export default async function PaginaConversacion({ searchParams }: Props) {
 
           {escolhido ? (
             <div className="flex flex-col gap-4">
-              <h2 className="text-xl font-bold">
+              <h2 className={TITULO_DE_TARJETA}>
                 {t.horariosDe} {fechaLarga(escolhido.data)}
               </h2>
               {escolhido.manha.length + escolhido.tarde.length + escolhido.noite.length === 0 ? (
@@ -224,28 +225,31 @@ export default async function PaginaConversacion({ searchParams }: Props) {
                 if (horarios.length === 0) return null;
                 return (
                   <section key={periodo.chave} aria-labelledby={`periodo-${periodo.chave}`} className="flex flex-col gap-2">
-                    <h3 id={`periodo-${periodo.chave}`} className="text-xs font-bold tracking-[0.14em] text-dourado-texto">
-                      {periodo.rotulo.toUpperCase()}
+                    <h3 id={`periodo-${periodo.chave}`} className="text-[15px] font-semibold text-dourado-texto">
+                      {periodo.rotulo}
                     </h3>
                     <ul className="flex flex-col gap-3">
                       {horarios.map((horario) => {
                         const doNivel = lerNivel(horario.nivel);
                         const tema = dados.temas.get(horario.temaId);
                         return (
-                          <li key={horario.turmaId} className="flex flex-col gap-3 rounded-xl border border-linha p-4">
+                          <li key={horario.turmaId} className="flex flex-col gap-3 rounded-2xl border border-borda p-4">
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="flex min-w-0 items-start gap-4">
                                 <span className="font-titulo text-3xl font-bold leading-none">{horario.hora}</span>
                                 <div className="flex min-w-0 flex-col gap-1">
                                   <h4 className="text-lg font-bold leading-tight">{horario.titulo}</h4>
                                   <p className="text-[15px] text-apoio">
-                                    {doNivel ? `${NOMBRE_DEL_NIVEL[doNivel]} · ` : ''}
+                                    {doNivel ? `${NOMBRE_DEL_NIVEL[doNivel]}, ` : ''}
                                     {horario.duracaoMin} {t.minutos}
                                   </p>
                                 </div>
                               </div>
                               {horario.jaReservada ? (
-                                <Sello tom="verde">✓ {t.reservada}</Sello>
+                                <Sello tom="verde">
+                                  <IconoHecho tamano={14} />
+                                  {t.reservada}
+                                </Sello>
                               ) : horario.lotada ? (
                                 <Sello tom="aviso">{t.completo}</Sello>
                               ) : (
@@ -257,7 +261,7 @@ export default async function PaginaConversacion({ searchParams }: Props) {
                             {tema?.descricao ? <p className="text-[15px] leading-normal text-apoio">{tema.descricao}</p> : null}
                             {tema && tema.aprendizados.length > 0 ? (
                               <details className="text-[15px]">
-                                <summary className="cursor-pointer font-semibold text-verde-link">{t.aprenderas}</summary>
+                                <summary className="cursor-pointer py-3 font-semibold text-verde-link">{t.aprenderas}</summary>
                                 <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-apoio">
                                   {tema.aprendizados.map((linha) => (
                                     <li key={linha}>{linha}</li>
@@ -290,10 +294,10 @@ export default async function PaginaConversacion({ searchParams }: Props) {
 
       {equipe || passadas.length === 0 ? null : (
         <Tarjeta id="anteriores" className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold">{t.anteriores}</h2>
+          <h2 className={TITULO_DE_TARJETA}>{t.anteriores}</h2>
           <ul className="flex flex-col gap-3">
             {passadas.map((reserva) => (
-              <li key={reserva.reserva_id} className="flex flex-col gap-3 rounded-xl border border-linha p-4">
+              <li key={reserva.reserva_id} className="flex flex-col gap-3 rounded-2xl border border-borda p-4">
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-bold">{reserva.titulo_es}</h3>
                   <p className="text-[15px] text-apoio">{fechaYHora(reserva.inicio, dados.fuso)}</p>
@@ -308,12 +312,12 @@ export default async function PaginaConversacion({ searchParams }: Props) {
                     <input type="hidden" name="reserva_id" value={reserva.reserva_id} />
                     {camposDeVolta}
                     <fieldset className="flex flex-col gap-2">
-                      <legend className="text-sm font-semibold">{t.nota}</legend>
+                      <legend className={CLASE_DEL_ROTULO}>{t.nota}</legend>
                       <div className="flex flex-wrap gap-2">
                         {[1, 2, 3, 4, 5].map((nota) => (
                           <label
                             key={nota}
-                            className="flex size-12 cursor-pointer items-center justify-center rounded-xl border border-borda-campo bg-cartao text-base font-bold has-[:checked]:border-verde has-[:checked]:bg-verde-suave has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-verde-link"
+                            className="flex size-12 cursor-pointer items-center justify-center rounded-[14px] border border-borda-campo bg-cartao text-base font-bold has-[:checked]:border-verde has-[:checked]:bg-verde-suave has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-verde-link"
                           >
                             <input type="radio" name="nota" value={nota} className="sr-only" />
                             {nota}
@@ -322,14 +326,14 @@ export default async function PaginaConversacion({ searchParams }: Props) {
                       </div>
                     </fieldset>
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor={`comentario-${reserva.reserva_id}`} className="text-sm font-semibold">
+                      <label htmlFor={`comentario-${reserva.reserva_id}`} className={CLASE_DEL_ROTULO}>
                         {t.comentario}
                       </label>
                       <textarea
                         id={`comentario-${reserva.reserva_id}`}
                         name="comentario"
                         maxLength={500}
-                        className="box-border min-h-24 w-full rounded-xl border border-borda-campo bg-cartao px-3 py-2.5 text-base text-texto"
+                        className="box-border min-h-24 w-full rounded-[14px] border border-borda-campo bg-cartao px-4 py-3 text-[17px] text-texto"
                       />
                     </div>
                     <div>

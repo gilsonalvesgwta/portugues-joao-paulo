@@ -31,7 +31,7 @@ export function SugerenciaDeZona({ atual, dia, nivel }: { atual: string; dia: st
 
   if (doAparelho === null || doAparelho === atual) return null;
   return (
-    <form action={usarZona} className="flex flex-wrap items-center gap-3 rounded-xl border border-aviso bg-aviso-suave px-4 py-3">
+    <form action={usarZona} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-aviso bg-aviso-suave px-4 py-3">
       <input type="hidden" name="fuso" value={doAparelho} />
       <input type="hidden" name="dia" value={dia} />
       <input type="hidden" name="nivel" value={nivel} />

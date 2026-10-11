@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
-import { admin, base, caminho, clientePublico, criarPessoa, emailDeTeste, entrar, novaPagina, senha, textoDoAviso } from './apoio.mjs';
+import { admin, base, caminho, clientePublico, criarPessoa, emailDeTeste, entrar, novaPagina, novoContexto, senha, textoDoAviso } from './apoio.mjs';
 
 const aluna = { email: emailDeTeste('aluna'), nome: 'Lucía Prueba' };
 const professor = { email: emailDeTeste('professor'), nome: 'Professor Teste', papel: 'professor' };
@@ -26,6 +26,24 @@ test('o perfil nasce junto com o usuário, como aluno e com o nome', async () =>
   const { data, error } = await admin.from('perfis').select('nome, papel, email').eq('email', aluna.email).single();
   assert.equal(error, null, error?.message);
   assert.deepEqual(data, { nome: aluna.nome, papel: 'aluno', email: aluna.email });
+});
+
+test('a tela de entrada mostra a foto do professor e o botão de entrar sem rolar, no computador e no celular', async () => {
+  for (const [nome, largura, altura] of [['computador', 1280, 800], ['celular', 390, 844]]) {
+    const contexto = await novoContexto(navegador, largura, altura);
+    const pagina = await contexto.newPage();
+    await pagina.goto(`${base}/entrar`, { waitUntil: 'networkidle' });
+    // Há uma foto para a tela larga e outra para a estreita: só uma fica visível de cada vez.
+    const foto = pagina.getByRole('img', { name: 'Profesor João Paulo Alves' });
+    await foto.waitFor();
+    assert.ok(await foto.evaluate((img) => img.complete && img.naturalWidth > 0), `${nome}: a foto carregou`);
+    const sobra = await pagina.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(sobra <= 0, `${nome}: a tela passa ${sobra}px da largura`);
+    const botao = await pagina.getByRole('button', { name: 'Acceder a mis clases' }).boundingBox();
+    assert.ok(botao.y + botao.height <= altura, `${nome}: o botão de entrar aparece sem rolar`);
+    assert.equal(await pagina.getByRole('heading', { level: 1 }).count(), 1, `${nome}: a página tem um título para leitor de tela`);
+    await contexto.close();
+  }
 });
 
 test('sem login, as áreas internas levam para a tela de acesso', async () => {

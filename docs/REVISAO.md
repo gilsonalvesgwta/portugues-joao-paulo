@@ -21,9 +21,9 @@ A cada mudança, o GitHub roda tudo do zero. Nada entra no ramo principal sem pa
 
 | Conjunto | Quantidade | O que confere |
 | --- | --- | --- |
-| Lógica do aplicativo | 193 testes | Regras sem dependências: datas e fusos, quiz, trilha, validação do que o professor digita, e-mails, avisos da Greenn, limites |
+| Lógica do aplicativo | 199 testes | Regras sem dependências: datas e fusos, quiz, trilha, validação do que o professor digita, e-mails, avisos da Greenn, limites |
 | Banco de dados | 235 verificações e 2 testes de disputa | Quem lê e grava o quê (regras por linha), reserva de turmas, pagamento, lembretes, Papo, e a lista do que fica aberto a quem está logado |
-| Ponta a ponta | 174 testes | Navegador de verdade clicando nas telas, do login à reserva de aula, contra dois ambientes: o Supabase local e a **mesma stack que vai para a VPS**, em Docker Swarm. Um deles é a jornada inteira de uma aluna, em sequência: compra, e-mail, senha, aula, quiz, reserva, fuso, telas do administrador, reembolso |
+| Ponta a ponta | 175 testes | Navegador de verdade clicando nas telas, do login à reserva de aula, contra dois ambientes: o Supabase local e a **mesma stack que vai para a VPS**, em Docker Swarm. Um deles é a jornada inteira de uma aluna, em sequência: compra, e-mail, senha, aula, quiz, reserva, fuso, telas do administrador, reembolso |
 | Atrás do Traefik | a cada execução | A stack atrás de um Traefik montado como o da VPS (rede, entrada `websecure`, `letsencryptresolver`), por https, no endereço da variável `DOMINIO`: rótulos, redirecionamentos, cookie da sessão cifrado, formulários, primeiro acesso e a jornada da aluna |
 | Cópia de segurança | a cada execução | Copia, estraga o banco de propósito, restaura, confere as contagens e refaz os testes de login, de conteúdo e da área do aluno |
 | Imagem | a cada execução | Construída sem nenhuma chave; conferido que nenhuma chave fica dentro; roda como usuário comum; depois de publicada, é baixada sem login (as duas imagens estão públicas, como a VPS precisa) |

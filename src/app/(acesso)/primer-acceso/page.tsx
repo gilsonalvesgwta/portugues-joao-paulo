@@ -13,13 +13,13 @@ export default async function PaginaPrimeiroAcesso({ searchParams }: Props) {
   return (
     <>
       <Cabecalho area={es.acesso.area} titulo={es.primerAcceso.titulo} texto={es.primerAcceso.texto} />
-      <form action={pedirPrimeiroAcesso} className="flex flex-col gap-5">
+      <form action={pedirPrimeiroAcesso} className="flex flex-col gap-4 lg:gap-[18px]">
         {enviado ? <Aviso tipo="ok">{es.enlace.enviado}</Aviso> : null}
         {error === 'correo' ? <Aviso tipo="erro">{es.enlace.correoInvalido}</Aviso> : null}
         <CampoDeCorreo rotulo={es.entrar.correo} exemplo={es.entrar.correoEjemplo} />
         <BotaoPrincipal>{es.primerAcceso.boton}</BotaoPrincipal>
       </form>
-      <div className="flex justify-center">
+      <div>
         <LinkDeTexto href="/entrar">{es.acesso.volver}</LinkDeTexto>
       </div>
     </>

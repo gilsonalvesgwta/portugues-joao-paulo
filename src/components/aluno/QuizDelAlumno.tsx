@@ -32,9 +32,9 @@ function enunciado(pergunta: PerguntaEntregue): string {
 }
 
 const classeDaOpcao =
-  'flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-borda-campo bg-cartao px-4 py-2 text-base has-[:checked]:border-verde has-[:checked]:bg-verde-suave';
+  'flex min-h-[52px] cursor-pointer items-center gap-3 rounded-[14px] border border-borda-campo bg-cartao px-4 py-2.5 text-base leading-snug transition-colors has-[:checked]:border-verde has-[:checked]:bg-verde-suave';
 // A cor de cada palavra vem à parte (solta ou já na frase), para as classes não brigarem entre si.
-const formaDaPalavra = 'min-h-11 cursor-pointer rounded-[10px] border px-3.5 text-base font-semibold text-texto';
+const formaDaPalavra = 'min-h-11 cursor-pointer rounded-xl border px-3.5 text-base font-semibold text-texto';
 const palavraSolta = `${formaDaPalavra} border-borda-campo bg-cartao hover:bg-fundo`;
 const palavraNaFrase = `${formaDaPalavra} border-verde bg-verde-suave`;
 
@@ -53,7 +53,7 @@ function Ordenar({
       <p className="text-[15px] text-apoio">{pergunta.traducao}</p>
       <div className="flex flex-col gap-1.5">
         <p className="text-sm font-semibold">{es.quiz.tuFrase}</p>
-        <div lang="pt-BR" aria-live="polite" className="flex min-h-[60px] flex-wrap items-center gap-2 rounded-xl border border-dashed border-borda-campo bg-fundo p-2">
+        <div lang="pt-BR" aria-live="polite" className="flex min-h-[60px] flex-wrap items-center gap-2 rounded-[14px] border border-dashed border-borda-campo bg-fundo p-2">
           {escolha.length === 0 ? <span lang="es" className="px-2 text-[15px] text-apoio">{es.quiz.fraseVacia}</span> : null}
           {escolha.map((posicao, ordem) => (
             <button
@@ -124,11 +124,11 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
       {previa ? <Aviso tipo="info">{es.quiz.vistaPrevia}</Aviso> : null}
 
       {corrigido && estado.correcao ? (
-        <section aria-labelledby="resultado" className="flex flex-col gap-2 rounded-[20px] border border-verde bg-verde-suave p-5 sm:p-7">
-          <h2 id="resultado" className="text-xs font-bold tracking-[0.14em] text-verde">
-            {es.quiz.resultado.toUpperCase()}
+        <section aria-labelledby="resultado" className="flex flex-col gap-2 rounded-3xl border border-verde bg-verde-suave px-[18px] py-[22px] sm:rounded-[28px] sm:p-7">
+          <h2 id="resultado" className="text-sm font-semibold text-verde sm:text-[15px]">
+            {es.quiz.resultado}
           </h2>
-          <p className="font-titulo text-4xl font-bold leading-tight">
+          <p className="font-titulo text-[34px] font-bold leading-[1.1] sm:text-[40px]">
             {estado.correcao.acertos} {es.inicio.de} {estado.correcao.total} · {estado.correcao.percentual} %
           </p>
           <p className="text-base font-semibold">
@@ -141,7 +141,7 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
             {/* Endereço comum, de propósito: recarrega a página, limpa as respostas e embaralha de novo. */}
             <a
               href={`/quiz/${quizId}`}
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-borda-campo bg-cartao px-5 text-base font-bold text-texto no-underline hover:bg-fundo"
+              className="inline-flex min-h-12 items-center justify-center rounded-[14px] border border-linha bg-cartao px-5 text-base font-bold text-texto no-underline transition-colors hover:bg-fundo"
             >
               {es.quiz.otraVez}
             </a>
@@ -159,11 +159,11 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
             <section
               key={pergunta.id}
               aria-labelledby={`pergunta-${pergunta.id}`}
-              className="flex flex-col gap-3 rounded-[20px] border border-linha bg-cartao p-5 sm:p-7"
+              className="flex flex-col gap-3.5 rounded-3xl border border-borda bg-cartao px-[18px] py-[22px] sm:rounded-[28px] sm:p-7 sm:shadow-cartao"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 id={`pergunta-${pergunta.id}`} className="text-xs font-bold tracking-[0.14em] text-dourado-texto">
-                  {String(i + 1).padStart(2, '0')} — {enunciado(pergunta).toUpperCase()}
+                <h2 id={`pergunta-${pergunta.id}`} className="flex items-baseline gap-2 text-sm font-semibold text-dourado-texto sm:text-[15px]">
+                  <span className="font-titulo text-lg font-bold italic">{i + 1}</span> <span>{enunciado(pergunta)}</span>
                 </h2>
                 {conferida ? <Sello tom={conferida.correta ? 'verde' : 'aviso'}>{conferida.correta ? es.quiz.correcta : es.quiz.incorrecta}</Sello> : null}
               </div>
@@ -198,7 +198,7 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
               )}
 
               {conferida && !conferida.correta ? (
-                <p className="rounded-xl bg-fundo px-4 py-3 text-[15px]">
+                <p className="rounded-[14px] bg-fundo px-4 py-3 text-[15px] leading-normal">
                   <span className="font-semibold">{es.quiz.respuestaCorrecta}:</span> <span lang="pt-BR">{conferida.certa}</span>
                 </p>
               ) : null}
@@ -213,9 +213,9 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
         </Aviso>
       ) : null}
       {corrigido ? null : (
-        <div>
-          <Boton disabled={enviando || !pronto}>{es.quiz.enviar}</Boton>
-        </div>
+        <Boton disabled={enviando || !pronto} className="min-h-[54px] text-[17px] shadow-botao sm:self-start sm:px-7">
+          {es.quiz.enviar}
+        </Boton>
       )}
     </form>
   );

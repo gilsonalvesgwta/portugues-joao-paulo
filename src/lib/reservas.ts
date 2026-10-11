@@ -80,6 +80,14 @@ export function fechaLarga(data: string): string {
   return `${parte('weekday')} ${parte('day')} de ${parte('month')}`;
 }
 
+// As três partes da data de uma aula no fuso do aluno, para o quadrinho de calendário:
+// "lun", "12", "oct". O dia é o do fuso dele, que pode não ser o mesmo do professor.
+export function partesDeLaFecha(inicioIso: string, fuso: string): { diaSemana: string; dia: string; mes: string } {
+  const partes = new Intl.DateTimeFormat('es', { timeZone: fuso, weekday: 'short', day: 'numeric', month: 'short' }).formatToParts(new Date(inicioIso));
+  const parte = (tipo: string) => (partes.find((p) => p.type === tipo)?.value ?? '').replace(/\.$/, '');
+  return { diaSemana: parte('weekday'), dia: parte('day'), mes: parte('month') };
+}
+
 // "17:15": a hora de um instante no fuso pedido.
 export function horaEn(instante: Date, fuso: string): string {
   const local = partesLocais(instante, fuso);

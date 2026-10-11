@@ -122,7 +122,7 @@ test('a agenda mostra os horários no fuso da aluna, com o tema, as vagas e o qu
   await pagina.getByRole('heading', { name: `Horarios del ${fechaLarga(DIA)}` }).waitFor();
   assert.match(await horario('unica').innerText(), /1 plaza(?!s)/);
   assert.match(await horario('tarde').innerText(), /10 plazas/);
-  assert.match(await horario('tarde').innerText(), /Básico · 60 min/);
+  assert.match(await horario('tarde').innerText(), /Básico, 60 min/);
   assert.match(await horario('tarde').innerText(), /Comprar frutas y preguntar precios\./);
   await horario('tarde').getByText('Lo que vas a aprender').click();
   await horario('tarde').getByText('Números y precios').waitFor();
@@ -149,7 +149,7 @@ test('reservar: confirmação na tela, e-mail com o link da sala, e a vaga some 
   assert.equal(await minha.getByRole('link', { name: 'Entrar a la clase' }).getAttribute('rel'), 'noopener noreferrer');
   assert.equal(await minha.getByRole('link', { name: 'Material de la clase' }).getAttribute('href'), MATERIAL);
   assert.match(await minha.innerText(), new RegExp(`${hora.unica}`));
-  assert.match(await horario('unica').innerText(), /✓ Reservada/);
+  assert.match(await horario('unica').innerText(), /Reservada/);
   assert.equal(await horario('unica').getByRole('button').count(), 0);
   await pagina.getByText('En la semana del día elegido: te quedan 1 de 2 reservas.').waitFor();
 

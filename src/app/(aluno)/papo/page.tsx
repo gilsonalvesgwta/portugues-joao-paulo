@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { empezarDeNuevo } from '@/app/(aluno)/papo/acoes';
 import { ConversaDelPapo } from '@/components/aluno/ConversaDelPapo';
-import { Aviso, Boton, Tarjeta } from '@/components/aluno/ui';
+import { Aviso, Boton, Tarjeta, TEXTO_DE_PAGINA, TITULO_DE_PAGINA, TITULO_DE_TARJETA } from '@/components/aluno/ui';
 import { es } from '@/i18n/es';
 import { conversaAtual, situacaoDoPapo } from '@/lib/papo-servidor';
 import { pessoaLogada } from '@/lib/supabase/servidor';
@@ -23,18 +23,18 @@ export default async function PaginaDelPapo({ searchParams }: Props) {
   const situacao = await situacaoDoPapo();
 
   const cabecalho = (
-    <header className="flex flex-col gap-1.5">
-      <h1 className="font-titulo text-4xl font-bold leading-tight">{t.titulo}</h1>
-      <p className="text-base leading-normal text-apoio">{t.texto}</p>
+    <header className="flex flex-col gap-1.5 lg:gap-2.5">
+      <h1 className={TITULO_DE_PAGINA}>{t.titulo}</h1>
+      <p className={TEXTO_DE_PAGINA}>{t.texto}</p>
     </header>
   );
 
   if (!situacao.ligado || !situacao.liberado) {
     return (
-      <div className="mx-auto flex max-w-[820px] flex-col gap-6">
+      <div className="mx-auto flex max-w-[820px] flex-col gap-5 lg:gap-6">
         {cabecalho}
         <Tarjeta>
-          <h2 className="text-xl font-bold">{situacao.ligado ? t.sinAcceso : t.apagado}</h2>
+          <h2 className={TITULO_DE_TARJETA}>{situacao.ligado ? t.sinAcceso : t.apagado}</h2>
           <p className="mt-2 text-base leading-normal text-apoio">{situacao.ligado ? t.sinAccesoTexto : t.apagadoTexto}</p>
         </Tarjeta>
       </div>
@@ -45,7 +45,7 @@ export default async function PaginaDelPapo({ searchParams }: Props) {
   const restam = Math.max(situacao.limite - situacao.usadas, 0);
 
   return (
-    <div className="mx-auto flex max-w-[820px] flex-col gap-6">
+    <div className="mx-auto flex max-w-[820px] flex-col gap-5 lg:gap-6">
       {cabecalho}
       {aviso === 'nueva' ? <Aviso tipo="info">{t.avisos.nueva}</Aviso> : null}
       {aviso === 'fallo' ? <Aviso tipo="error">{t.errores.fallo}</Aviso> : null}

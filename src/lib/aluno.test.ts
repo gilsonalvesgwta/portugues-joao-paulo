@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  duracaoCurta, itemDaTarefa, lerPosicao, montarDias, montarPainel, pontoDeRetomada, SEM_PROGRESSO, videoConcluido, vizinhas,
+  diaDeApertura, duracaoCurta, duracionEnPalabras, fraseDeHoy, inicialDe, itemDaTarefa, lerPosicao, miniaturaDoYoutube, montarDias, montarPainel, nombreCorto,
+  pendientesDeHoy, pontoDeRetomada, SEM_PROGRESSO, videoConcluido, vizinhas,
   type CursoDoAluno, type Progresso,
 } from './aluno.ts';
 
@@ -143,4 +144,61 @@ test('duração curta', () => {
   assert.equal(duracaoCurta(20), '1 min');
   assert.equal(duracaoCurta(754), '13 min');
   assert.equal(duracaoCurta(3900), '1 h 05 min');
+});
+
+test('duração por extenso, para as frases', () => {
+  assert.equal(duracionEnPalabras(null), '');
+  assert.equal(duracionEnPalabras(0), '');
+  assert.equal(duracionEnPalabras(40), '1 minuto');
+  assert.equal(duracionEnPalabras(720), '12 minutos');
+  assert.equal(duracionEnPalabras(3600), '1 hora');
+  assert.equal(duracionEnPalabras(3900), '1 hora y 5 minutos');
+  assert.equal(duracionEnPalabras(7260), '2 horas y 1 minuto');
+});
+
+test('o que falta hoje: só o obrigatório conta, e a frase concorda em número', () => {
+  const comeco = montarPainel(curso('sequencial'), SEM_PROGRESSO);
+  assert.deepEqual(pendientesDeHoy(comeco), { clases: 1, quizzes: 1, tareas: 1 }, 'a tarefa opcional fica de fora');
+  assert.equal(fraseDeHoy(pendientesDeHoy(comeco)), 'Hoy te esperan una clase, un quiz y una tarea.');
+
+  const soTarefa = montarPainel(curso('sequencial'), progresso({ aulas: [vista('a1')], quizzes: [{ quiz_id: 'q1', tentativas: 1, melhor: 80 }] }));
+  assert.deepEqual(pendientesDeHoy(soTarefa), { clases: 0, quizzes: 0, tareas: 1 });
+  assert.equal(fraseDeHoy(pendientesDeHoy(soTarefa)), 'Hoy te espera una tarea.');
+
+  const dia2 = montarPainel(curso('sequencial'), progresso({ aulas: [vista('a1')], quizzes: [{ quiz_id: 'q1', tentativas: 1, melhor: 80 }], itens: ['i-t1'] }));
+  assert.equal(fraseDeHoy(pendientesDeHoy(dia2)), 'Hoy te espera una clase.');
+
+  const fim = montarPainel(curso('sequencial'), progresso({ aulas: [vista('a1'), vista('a2'), vista('a3')], quizzes: [{ quiz_id: 'q1', tentativas: 1, melhor: 80 }], itens: ['i-t1'] }));
+  assert.deepEqual(pendientesDeHoy(fim), { clases: 0, quizzes: 0, tareas: 0 });
+  assert.equal(fraseDeHoy(pendientesDeHoy(fim)), '');
+
+  assert.equal(fraseDeHoy({ clases: 2, quizzes: 0, tareas: 3 }), 'Hoy te esperan 2 clases y 3 tareas.');
+  assert.equal(fraseDeHoy({ clases: 0, quizzes: 2, tareas: 0 }), 'Hoy te esperan 2 quizzes.');
+});
+
+test('o dia em que cada aula abre, pela trilha do aluno', () => {
+  const dias = montarDias(curso());
+  assert.equal(diaDeApertura(dias, 'a1'), 1);
+  assert.equal(diaDeApertura(dias, 'q1'), 1);
+  assert.equal(diaDeApertura(dias, 'a2'), 2, 'o dia que ficou vazio não conta');
+  assert.equal(diaDeApertura(dias, 'a3'), 3);
+  assert.equal(diaDeApertura(dias, 'fora-da-trilha'), null);
+});
+
+test('o nome que cabe no topo e a letra do círculo', () => {
+  assert.equal(nombreCorto('Elena Ruiz', 'elena@exemplo.test'), 'Elena Ruiz');
+  assert.equal(nombreCorto('  María   de los Ángeles Fernández-Villaverde ', 'm@exemplo.test'), 'María', 'nome comprido: só o primeiro');
+  assert.equal(nombreCorto('', 'servocar.consorcios@exemplo.test'), 'servocar.consorcios', 'sem nome: o começo do e-mail');
+  assert.equal(nombreCorto('Wolfeschlegelsteinhausenbergerdorff', 'w@exemplo.test'), 'Wolfeschlegelsteinhau…');
+  assert.ok(nombreCorto('Wolfeschlegelsteinhausenbergerdorff', 'w@exemplo.test').length <= 22);
+  assert.equal(inicialDe('elena ruiz', 'x@exemplo.test'), 'E');
+  assert.equal(inicialDe(' ángela', 'x@exemplo.test'), 'Á');
+  assert.equal(inicialDe('', 'julia@exemplo.test'), 'J');
+  assert.equal(inicialDe('«Lola»', 'x@exemplo.test'), 'L', 'sinais não servem de inicial');
+  assert.equal(inicialDe('', ''), '?');
+});
+
+test('miniatura do vídeo no YouTube', () => {
+  assert.equal(miniaturaDoYoutube('aB3dE6gH9jK'), 'https://i.ytimg.com/vi/aB3dE6gH9jK/hqdefault.jpg');
+  assert.equal(miniaturaDoYoutube('a/b?c'), 'https://i.ytimg.com/vi/a%2Fb%3Fc/hqdefault.jpg', 'o código nunca muda o endereço');
 });

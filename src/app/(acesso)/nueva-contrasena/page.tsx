@@ -22,7 +22,7 @@ export default async function PaginaNovaSenha({ searchParams }: Props) {
   return (
     <>
       <Cabecalho area={es.acesso.area} titulo={es.nuevaClave.titulo} texto={es.nuevaClave.texto} />
-      <form action={definirSenha} className="flex flex-col gap-5">
+      <form action={definirSenha} className="flex flex-col gap-4 lg:gap-[18px]">
         {erro ? <Aviso tipo="erro">{erro}</Aviso> : null}
         <CampoSenha
           id="nueva"

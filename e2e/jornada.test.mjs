@@ -122,8 +122,8 @@ test('2. ela abre o link do e-mail, cria a senha e cai no curso, no dia 1', asyn
 test('3. assiste à aula 1, faz o quiz e é aprovada: o dia vira e a aula 2 abre', async () => {
   await pagina.locator('#hoy').getByRole('link', { name: new RegExp(`Ver la clase 1: ${A1}`) }).click();
   await pagina.waitForURL(`**/clase/${ids.aula1}`);
-  await pagina.getByRole('button', { name: 'Marcar como vista' }).click();
-  await pagina.getByText('✓ Clase vista').waitFor();
+  await pagina.getByRole('button', { name: 'Marcar la clase como vista' }).click();
+  await pagina.getByText('Clase vista', { exact: true }).waitFor();
 
   await pagina.getByRole('link', { name: 'Hacer el quiz' }).click();
   await pagina.waitForURL(`**/quiz/${ids.quiz}`);

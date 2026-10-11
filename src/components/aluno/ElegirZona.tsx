@@ -37,7 +37,7 @@ export function ElegirZona({ guardada, comunes, otras }: { guardada: string; com
   return (
     <form action={confirmarZona} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="fuso" className="text-sm font-semibold">
+        <label htmlFor="fuso" className="text-[15px] font-semibold">
           {t.campo}
         </label>
         <select
@@ -47,7 +47,7 @@ export function ElegirZona({ guardada, comunes, otras }: { guardada: string; com
           disabled={!estado.pronta}
           onChange={(evento) => setEstado((atual) => ({ ...atual, zona: evento.target.value, detectada: false }))}
           aria-describedby="fuso-ayuda"
-          className="box-border h-12 w-full min-w-0 rounded-xl border border-borda-campo bg-cartao px-3.5 text-base text-texto disabled:opacity-60"
+          className="box-border h-[52px] w-full min-w-0 rounded-[14px] border border-borda-campo bg-cartao px-4 text-[17px] text-texto disabled:opacity-60"
         >
           {conhecida ? null : <option value={estado.zona}>{estado.zona.replace(/_/g, ' ')}</option>}
           <optgroup label={tc.frecuentes}>
@@ -71,7 +71,7 @@ export function ElegirZona({ guardada, comunes, otras }: { guardada: string; com
       </div>
 
       {estado.agora ? (
-        <div role="status" className="flex flex-col gap-1 rounded-xl bg-fundo px-4 py-3">
+        <div role="status" className="flex flex-col gap-1 rounded-2xl bg-fundo px-4 py-3.5">
           <p className="text-base leading-normal">
             {t.ahora} <span className="font-titulo text-2xl font-bold">{horaEn(estado.agora, estado.zona)}</span> {t.en}{' '}
             <span className="font-semibold">{rotuloDoFuso(estado.zona, estado.agora)}</span>.
@@ -85,7 +85,7 @@ export function ElegirZona({ guardada, comunes, otras }: { guardada: string; com
           <button
             type="submit"
             disabled={!estado.pronta}
-            className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-verde bg-verde px-5 text-base font-bold text-white hover:bg-verde-link disabled:cursor-default disabled:opacity-50"
+            className="inline-flex min-h-[54px] w-full cursor-pointer items-center justify-center rounded-[14px] border border-verde bg-verde px-7 text-[17px] font-bold text-white shadow-botao transition-colors hover:bg-verde-link disabled:cursor-default disabled:opacity-50 sm:w-auto"
           >
             {t.confirmar}
           </button>

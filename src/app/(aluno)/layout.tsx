@@ -23,8 +23,15 @@ export default async function LayoutDoAluno({ children }: { children: ReactNode 
 
   return (
     <div className="min-h-dvh">
-      <CabecalhoInterno inicio="/inicio" nome={pessoa.nome || pessoa.email} rotuloSair={es.comum.salir} menu={<MenuDelAlumno conPapo={configDoPapo() !== null} />} />
-      <main className="mx-auto max-w-[1208px] px-4 py-8 sm:px-6">{children}</main>
+      <CabecalhoInterno
+        inicio="/inicio"
+        nome={pessoa.nome}
+        email={pessoa.email}
+        rotuloSair={es.comum.salir}
+        menu={<MenuDelAlumno conPapo={configDoPapo() !== null} />}
+      />
+      {/* No celular, o espaço de baixo deixa o fim da página livre da barra fixa das seções. */}
+      <main className="mx-auto max-w-[1240px] px-5 pb-28 pt-6 sm:px-8 lg:px-10 lg:pb-[72px] lg:pt-12">{children}</main>
     </div>
   );
 }

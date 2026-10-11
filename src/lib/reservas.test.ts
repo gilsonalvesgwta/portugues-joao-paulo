@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  codigoDoErro, fechaLarga, lerNota, podeCancelar, reservasNaSemana, reservasNaSemanaDoDia, rotuloDoFuso, segundaDaSemana, separarReservas, zonaValida, ZONAS_COMUNES,
+  codigoDoErro, fechaLarga, lerNota, partesDeLaFecha, podeCancelar, reservasNaSemana, reservasNaSemanaDoDia, rotuloDoFuso, segundaDaSemana, separarReservas, zonaValida, ZONAS_COMUNES,
 } from './reservas.ts';
 
 // Quinta-feira, 8 de outubro de 2026, 12:00 em Madri.
@@ -68,4 +68,20 @@ test('erro do banco vira código conhecido; nota de 1 a 5', () => {
   assert.equal(codigoDoErro('nota fora do intervalo'), 'fallo', 'palavras soltas não viram código');
   assert.equal(lerNota('5'), 5);
   for (const ruim of ['0', '6', '4.5', '', undefined, 3]) assert.equal(lerNota(ruim), null, String(ruim));
+});
+
+test('as partes da data para o quadrinho de calendário, no fuso do aluno', () => {
+  // 12 de outubro de 2026, 20:15 em UTC: 22:15 em Madri, 17:15 em São Paulo.
+  assert.deepEqual(partesDeLaFecha('2026-10-12T20:15:00Z', 'Europe/Madrid'), { diaSemana: 'lun', dia: '12', mes: 'oct' });
+  assert.deepEqual(partesDeLaFecha('2026-10-12T20:15:00Z', 'America/Sao_Paulo'), { diaSemana: 'lun', dia: '12', mes: 'oct' });
+  // Aula às 23:30 de São Paulo: em Madri já é o dia seguinte.
+  assert.deepEqual(partesDeLaFecha('2026-10-13T02:30:00Z', 'America/Sao_Paulo'), { diaSemana: 'lun', dia: '12', mes: 'oct' });
+  assert.deepEqual(partesDeLaFecha('2026-10-13T02:30:00Z', 'Europe/Madrid'), { diaSemana: 'mar', dia: '13', mes: 'oct' });
+  // Virada de mês e de ano.
+  assert.deepEqual(partesDeLaFecha('2027-01-01T01:00:00Z', 'America/Bogota'), { diaSemana: 'jue', dia: '31', mes: 'dic' });
+  for (const mes of ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']) {
+    const partes = partesDeLaFecha(`2026-${mes}-15T12:00:00Z`, 'Europe/Madrid');
+    assert.match(partes.mes, /^[a-zé]{3,4}$/, `mês ${mes}: ${partes.mes}`);
+    assert.match(partes.diaSemana, /^[a-zéá]{3}$/, `mês ${mes}: ${partes.diaSemana}`);
+  }
 });

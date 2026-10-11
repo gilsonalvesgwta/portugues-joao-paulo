@@ -72,8 +72,8 @@ export async function novaPagina(navegador) {
 
 export async function entrar(pagina, email, clave) {
   await pagina.goto(`${base}/entrar`);
-  await pagina.getByLabel('Correo electrónico de tu compra').fill(email);
-  await pagina.getByLabel('Tu contraseña', { exact: true }).fill(clave);
+  await pagina.getByLabel('Correo electrónico', { exact: true }).fill(email);
+  await pagina.getByLabel('Contraseña', { exact: true }).fill(clave);
   await pagina.getByRole('button', { name: 'Acceder a mis clases' }).click();
 }
 
