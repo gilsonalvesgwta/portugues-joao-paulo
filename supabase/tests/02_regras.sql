@@ -33,6 +33,19 @@ begin
   perform teste.confere((select nome from perfis where id = teste.uid(1)) = 'Aluno Um', 'aluno altera nome e fuso');
   perform teste.espera_erro($q$update perfis set fuso = 'Lugar/Inexistente' where id = teste.uid(1)$q$,
     'fuso_invalido', 'fuso inválido é recusado');
+  -- A confirmação do fuso: a pessoa marca a própria, junto com o fuso, e não a de outra pessoa.
+  perform teste.confere((select fuso_confirmado_em is null from perfis where id = teste.uid(1)), 'a conta nasce sem o fuso confirmado');
+  update perfis set fuso = 'America/Mexico_City', fuso_confirmado_em = now() where id = teste.uid(1);
+  perform teste.confere((select fuso = 'America/Mexico_City' and fuso_confirmado_em is not null from perfis where id = teste.uid(1)),
+    'aluno confirma o próprio fuso');
+  declare
+    v_linhas integer;
+  begin
+    update perfis set fuso_confirmado_em = now() where id = teste.uid(2);
+    get diagnostics v_linhas = row_count;
+    perform teste.confere(v_linhas = 0, 'aluno não confirma o fuso de outra pessoa');
+  end;
+  update perfis set fuso = 'America/Bogota' where id = teste.uid(1);
 
   insert into progresso_aulas (aluno_id, aula_id, posicao_seg) values (teste.uid(1), teste.tid(20), 42);
   perform teste.confere((select posicao_seg from progresso_aulas where aula_id = teste.tid(20)) = 42, 'aluno grava o próprio progresso');

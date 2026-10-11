@@ -1,23 +1,42 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  configDoPapo, corpoDoPedido, diaNoFuso, ENDERECO_PADRAO, HISTORICO_MAX, historicoParaOModelo, instrucoesDoPapo, lerMensagem, lerResposta,
-  lerLimiteDoPapo, MENSAGEM_MAX, MODELO_PADRAO,
+  cabecalhosDoPedido, configDoPapo, corpoDoPedido, diaNoFuso, ENDERECO_PADRAO, HISTORICO_MAX, historicoParaOModelo, instrucoesDoPapo, lerMensagem,
+  lerResposta, lerLimiteDoPapo, MENSAGEM_MAX, MODELO_PADRAO, motivoDaFalhaDoPapo,
 } from './papo.ts';
 
-test('sem a chave o Papo fica desligado; com ela, usa o modelo e o endereço padrão', () => {
+test('sem chave o Papo fica desligado; com a da OpenAI ou a da Anthropic, usa o modelo e o endereço padrão do serviço', () => {
   assert.equal(configDoPapo({}), null);
-  assert.equal(configDoPapo({ ANTHROPIC_API_KEY: '   ' }), null);
-  assert.deepEqual(configDoPapo({ ANTHROPIC_API_KEY: ' chave ' }), { chave: 'chave', modelo: MODELO_PADRAO, endereco: ENDERECO_PADRAO });
-  assert.deepEqual(configDoPapo({ ANTHROPIC_API_KEY: 'chave', PAPO_MODELO: 'outro-modelo', PAPO_API_URL: 'http://127.0.0.1:4010/v1/messages' }), {
-    chave: 'chave', modelo: 'outro-modelo', endereco: 'http://127.0.0.1:4010/v1/messages',
+  assert.equal(configDoPapo({ ANTHROPIC_API_KEY: '   ', OPENAI_API_KEY: ' ' }), null);
+  assert.deepEqual(configDoPapo({ OPENAI_API_KEY: ' chave ' }), {
+    provedor: 'openai', chave: 'chave', modelo: MODELO_PADRAO.openai, endereco: ENDERECO_PADRAO.openai,
+  });
+  assert.deepEqual(configDoPapo({ ANTHROPIC_API_KEY: ' chave ' }), {
+    provedor: 'anthropic', chave: 'chave', modelo: MODELO_PADRAO.anthropic, endereco: ENDERECO_PADRAO.anthropic,
+  });
+  assert.equal(ENDERECO_PADRAO.openai, 'https://api.openai.com/v1/chat/completions');
+  // Com as duas chaves, vale a da OpenAI.
+  assert.equal(configDoPapo({ ANTHROPIC_API_KEY: 'da-anthropic', OPENAI_API_KEY: 'da-openai' })?.chave, 'da-openai');
+  assert.deepEqual(configDoPapo({ OPENAI_API_KEY: 'chave', PAPO_MODELO: 'outro-modelo', PAPO_API_URL: 'http://127.0.0.1:4010/v1/chat/completions' }), {
+    provedor: 'openai', chave: 'chave', modelo: 'outro-modelo', endereco: 'http://127.0.0.1:4010/v1/chat/completions',
   });
 });
 
 test('a chave nunca viaja sem cifra para fora do próprio computador', () => {
-  assert.equal(configDoPapo({ ANTHROPIC_API_KEY: 'chave', PAPO_API_URL: 'http://exemplo.com/v1/messages' }), null);
-  assert.equal(configDoPapo({ ANTHROPIC_API_KEY: 'chave', PAPO_API_URL: 'isto não é endereço' }), null);
-  assert.notEqual(configDoPapo({ ANTHROPIC_API_KEY: 'chave', PAPO_API_URL: 'https://exemplo.com/v1/messages' }), null);
+  for (const chave of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY']) {
+    assert.equal(configDoPapo({ [chave]: 'chave', PAPO_API_URL: 'http://exemplo.com/v1/messages' }), null);
+    assert.equal(configDoPapo({ [chave]: 'chave', PAPO_API_URL: 'isto não é endereço' }), null);
+    assert.notEqual(configDoPapo({ [chave]: 'chave', PAPO_API_URL: 'https://exemplo.com/v1/messages' }), null);
+  }
+});
+
+test('cada serviço recebe a chave do seu jeito', () => {
+  assert.deepEqual(cabecalhosDoPedido({ provedor: 'openai', chave: 'sk-teste', modelo: 'm', endereco: ENDERECO_PADRAO.openai }), {
+    'content-type': 'application/json', authorization: 'Bearer sk-teste',
+  });
+  assert.deepEqual(cabecalhosDoPedido({ provedor: 'anthropic', chave: 'sk-ant', modelo: 'm', endereco: ENDERECO_PADRAO.anthropic }), {
+    'content-type': 'application/json', 'x-api-key': 'sk-ant', 'anthropic-version': '2023-06-01',
+  });
 });
 
 test('a mensagem do aluno é arrumada; vazia ou grande demais é recusada', () => {
@@ -74,12 +93,31 @@ test('o histórico tem limite de quantidade e de tamanho, sem nunca perder a úl
   assert.deepEqual(historicoParaOModelo([{ autor: 'aluno', texto: 'z'.repeat(20_000) }]), [{ role: 'user', content: 'z'.repeat(20_000) }]);
 });
 
-test('o pedido leva o modelo, as instruções e o histórico', () => {
-  const corpo = corpoDoPedido({ chave: 'c', modelo: 'modelo-x', endereco: ENDERECO_PADRAO }, 'Ana', [{ autor: 'aluno', texto: 'Oi' }]);
-  assert.equal(corpo.model, 'modelo-x');
-  assert.ok(corpo.max_tokens > 0);
-  assert.ok(corpo.system.includes('Ana'));
-  assert.deepEqual(corpo.messages, [{ role: 'user', content: 'Oi' }]);
+test('o pedido leva o modelo, as instruções e o histórico, no formato de cada serviço', () => {
+  const conversa = [{ autor: 'aluno' as const, texto: 'Oi' }];
+  const daAnthropic = corpoDoPedido({ provedor: 'anthropic', chave: 'c', modelo: 'modelo-x', endereco: ENDERECO_PADRAO.anthropic }, 'Ana', conversa) as Record<string, unknown>;
+  assert.equal(daAnthropic.model, 'modelo-x');
+  assert.ok(Number(daAnthropic.max_tokens) > 0);
+  assert.ok(String(daAnthropic.system).includes('Ana'));
+  assert.deepEqual(daAnthropic.messages, [{ role: 'user', content: 'Oi' }]);
+
+  // OpenAI: as instruções vão como a primeira mensagem, e o limite de resposta tem folga para o raciocínio.
+  const daOpenAI = corpoDoPedido({ provedor: 'openai', chave: 'c', modelo: 'gpt-6-luna', endereco: ENDERECO_PADRAO.openai }, 'Ana', conversa) as Record<string, unknown>;
+  const mensagens = daOpenAI.messages as { role: string; content: string }[];
+  assert.equal(daOpenAI.model, 'gpt-6-luna');
+  assert.equal(daOpenAI.reasoning_effort, 'low');
+  assert.ok(Number(daOpenAI.max_completion_tokens) >= 2000);
+  assert.equal('max_tokens' in daOpenAI, false);
+  assert.equal('system' in daOpenAI, false);
+  assert.equal(mensagens.length, 2);
+  assert.equal(mensagens[0]?.role, 'developer');
+  assert.ok(mensagens[0]?.content.includes('tutor de português do Brasil') && mensagens[0]?.content.includes('Ana'));
+  assert.deepEqual(mensagens[1], { role: 'user', content: 'Oi' });
+
+  // Modelo antigo da OpenAI: instruções como "system" e sem o ajuste de raciocínio.
+  const antigo = corpoDoPedido({ provedor: 'openai', chave: 'c', modelo: 'gpt-4.1-mini', endereco: ENDERECO_PADRAO.openai }, 'Ana', conversa) as Record<string, unknown>;
+  assert.equal((antigo.messages as { role: string }[])[0]?.role, 'system');
+  assert.equal('reasoning_effort' in antigo, false);
 });
 
 test('a resposta do modelo é lida com o texto e os tokens; sem texto, null', () => {
@@ -91,6 +129,42 @@ test('a resposta do modelo é lida com o texto e os tokens; sem texto, null', ()
   for (const ruim of [null, 'texto', {}, { content: 'x' }, { content: [] }, { content: [{ type: 'text', text: '  ' }] }, { error: { type: 'overloaded_error' } }]) {
     assert.equal(lerResposta(ruim), null);
   }
+});
+
+test('a resposta da OpenAI é lida do mesmo jeito', () => {
+  assert.deepEqual(
+    lerResposta({ choices: [{ message: { role: 'assistant', content: ' Olá! Tudo bem? ' }, finish_reason: 'stop' }], usage: { prompt_tokens: 40, completion_tokens: 9 } }, 'openai'),
+    { texto: 'Olá! Tudo bem?', tokensEntrada: 40, tokensSaida: 9 },
+  );
+  assert.deepEqual(lerResposta({ choices: [{ message: { content: [{ type: 'text', text: 'Oi' }, { type: 'refusal', refusal: 'não' }] } }] }, 'openai'), {
+    texto: 'Oi', tokensEntrada: null, tokensSaida: null,
+  });
+  // Resposta cortada antes do texto (o limite acabou no raciocínio), recusa ou erro: sem texto.
+  for (const ruim of [null, {}, { choices: [] }, { choices: [{ message: { content: '' }, finish_reason: 'length' }] }, { choices: [{ message: { content: null } }] }, { error: { message: 'x' } }]) {
+    assert.equal(lerResposta(ruim, 'openai'), null);
+  }
+  // O formato de um serviço não é lido como o do outro.
+  assert.equal(lerResposta({ content: [{ type: 'text', text: 'Oi' }] }, 'openai'), null);
+});
+
+test('o motivo da falha sai do código da resposta e do erro devolvido pelo serviço', () => {
+  const casos: [number, unknown, string][] = [
+    [401, { error: { message: 'Incorrect API key provided', type: 'invalid_request_error', code: 'invalid_api_key' } }, 'chave'],
+    [401, { type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } }, 'chave'],
+    [403, { error: { message: 'Country, region, or territory not supported' } }, 'chave'],
+    [429, { error: { message: 'You exceeded your current quota', type: 'insufficient_quota', code: 'insufficient_quota' } }, 'credito'],
+    [429, { error: { message: 'x', type: 'insufficient_quota', code: 'credit_balance_exhausted' } }, 'credito'],
+    [429, { error: { message: 'x', code: 'project_spend_limit_exceeded' } }, 'credito'],
+    [400, { type: 'error', error: { type: 'invalid_request_error', message: 'Your credit balance is too low to access the Anthropic API.' } }, 'credito'],
+    [404, { error: { message: 'The model `gpt-x` does not exist', code: 'model_not_found' } }, 'modelo'],
+    [404, { type: 'error', error: { type: 'not_found_error', message: 'model: x' } }, 'modelo'],
+    [429, { error: { message: 'Rate limit reached for requests', type: 'rate_limit_error', code: 'rate_limit_exceeded' } }, 'limite'],
+    [503, { error: { type: 'service_unavailable_error', code: 'server_is_overloaded' } }, 'indisponivel'],
+    [529, { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }, 'indisponivel'],
+    [400, { error: { message: "Unsupported parameter: 'reasoning_effort'", type: 'invalid_request_error' } }, 'pedido'],
+    [418, null, 'outro'],
+  ];
+  for (const [status, corpo, esperado] of casos) assert.equal(motivoDaFalhaDoPapo(status, corpo), esperado, `${status} ${JSON.stringify(corpo)}`);
 });
 
 test('o dia do limite é contado no fuso do aluno', () => {

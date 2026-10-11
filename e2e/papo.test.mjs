@@ -1,4 +1,4 @@
-// Teste de ponta a ponta do Papo, o tutor com inteligência artificial. O serviço da Anthropic é
+// Teste de ponta a ponta do Papo, o tutor com inteligência artificial. O serviço da OpenAI é
 // imitado por um servidor do próprio teste (variável PAPO_DE_TESTE_PORTA): assim dá para conferir
 // o que o aplicativo envia (chave, instruções, histórico) e como ele trata resposta e falha.
 // Sem essa variável, o aplicativo está sem a chave e o teste confere o Papo desligado.
@@ -26,6 +26,7 @@ let pagina; // a aluna
 let alunaId;
 let imitacao;
 const pedidos = []; // o que o aplicativo mandou para o "modelo"
+let proximaFalha = null; // [código, erro] que a imitação devolve no pedido seguinte
 
 const bolhas = (onde = pagina) => onde.locator('ol[aria-label="Conversación con Papo"] li[data-autor]');
 const textos = async (onde = pagina) => (await bolhas(onde).evaluateAll((lista) => lista.map((li) => [li.dataset.autor, li.querySelector('span:last-child').textContent])));
@@ -79,9 +80,11 @@ before(async () => {
         pedidos.push({ caminho: pedido.url, metodo: pedido.method, cabecalhos: pedido.headers, corpo: lido });
         const ultima = String(lido.messages.at(-1)?.content ?? '');
         const responder = () => {
-          if (ultima.includes('FALHA')) {
-            resposta.writeHead(529, { 'content-type': 'application/json' });
-            resposta.end(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }));
+          const falha = proximaFalha ?? (ultima.includes('FALHA') ? [503, { message: 'Overloaded', type: 'service_unavailable_error', code: 'server_is_overloaded' }] : null);
+          proximaFalha = null;
+          if (falha) {
+            resposta.writeHead(falha[0], { 'content-type': 'application/json' });
+            resposta.end(JSON.stringify({ error: falha[1] }));
             return;
           }
           const texto = ultima.includes('HTML')
@@ -89,8 +92,9 @@ before(async () => {
             : `Muito bem! Você disse: «${ultima}». (¡Bien hecho!)`;
           resposta.writeHead(200, { 'content-type': 'application/json' });
           resposta.end(JSON.stringify({
-            id: 'msg_de_teste', type: 'message', role: 'assistant', model: lido.model, stop_reason: 'end_turn',
-            content: [{ type: 'text', text: texto }], usage: { input_tokens: 31, output_tokens: 17 },
+            id: 'chatcmpl-de-teste', object: 'chat.completion', model: lido.model,
+            choices: [{ index: 0, message: { role: 'assistant', content: texto }, finish_reason: 'stop' }],
+            usage: { prompt_tokens: 31, completion_tokens: 17, total_tokens: 48 },
           }));
         };
         if (ultima.includes('DEVAGAR')) setTimeout(responder, 1500);
@@ -125,7 +129,8 @@ test('sem a chave, o Papo não aparece no menu, a tela explica e o painel mostra
   await dele.waitForURL('**/admin');
   await dele.getByRole('heading', { name: 'Papo, o tutor com inteligência artificial' }).waitFor();
   await dele.getByText('Desligado', { exact: true }).waitFor();
-  await dele.getByText(/variável ANTHROPIC_API_KEY/).waitFor();
+  await dele.getByText(/variável CHAVE_DA_OPENAI/).waitFor();
+  assert.equal(await dele.getByRole('button', { name: 'Testar o Papo' }).count(), 0, 'sem a chave não há o que testar');
   await dele.context().close();
 });
 
@@ -158,13 +163,15 @@ test('a mensagem vai ao modelo com a chave, as instruções e o nome; a resposta
 
   assert.equal(pedidos.length, 1);
   const { caminho, metodo, cabecalhos, corpo } = pedidos[0];
-  assert.equal(`${metodo} ${caminho}`, 'POST /v1/messages');
-  assert.equal(cabecalhos['x-api-key'], process.env.ANTHROPIC_API_KEY, 'a chave vai no cabeçalho');
-  assert.equal(cabecalhos['anthropic-version'], '2023-06-01');
-  assert.equal(corpo.model, 'claude-haiku-4-5-20251001');
-  assert.ok(corpo.max_tokens > 0 && corpo.max_tokens <= 1000);
-  assert.ok(corpo.system.includes('tutor de português do Brasil') && corpo.system.includes(`se chama ${aluna.nome}.`));
-  assert.deepEqual(corpo.messages, [{ role: 'user', content: 'Oi, Papo! Eu quero praticar. DEVAGAR' }]);
+  assert.equal(`${metodo} ${caminho}`, 'POST /v1/chat/completions');
+  assert.equal(cabecalhos.authorization, `Bearer ${process.env.OPENAI_API_KEY}`, 'a chave vai no cabeçalho');
+  assert.equal(corpo.model, 'gpt-6-luna');
+  assert.ok(corpo.max_completion_tokens >= 2000 && corpo.max_completion_tokens <= 4000);
+  assert.equal(corpo.reasoning_effort, 'low');
+  const [instrucoes, ...conversa] = corpo.messages;
+  assert.equal(instrucoes.role, 'developer');
+  assert.ok(instrucoes.content.includes('tutor de português do Brasil') && instrucoes.content.includes(`se chama ${aluna.nome}.`));
+  assert.deepEqual(conversa, [{ role: 'user', content: 'Oi, Papo! Eu quero praticar. DEVAGAR' }]);
   assert.equal(JSON.stringify(corpo).includes(aluna.email), false, 'o e-mail da aluna não vai para o modelo');
 
   assert.deepEqual(await guardadas(), [
@@ -172,15 +179,15 @@ test('a mensagem vai ao modelo com a chave, as instruções e o nome; a resposta
     ['papo', 'Muito bem! Você disse: «Oi, Papo! Eu quero praticar. DEVAGAR». (¡Bien hecho!)', 31, 17],
   ]);
   assert.equal(await usadasHoje(), 1);
-  assert.equal((await pagina.content()).includes(process.env.ANTHROPIC_API_KEY), false, 'a chave nunca chega ao navegador');
+  assert.equal((await pagina.content()).includes(process.env.OPENAI_API_KEY), false, 'a chave nunca chega ao navegador');
 });
 
 test('a conversa continua: o modelo recebe o histórico, e o que ele responde nunca vira HTML', { skip: soLigado }, async () => {
   const vez = await mandar('Como se escreve em HTML?');
   await pagina.locator(`form[data-vez="${vez}"]`).waitFor();
   await bolhas().nth(3).waitFor();
-  assert.deepEqual(pedidos[1].corpo.messages.map((m) => m.role), ['user', 'assistant', 'user']);
-  assert.equal(pedidos[1].corpo.messages[2].content, 'Como se escreve em HTML?');
+  assert.deepEqual(pedidos[1].corpo.messages.map((m) => m.role), ['developer', 'user', 'assistant', 'user']);
+  assert.equal(pedidos[1].corpo.messages[3].content, 'Como se escreve em HTML?');
   assert.equal((await textos())[3][1], 'Em HTML seria <b>negrito</b>.\n<script>window.invadido = true</script>');
   assert.equal(await bolhas().nth(3).locator('b, script').count(), 0, 'o texto do tutor é mostrado como texto');
   assert.equal(await pagina.evaluate(() => window.invadido === true), false);
@@ -190,7 +197,7 @@ test('a conversa continua: o modelo recebe o histórico, e o que ele responde nu
 test('se o modelo falha, a aluna é avisada, o texto dela fica no campo e a mensagem não é contada', { skip: soLigado }, async () => {
   const vez = await mandar('Esta vai dar FALHA no modelo');
   await pagina.locator(`form[data-vez="${vez}"]`).waitFor();
-  assert.equal(await textoDoAviso(pagina), 'Papo no pudo responder ahora. Tu mensaje no se contó: inténtalo de nuevo en un momento.');
+  assert.equal(await textoDoAviso(pagina), 'Papo no pudo responder ahora. Tu mensaje no se envió ni se contó: sigue en el cuadro de abajo. Inténtalo de nuevo en unos minutos.');
   assert.equal(await pagina.getByLabel('Tu mensaje').inputValue(), 'Esta vai dar FALHA no modelo');
   assert.equal(await bolhas().count(), 4, 'nada novo na conversa');
   assert.equal((await guardadas()).length, 4);
@@ -208,7 +215,7 @@ test('conversa nova: a tela recomeça e o modelo não recebe mais o que veio ant
   const vez = await mandar('Agora outro assunto');
   await pagina.locator(`form[data-vez="${vez}"]`).waitFor();
   await bolhas().nth(1).waitFor();
-  assert.deepEqual(pedidos[antes].corpo.messages, [{ role: 'user', content: 'Agora outro assunto' }]);
+  assert.deepEqual(pedidos[antes].corpo.messages.slice(1), [{ role: 'user', content: 'Agora outro assunto' }]);
   assert.equal((await guardadas()).length, 6, 'a conversa anterior continua guardada');
 });
 
@@ -243,7 +250,31 @@ test('painel: o administrador vê o Papo ligado e muda o limite do dia; o profes
   await dele.waitForURL('**/admin');
   await dele.getByRole('heading', { name: 'Papo, o tutor com inteligência artificial' }).waitFor();
   await dele.getByText('Ligado', { exact: true }).waitFor();
+  await dele.getByText(/hoje, a OpenAI \(modelo gpt-6-luna\)/).waitFor();
   await dele.getByText(/Nos últimos 7 dias: \d+ mensagens?, de \d+ pessoas?\./).waitFor();
+
+  // O teste do painel: uma mensagem curta ao serviço, que não entra na conversa nem no limite de ninguém.
+  const usadasAntes = await usadasHoje();
+  const guardadasAntes = (await guardadas()).length;
+  const pedidosAntes = pedidos.length;
+  await dele.getByRole('button', { name: 'Testar o Papo' }).click();
+  await dele.waitForURL('**/admin?aviso=papoteste_ok#papo');
+  assert.equal(await textoDoAviso(dele, 'status'), 'O Papo respondeu: a chave e o modelo estão funcionando.');
+  assert.equal(pedidos.length, pedidosAntes + 1);
+  assert.equal(JSON.stringify(pedidos.at(-1).corpo).includes(aluna.nome), false, 'o teste não leva o nome de ninguém');
+  assert.equal(await usadasHoje(), usadasAntes);
+  assert.equal((await guardadas()).length, guardadasAntes);
+  // Quando o serviço recusa, o painel diz o motivo em palavras simples.
+  for (const [falha, codigo, trecho] of [
+    [[401, { message: 'Incorrect API key provided', type: 'invalid_request_error', code: 'invalid_api_key' }], 'chave', 'O serviço recusou a chave.'],
+    [[429, { message: 'You exceeded your current quota', type: 'insufficient_quota', code: 'insufficient_quota' }], 'credito', 'A conta do serviço está sem crédito'],
+    [[404, { message: 'The model does not exist', type: 'invalid_request_error', code: 'model_not_found' }], 'modelo', 'O serviço não conhece o modelo configurado'],
+  ]) {
+    proximaFalha = falha;
+    await dele.getByRole('button', { name: 'Testar o Papo' }).click();
+    await dele.waitForURL(`**/admin?aviso=papoteste_${codigo}#papo`);
+    assert.ok((await textoDoAviso(dele)).startsWith(trecho), codigo);
+  }
   const limite = dele.getByLabel('Mensagens por pessoa, por dia');
   assert.equal(await limite.inputValue(), '40');
 

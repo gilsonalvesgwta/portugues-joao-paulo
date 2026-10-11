@@ -10,7 +10,7 @@ import { carregarConversacion } from '@/lib/aluno/conversacion';
 import { lerNivel, NIVEIS, NOMBRE_DEL_NIVEL } from '@/lib/conversacao';
 import { fechaYHora, plazo } from '@/lib/emails';
 import { ehEquipe } from '@/lib/papeis';
-import { DIAS_CORTOS, ERRORES_DE_RESERVA, fechaLarga, podeCancelar, reservasNaSemanaDoDia, rotuloDoFuso, separarReservas } from '@/lib/reservas';
+import { DIAS_CORTOS, ERRORES_DE_RESERVA, fechaLarga, podeCancelar, horaEn, reservasNaSemanaDoDia, rotuloDoFuso, separarReservas } from '@/lib/reservas';
 import { pessoaLogada } from '@/lib/supabase/servidor';
 
 export const metadata: Metadata = { title: es.conversacion.titulo };
@@ -163,15 +163,18 @@ export default async function PaginaConversacion({ searchParams }: Props) {
               {t.semana}: {t.teQuedan} <span className="font-bold">{restam}</span> {t.reservasDe} {dados.limite} {t.reservas}.
             </p>
           )}
-          <p className="text-[15px] leading-normal text-apoio">
-            {t.zona}: <span className="font-semibold text-texto">{rotuloDoFuso(dados.fuso, agora)}</span>.{' '}
+        </Tarjeta>
+
+        <Tarjeta id="agenda" className="flex min-w-0 flex-col gap-5">
+          {/* Em que hora a agenda está: o lugar do fuso do aluno e que horas são lá agora, para ele
+              conferir com o próprio relógio. */}
+          <p className="rounded-xl bg-fundo px-4 py-3 text-[15px] leading-normal">
+            {t.zona}: <span className="font-bold">{rotuloDoFuso(dados.fuso, agora)}</span>. {t.ahoraSon}{' '}
+            <span className="font-bold">{horaEn(agora, dados.fuso)}</span>.{' '}
             <Link href="/cuenta" className="font-semibold text-verde-link underline hover:text-verde">
               {t.cambiarZona}
             </Link>
           </p>
-        </Tarjeta>
-
-        <Tarjeta id="agenda" className="flex min-w-0 flex-col gap-5">
           <nav aria-label={t.niveles} className="flex flex-wrap gap-2">
             <Link href={endereco(diaAtual, '')} aria-current={nivel === null ? 'page' : undefined} className={classeDaAba(nivel === null)}>
               {t.todos}

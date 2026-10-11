@@ -135,6 +135,6 @@ export async function usarZona(dados: FormData): Promise<void> {
   const { pessoa, supabase } = await exigirPessoa();
   const fuso = texto(dados, 'fuso');
   if (!zonaValida(fuso)) redirect(volta(dados, 'fallo'));
-  const { error } = await supabase.from('perfis').update({ fuso }).eq('id', pessoa.id);
+  const { error } = await supabase.from('perfis').update({ fuso, fuso_confirmado_em: new Date().toISOString() }).eq('id', pessoa.id);
   redirect(volta(dados, error ? 'fallo' : 'zona'));
 }

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { randomBytes, randomInt } from 'node:crypto';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
-import { admin, base, caminho, criarPessoa, emailDeTeste, emailsPara, entrar, linkDoEmail, novaPagina, senha, textoDoAviso } from './apoio.mjs';
+import { admin, base, caminho, confirmarZona, criarPessoa, emailDeTeste, emailsPara, entrar, linkDoEmail, novaPagina, senha, textoDoAviso } from './apoio.mjs';
 
 const SEGREDO = process.env.GREENN_WEBHOOK_SEGREDO ?? '';
 const sufixo = randomBytes(3).toString('hex');
@@ -107,7 +107,8 @@ test('2. ela abre o link do e-mail, cria a senha e cai no curso, no dia 1', asyn
   await pagina.getByLabel('Contraseña nueva', { exact: true }).fill(SENHA_DELA);
   await pagina.getByLabel('Repite la contraseña', { exact: true }).fill(SENHA_DELA);
   await pagina.getByRole('button', { name: 'Guardar y entrar' }).click();
-  await pagina.waitForURL('**/inicio');
+  // A primeira tela é a confirmação do fuso horário: ela confirma o de Madri e só então vê o curso.
+  await confirmarZona(pagina, 'Europe/Madrid');
 
   assert.equal(await pagina.getByRole('heading', { level: 1 }).innerText(), 'Hola, Julia');
   await pagina.getByRole('heading', { name: CURSO }).waitFor();

@@ -30,7 +30,7 @@ test('o perfil nasce junto com o usuário, como aluno e com o nome', async () =>
 
 test('sem login, as áreas internas levam para a tela de acesso', async () => {
   const pagina = await novaPagina(navegador);
-  for (const rota of ['/inicio', '/admin', '/nueva-contrasena', '/qualquer-coisa']) {
+  for (const rota of ['/inicio', '/admin', '/nueva-contrasena', '/zona-horaria', '/qualquer-coisa']) {
     await pagina.goto(`${base}${rota}`);
     assert.equal(caminho(pagina), '/entrar', rota);
   }
