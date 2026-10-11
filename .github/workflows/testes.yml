@@ -312,6 +312,7 @@ jobs:
               GREENN_WEBHOOK_SEGREDO="$STACK_SEGREDO_DA_GREENN" \
               node --test e2e/acesso.test.mjs e2e/primeiro-acesso.test.mjs e2e/jornada.test.mjs
           } 2>&1 | tee saida/14-atras-do-traefik.txt
+      - name: Medir a stack e guardar os registros
         if: always()
         run: |
           if docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null | grep -q '^active$'; then
