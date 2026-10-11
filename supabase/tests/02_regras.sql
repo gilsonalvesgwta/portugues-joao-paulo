@@ -43,7 +43,9 @@ begin
   insert into itens_concluidos (aluno_id, item_dia_id) values (teste.uid(1), teste.tid(53));
   perform teste.confere((select count(*) from itens_concluidos) = 1, 'aluno marca a tarefa do dia');
   perform teste.espera_erro($q$select registrar_evento_pagamento('{"type":"sale"}'::jsonb)$q$,
-    'permission denied', 'aluno não chama as funções de pagamento');
+    'permission denied', 'aluno não grava aviso de pagamento');
+  perform teste.espera_erro($q$select aplicar_evento_pagamento(1, teste.uid(1))$q$,
+    'permission denied', 'aluno não aplica aviso de pagamento (não libera acesso para si)');
 end $$;
 
 -- ============ 2. Sem matrícula (12) e com acesso vencido (11) ============
@@ -355,7 +357,49 @@ begin
 end $$;
 reset role;
 
--- ============ 10. Pagamento: renovação da assinatura e compra de quem já tem acesso ============
+-- ============ 10. Nada fica liberado por esquecimento ============
+-- O ambiente de teste, como o Supabase, libera para quem está logado toda função e toda tabela
+-- nova. Estas listas são tudo o que as migrações deixam aberto; qualquer coisa a mais é falha.
+do $$
+declare
+  v_abertas text[];
+begin
+  select coalesce(array_agg(p.proname::text order by p.proname), '{}') into v_abertas
+  from pg_proc p
+  where p.pronamespace = 'public'::regnamespace and has_function_privilege('authenticated', p.oid, 'execute');
+  perform teste.confere(v_abertas = array['agenda_turmas', 'aluno_ve_aula', 'aluno_ve_curso', 'avaliar_aula', 'cancelar_reserva',
+      'config_int', 'definir_papel', 'eh_admin', 'eh_equipe', 'ler_trilha', 'lista_de_pessoas', 'pode_conversacao', 'reservar_turma',
+      'resumo_dos_quizzes', 'salvar_quiz', 'salvar_trilha'],
+    'quem está logado só chama as funções da lista: ' || array_to_string(v_abertas, ', '));
+
+  select coalesce(array_agg(p.proname::text order by p.proname), '{}') into v_abertas
+  from pg_proc p
+  where p.pronamespace = 'public'::regnamespace and has_function_privilege('anon', p.oid, 'execute');
+  perform teste.confere(v_abertas = '{}', 'visitante sem login não chama nenhuma função: ' || array_to_string(v_abertas, ', '));
+
+  select coalesce(array_agg(c.relname::text order by c.relname), '{}') into v_abertas
+  from pg_class c
+  where c.relnamespace = 'public'::regnamespace and c.relkind in ('r', 'v', 'm', 'S')
+    and (has_table_privilege('anon', c.oid, 'select') or has_table_privilege('anon', c.oid, 'insert')
+         or has_table_privilege('anon', c.oid, 'update') or has_table_privilege('anon', c.oid, 'delete'));
+  perform teste.confere(v_abertas = '{}', 'visitante sem login não lê nem grava nenhuma tabela: ' || array_to_string(v_abertas, ', '));
+
+  select coalesce(array_agg(c.relname::text order by c.relname), '{}') into v_abertas
+  from pg_class c
+  where c.relnamespace = 'public'::regnamespace and c.relkind = 'r' and not c.relrowsecurity;
+  perform teste.confere(v_abertas = '{}', 'toda tabela tem regras de acesso por linha ligadas: ' || array_to_string(v_abertas, ', '));
+
+  -- Uma função criada depois desta migração não nasce liberada pelo nome para quem está logado.
+  -- (Sobra o padrão geral do Postgres, "todos", que cada migração tira das funções que cria.)
+  create function public.teste_de_funcao_nova() returns integer language sql as 'select 1';
+  perform teste.confere(
+    (select coalesce(proacl::text, '') not like '%authenticated=%' and coalesce(proacl::text, '') not like '%anon=%'
+     from pg_proc where oid = 'public.teste_de_funcao_nova()'::regprocedure),
+    'função nova não nasce liberada pelo nome para visitante nem para quem está logado');
+  drop function public.teste_de_funcao_nova();
+end $$;
+
+-- ============ 11. Pagamento: renovação da assinatura e compra de quem já tem acesso ============
 update public.matriculas set expira_em = now() + interval '10 days' where aluno_id = teste.uid(3);
 select set_config('request.jwt.claims', '', false);
 set role service_role;

@@ -401,7 +401,11 @@ test('o professor não vê Pagamentos; ofertas e avisos não respondem para ele 
     await sessao.auth.signInWithPassword({ email, password: clave });
     assert.deepEqual((await sessao.from('ofertas').select('id')).data ?? [], [], `${email} não lê ofertas`);
     assert.deepEqual((await sessao.from('eventos_pagamento').select('id')).data ?? [], [], `${email} não lê avisos`);
-    assert.notEqual((await sessao.rpc('registrar_evento_pagamento', { p_payload: { type: 'sale' } })).error, null);
+    // Ninguém além do servidor grava ou aplica um aviso: senão, bastaria estar logado para liberar acesso.
+    assert.notEqual((await sessao.rpc('registrar_evento_pagamento', { p_payload: { type: 'sale' } })).error, null, `${email} não grava aviso`);
+    const [umAviso] = await avisosDe(compradora.email);
+    const { data: eu } = await sessao.auth.getUser();
+    assert.notEqual((await sessao.rpc('aplicar_evento_pagamento', { p_evento: umAviso.id, p_aluno: eu.user.id })).error, null, `${email} não aplica aviso`);
     assert.notEqual((await sessao.from('ofertas').insert({ greenn_product_id: produto + 5, curso_id: cursoId, nome: 'Intrusa' })).error, null);
   }
 
@@ -411,6 +415,22 @@ test('o professor não vê Pagamentos; ofertas e avisos não respondem para ele 
   await dela.goto(`${base}/admin/pagamentos`);
   assert.equal(caminho(dela), '/inicio');
   await dela.context().close();
+});
+
+test('visitante sem login não chama nenhuma função do banco nem lê as tabelas de pagamento', async () => {
+  const visitante = clientePublico();
+  for (const [funcao, dados] of [
+    ['registrar_evento_pagamento', { p_payload: { type: 'sale' } }],
+    ['aplicar_evento_pagamento', { p_evento: 1, p_aluno: '00000000-0000-0000-0000-000000000001' }],
+    ['lista_de_pessoas', { p_busca: '', p_filtro: 'alunos', p_limite: 10, p_pulo: 0 }],
+    ['definir_papel', { p_pessoa: '00000000-0000-0000-0000-000000000001', p_papel: 'admin' }],
+    ['eh_admin', {}],
+  ]) {
+    assert.notEqual((await visitante.rpc(funcao, dados)).error, null, funcao);
+  }
+  for (const tabela of ['ofertas', 'eventos_pagamento', 'registro_alteracoes', 'matriculas']) {
+    assert.deepEqual((await visitante.from(tabela).select('*')).data ?? [], [], tabela);
+  }
 });
 
 test('no celular, a tela de pagamentos e a de oferta cabem na largura', async () => {

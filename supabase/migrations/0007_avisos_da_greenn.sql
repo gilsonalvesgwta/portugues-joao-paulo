@@ -1,7 +1,33 @@
--- Avisos de pagamento da Greenn: dois ajustes nas funções do servidor.
+-- Avisos de pagamento da Greenn: uma correção de segurança e dois ajustes nas funções do servidor.
 -- A transação é aberta por quem aplica: a migração entra inteira ou não entra.
 -- PROVISÓRIO, como o resto do pagamento: segue a documentação pública do webhook e será
 -- conferido com eventos reais antes de ir para produção.
+
+-- 0. SEGURANÇA: fechar as funções do servidor.
+--    O Supabase entrega toda função nova do esquema public já liberada para quem está logado
+--    (papel authenticated). A migração 0001 tirou a permissão de anon e de public, mas não a de
+--    authenticated: qualquer pessoa logada conseguia chamar as duas funções de pagamento e
+--    liberar acesso para si mesma. Aqui a permissão é tirada de todas as funções e devolvida só
+--    às que a tela do aluno e a da equipe usam (cada uma confere por dentro quem está chamando).
+--    As funções de pagamento ficam só com o servidor (service_role).
+revoke execute on all functions in schema public from public, anon, authenticated;
+grant execute on function
+  public.eh_equipe(), public.eh_admin(), public.aluno_ve_curso(uuid), public.aluno_ve_aula(uuid),
+  public.pode_conversacao(), public.config_int(text, integer), public.agenda_turmas(text),
+  public.reservar_turma(uuid), public.cancelar_reserva(uuid), public.avaliar_aula(uuid, integer, text),
+  public.salvar_quiz(uuid, text, integer, text, jsonb), public.resumo_dos_quizzes(),
+  public.salvar_trilha(uuid, jsonb), public.ler_trilha(uuid),
+  public.definir_papel(uuid, text), public.lista_de_pessoas(text, text, integer, integer)
+  to authenticated;
+grant execute on all functions in schema public to service_role;
+--    Os contadores das tabelas (sequências) também nascem liberados no Supabase. Ninguém além do
+--    servidor precisa deles: as tabelas com número automático cuidam disso sozinhas.
+revoke all on all sequences in schema public from public, anon, authenticated;
+--    Daqui em diante, função, tabela ou sequência nova criada pelas migrações não nasce liberada
+--    para anon nem para authenticated: cada migração libera o que for preciso, pelo nome.
+alter default privileges in schema public revoke execute on functions from anon, authenticated;
+alter default privileges in schema public revoke all on tables from anon, authenticated;
+alter default privileges in schema public revoke all on sequences from anon, authenticated;
 
 -- 1. Assinatura: cada cobrança paga manda o mesmo contrato com o mesmo status ("paid").
 --    A chave que impede gravar o mesmo aviso duas vezes passa a incluir a cobrança (ou o fim do
