@@ -1,5 +1,6 @@
 import { clienteDoServidor } from '@/lib/supabase/servidor';
 import type { Situacao } from '@/lib/conteudo';
+import { doBancoParaTrilha, type DiaDaTrilha, type Disponivel } from '@/lib/trilha-editor';
 
 // Leitura do conteúdo para as telas da administração. Usa a sessão de quem está logado,
 // então as regras de acesso do banco valem: só a equipe recebe rascunhos e itens da lixeira.
@@ -207,4 +208,60 @@ export function aulasDoCurso(conteudo: Conteudo, cursoId: string): Aula[] {
 export function cursoDaAula(conteudo: Conteudo, aulaId: string): string | null {
   const moduloId = conteudo.aulas.find((aula) => aula.id === aulaId)?.modulo_id;
   return conteudo.modulos.find((modulo) => modulo.id === moduloId)?.curso_id ?? null;
+}
+
+// Tudo o que pode entrar na trilha de um curso: as aulas, os quizzes dessas aulas e as tarefas,
+// sempre fora da lixeira. É também a lista usada para conferir o que o editor manda gravar.
+export async function carregarDisponiveis(cursoId: string): Promise<Disponivel[]> {
+  const supabase = await clienteDoServidor();
+  const [conteudo, tarefas, quizzes] = await Promise.all([
+    carregarConteudo(),
+    carregarTarefas(),
+    supabase.from('quizzes').select('id, aula_id, situacao'),
+  ]);
+  if (quizzes.error) throw new Error(`Não foi possível ler os quizzes: ${quizzes.error.message}`);
+  const aulas = aulasDoCurso(conteudo, cursoId);
+  const aulaPorId = new Map(aulas.map((aula) => [aula.id, aula]));
+
+  const disponiveis: Disponivel[] = aulas.map((aula) => ({
+    tipo: 'aula',
+    alvo: aula.id,
+    rotulo: `Aula ${aula.numero} — ${aula.titulo_pt}`,
+    aulaId: aula.id,
+    numeroDaAula: aula.numero,
+    publicado: aula.situacao === 'publicado',
+  }));
+  for (const quiz of (quizzes.data ?? []) as unknown as { id: string; aula_id: string; situacao: Situacao }[]) {
+    const aula = aulaPorId.get(quiz.aula_id);
+    if (!aula) continue;
+    disponiveis.push({
+      tipo: 'quiz',
+      alvo: quiz.id,
+      rotulo: `Quiz da aula ${aula.numero}`,
+      aulaId: aula.id,
+      numeroDaAula: aula.numero,
+      publicado: quiz.situacao === 'publicado' && aula.situacao === 'publicado',
+    });
+  }
+  for (const tarefa of ativos(tarefas)) {
+    if (tarefa.curso_id !== cursoId) continue;
+    const aula = tarefa.aula_id ? aulaPorId.get(tarefa.aula_id) : undefined;
+    disponiveis.push({
+      tipo: 'tarefa',
+      alvo: tarefa.id,
+      rotulo: `Tarefa: ${tarefa.titulo_es}`,
+      aulaId: aula?.id ?? null,
+      numeroDaAula: aula?.numero ?? null,
+      publicado: true,
+    });
+  }
+  return disponiveis;
+}
+
+// A trilha gravada de um curso, pronta para o editor.
+export async function carregarTrilha(cursoId: string): Promise<DiaDaTrilha[]> {
+  const supabase = await clienteDoServidor();
+  const { data, error } = await supabase.rpc('ler_trilha', { p_curso: cursoId });
+  if (error) throw new Error(`Não foi possível ler a trilha: ${error.message}`);
+  return doBancoParaTrilha(data);
 }

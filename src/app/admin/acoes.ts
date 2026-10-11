@@ -6,8 +6,10 @@ import { enviarEmail } from '@/lib/correio';
 import { emailDeConferencia } from '@/lib/emails';
 import { motivoDaFalha } from '@/lib/smtp';
 import { validarAnotacoes } from '@/lib/anotacoes';
-import type { EstadoDasAnotacoes, EstadoDoFormulario, EstadoDoQuiz } from '@/lib/formulario';
+import { carregarDisponiveis, carregarTrilha } from '@/lib/admin/dados';
+import type { EstadoDaTrilha, EstadoDasAnotacoes, EstadoDoFormulario, EstadoDoQuiz } from '@/lib/formulario';
 import { paraOBanco, validarQuiz } from '@/lib/quiz-editor';
+import { chave, validarTrilha } from '@/lib/trilha-editor';
 import { ehEquipe } from '@/lib/papeis';
 import { clienteDoServidor, pessoaLogada } from '@/lib/supabase/servidor';
 
@@ -385,6 +387,39 @@ export async function salvarTarefa(anterior: EstadoDoFormulario, dados: FormData
 }
 
 // ---------------------------------------------------------------------------
+// Trilha por dia
+// ---------------------------------------------------------------------------
+
+// Grava a trilha inteira do curso. A troca acontece dentro do banco, em uma única transação
+// (função salvar_trilha), e os itens que já existiam são movidos, não recriados: o que o aluno
+// já marcou como feito continua valendo.
+export async function salvarTrilha(anterior: EstadoDaTrilha, dados: FormData): Promise<EstadoDaTrilha> {
+  const supabase = await exigirEquipe();
+  const falha = (erro: string): EstadoDaTrilha => ({ vez: anterior.vez + 1, situacao: 'erro', erro, dias: null });
+
+  const { curso_id: cursoId, trilha: texto } = valoresDe(dados, ['curso_id', 'trilha']);
+  if (!ehUuid(cursoId)) return falha('Não encontrei este curso.');
+  if (typeof texto !== 'string' || texto.length > 600_000) return falha('A trilha ficou grande demais para salvar de uma vez.');
+  let lido: unknown;
+  try {
+    lido = JSON.parse(texto);
+  } catch {
+    return falha('A trilha chegou em um formato inesperado.');
+  }
+  const disponiveis = await carregarDisponiveis(cursoId);
+  const conferido = validarTrilha(lido, new Set(disponiveis.map(chave)));
+  if (!conferido.ok) return falha(conferido.erro);
+
+  const { error } = await supabase.rpc('salvar_trilha', { p_curso: cursoId, p_dias: conferido.dias });
+  if (error) {
+    if (error.message.includes('curso_inexistente')) return falha('Não encontrei este curso. Ele pode ter ido para a lixeira.');
+    // Alguém mexeu na trilha ou no conteúdo enquanto esta tela estava aberta.
+    return falha('Não foi possível salvar: a trilha ou o conteúdo do curso mudou enquanto esta tela estava aberta. Recarregue e tente de novo.');
+  }
+  return { vez: anterior.vez + 1, situacao: 'salvo', erro: null, dias: await carregarTrilha(cursoId) };
+}
+
+// ---------------------------------------------------------------------------
 // Lixeira
 // ---------------------------------------------------------------------------
 
@@ -418,6 +453,21 @@ export async function moverParaLixeira(dados: FormData): Promise<void> {
       .eq('modulo_id', id)
       .is('arquivado_em', null);
     if ((count ?? 0) > 0) redirect(`${volta}?aviso=modulo_com_aulas`);
+  }
+
+  // O que está na trilha por dia não vai para a lixeira: o aluno ficaria com um dia furado.
+  if (tipo === 'aula') {
+    const { count: daAula } = await supabase.from('itens_dia').select('id', { count: 'exact', head: true }).eq('aula_id', id);
+    const { data: quiz } = await supabase.from('quizzes').select('id').eq('aula_id', id).maybeSingle();
+    const { count: doQuiz } =
+      typeof quiz?.id === 'string'
+        ? await supabase.from('itens_dia').select('id', { count: 'exact', head: true }).eq('quiz_id', quiz.id)
+        : { count: 0 };
+    if ((daAula ?? 0) + (doQuiz ?? 0) > 0) redirect(`/admin/aulas/${id}?aviso=aula_na_trilha`);
+  }
+  if (tipo === 'tarefa') {
+    const { count } = await supabase.from('itens_dia').select('id', { count: 'exact', head: true }).eq('tarefa_id', id);
+    if ((count ?? 0) > 0) redirect(`/admin/tarefas/${id}?aviso=tarefa_na_trilha`);
   }
 
   // Curso e aula saem da lixeira como rascunho: restaurar nunca publica nada sozinho.

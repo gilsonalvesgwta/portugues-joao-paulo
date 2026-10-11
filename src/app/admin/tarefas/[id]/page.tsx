@@ -2,15 +2,17 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { moverParaLixeira } from '@/app/admin/acoes';
 import { FormularioDaTarefa } from '@/components/admin/FormularioDaTarefa';
-import { Botao, Cartao, TituloDaPagina, Trilha } from '@/components/admin/ui';
+import { AvisoDaPagina, Botao, Cartao, TituloDaPagina, Trilha } from '@/components/admin/ui';
+import { avisoDe } from '@/lib/admin/avisos';
 import { ativos, aulasDoCurso, carregarConteudo, carregarTarefas } from '@/lib/admin/dados';
 
 export const metadata: Metadata = { title: 'Editar tarefa' };
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ aviso?: string | string[] }> };
 
-export default async function PaginaEditarTarefa({ params }: Props) {
+export default async function PaginaEditarTarefa({ params, searchParams }: Props) {
   const { id } = await params;
+  const { aviso } = await searchParams;
   const [conteudo, tarefas] = await Promise.all([carregarConteudo(), carregarTarefas()]);
   const tarefa = ativos(tarefas).find((item) => item.id === id);
   if (!tarefa) redirect('/admin/tarefas?aviso=nao_encontrado');
@@ -20,6 +22,7 @@ export default async function PaginaEditarTarefa({ params }: Props) {
     <>
       <Trilha href={`/admin/tarefas?curso=${tarefa.curso_id}`} rotulo="Tarefas" />
       <TituloDaPagina titulo="Editar tarefa" texto={tarefa.titulo_es} />
+      <AvisoDaPagina aviso={avisoDe(aviso)} />
       <Cartao>
         <FormularioDaTarefa
           aulas={aulas.map((item) => ({ id: item.id, rotulo: `Aula ${item.numero} — ${item.titulo_pt}` }))}

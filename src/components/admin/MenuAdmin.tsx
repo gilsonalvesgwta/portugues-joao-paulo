@@ -10,6 +10,7 @@ const ITENS = [
   { href: '/admin/cursos', rotulo: 'Cursos e módulos', prefixos: ['/admin/cursos', '/admin/modulos'] },
   { href: '/admin/aulas', rotulo: 'Aulas', prefixos: ['/admin/aulas', '/admin/materiais'] },
   { href: '/admin/tarefas', rotulo: 'Tarefas', prefixos: ['/admin/tarefas'] },
+  { href: '/admin/trilha', rotulo: 'Trilha por dia', prefixos: ['/admin/trilha'] },
   { href: '/admin/lixeira', rotulo: 'Lixeira', prefixos: ['/admin/lixeira'] },
 ];
 
