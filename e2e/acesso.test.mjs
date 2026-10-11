@@ -96,6 +96,7 @@ test('a sessão fica em cookie que os programas da página não leem', async () 
   for (const cookie of cookies) {
     assert.equal(cookie.httpOnly, true, `${cookie.name} é só do servidor`);
     assert.equal(cookie.sameSite, 'Lax', cookie.name);
+    assert.equal(cookie.secure, base.startsWith('https://'), `${cookie.name}: em https, só viaja cifrado`);
   }
   assert.equal(await pagina.evaluate(() => document.cookie.includes('sb-')), false, 'a página não enxerga a sessão');
   // E a sessão continua valendo nas telas seguintes.

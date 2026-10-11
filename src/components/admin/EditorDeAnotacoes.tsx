@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { usePronto } from '@/components/usePronto';
 import { salvarAnotacoes } from '@/app/admin/acoes';
 import { useAvisoAoSair } from '@/components/admin/aoSair';
 import { Apuntes } from '@/components/aula/Apuntes';
@@ -272,6 +273,8 @@ function CamposDoBloco({ bloco, aoMudar, foco }: { bloco: Bloco; aoMudar: Mudar;
 type Props = { aulaId: string; numero: number; tituloEs: string; iniciais: Bloco[] };
 
 export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props) {
+  // Até a página acordar no navegador, o editor fica parado: o que fosse digitado antes se perderia.
+  const pronto = usePronto();
   const [blocos, setBlocos] = useState<Bloco[]>(iniciais);
   const [sujo, setSujo] = useState(false);
   const [recemCriado, setRecemCriado] = useState<string | null>(null);
@@ -335,7 +338,7 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
           </p>
           <button
             type="submit"
-            disabled={enviando}
+            disabled={enviando || !pronto}
             className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-verde bg-verde px-4 text-[15px] font-bold text-white hover:bg-verde-link disabled:cursor-default disabled:opacity-50"
           >
             {enviando ? 'Salvando…' : 'Salvar anotações'}
@@ -348,7 +351,7 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
           </p>
         ) : null}
 
-        <fieldset disabled={enviando} className="flex min-w-0 flex-col gap-4">
+        <fieldset disabled={enviando || !pronto} className="flex min-w-0 flex-col gap-4">
           <legend className="sr-only">Blocos das anotações</legend>
           {blocos.map((bloco, indice) => {
             const presoNoTopo = bloco.tipo === 'capa';

@@ -275,6 +275,43 @@ jobs:
               GREENN_WEBHOOK_SEGREDO="$STACK_SEGREDO_DA_GREENN" \
               node --test e2e/acesso.test.mjs e2e/admin-conteudo.test.mjs e2e/aluno.test.mjs
           } 2>&1 | tee saida/13-copia-de-seguranca.txt
+      # O que só existia na VPS passa a ser testado aqui: a plataforma atrás de um Traefik montado
+      # como o de lá, por https, com o endereço da variável DOMINIO. Confere os rótulos da stack,
+      # os redirecionamentos, o cookie da sessão (que em https só viaja cifrado) e os formulários
+      # passando pelo Traefik. É a última etapa de testes: ela muda o endereço público do aplicativo.
+      - name: Atrás do Traefik, por https
+        run: |
+          {
+            echo "127.0.0.1 plataforma.exemplo.test" | sudo tee -a /etc/hosts > /dev/null
+            docker stack deploy --resolve-image never -c deploy/teste-traefik.yml traefikteste > /dev/null 2>&1
+            # Sem "--detach": o comando só volta quando o aplicativo já reiniciou com o endereço novo.
+            docker service update --quiet --detach=false --env-add SITE_URL=https://plataforma.exemplo.test portuguesjp_portuguesjp_app > /dev/null
+            echo "esperando o Traefik entregar a plataforma por https..."
+            SEGUIDAS=0
+            for i in $(seq 1 90); do
+              CODIGO=$(curl -sk -o /dev/null -w '%{http_code}' https://plataforma.exemplo.test/api/saude || true)
+              REPLICAS=$(docker service ls --filter name=portuguesjp_portuguesjp_app --format '{{.Replicas}}')
+              if [ "$CODIGO" = "200" ] && [ "$REPLICAS" = "1/1" ]; then SEGUIDAS=$((SEGUIDAS + 1)); else SEGUIDAS=0; fi
+              if [ "$SEGUIDAS" -ge 5 ]; then break; fi
+              sleep 2
+            done
+            echo "resposta por https: $CODIGO (aplicativo $REPLICAS)"
+            test "$SEGUIDAS" -ge 5
+            LOCAL="$(curl -sk -o /dev/null -D - https://plataforma.exemplo.test/inicio | tr -d '\r' | grep -i '^location:' | cut -d' ' -f2 || true)"
+            echo "quem não está logado é mandado para: $LOCAL"
+            test "$LOCAL" = "https://plataforma.exemplo.test/entrar"
+            echo "sem o endereço certo, o Traefik não entrega a plataforma: $(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/api/saude)"
+            echo "== acesso, primeiro acesso e jornada da aluna, pelo Traefik =="
+            env -u SUPABASE_URL -u SUPABASE_ANON_KEY -u SUPABASE_SERVICE_ROLE_KEY -u ANTHROPIC_API_KEY -u PAPO_API_URL -u PAPO_DE_TESTE_PORTA \
+              BASE_URL=https://plataforma.exemplo.test \
+              E2E_CERTIFICADO_DE_TESTE=1 NODE_TLS_REJECT_UNAUTHORIZED=0 NODE_NO_WARNINGS=1 \
+              SUPABASE_AUTH_URL=http://127.0.0.1:9999 SUPABASE_REST_URL=http://127.0.0.1:3001 \
+              SUPABASE_JWT_SECRET="$STACK_SEGREDO_JWT" \
+              ADMIN_EMAIL=dono@exemplo.test ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA" \
+              EMAIL_PASTA="$STACK_PASTA_DA_CAIXA" \
+              GREENN_WEBHOOK_SEGREDO="$STACK_SEGREDO_DA_GREENN" \
+              node --test e2e/acesso.test.mjs e2e/primeiro-acesso.test.mjs e2e/jornada.test.mjs
+          } 2>&1 | tee saida/14-atras-do-traefik.txt
       - name: Medir a stack e guardar os registros
         if: always()
         run: |

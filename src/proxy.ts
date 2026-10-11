@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { configDoSupabase } from '@/lib/supabase/config';
+import { enderecoPublico } from '@/lib/endereco';
 import { cookieDaSessao } from '@/lib/supabase/cookies';
 
 type CookieParaGravar = { name: string; value: string; options: CookieOptions };
@@ -43,10 +44,7 @@ export async function proxy(pedido: NextRequest) {
   if (logado && comeca(caminho, SO_PARA_VISITANTE)) destino = '/inicio';
   if (destino === null) return resposta;
 
-  const endereco = pedido.nextUrl.clone();
-  endereco.pathname = destino;
-  endereco.search = '';
-  const redirecionamento = NextResponse.redirect(endereco);
+  const redirecionamento = NextResponse.redirect(enderecoPublico(destino, pedido.nextUrl));
   // Leva junto os cookies que a renovação da sessão acabou de gravar.
   for (const cookie of resposta.cookies.getAll()) redirecionamento.cookies.set(cookie);
   return redirecionamento;
