@@ -1,7 +1,7 @@
 # Stack do Portainer para a plataforma Português com João Paulo.
 #
-# Segue o padrão das outras stacks da VPS (Docker Swarm + Traefik + rede Wtatechor3Net) e não
-# encosta em nenhuma delas:
+# Segue o padrão das outras stacks da VPS (Docker Swarm + Traefik + a rede interna do Traefik) e
+# não encosta em nenhuma delas:
 # - tem banco e login PRÓPRIOS, separados do Supabase que os outros projetos usam;
 # - todo serviço tem nome começado por "portuguesjp_", que não existe em outra stack;
 # - não abre nenhuma porta da VPS: só o aplicativo é alcançado, e só pelo Traefik;
@@ -12,6 +12,9 @@
 # Nenhuma senha fica escrita neste arquivo.
 #
 #   DOMINIO              endereço da plataforma, sem https (ex.: portuguescomjoaopaulo.wtatech.com.br)
+#   REDE_INTERNA         nome da rede interna da VPS, a mesma do Traefik, escrito igualzinho
+#                        (ex.: WtatechNet). Para ver o nome: no Portainer, menu Networks, é a rede
+#                        de tipo "overlay" que não se chama "ingress"
 #   SENHA_DO_BANCO       senha nova, só letras e números, 30 ou mais
 #   SEGREDO_JWT          segredo novo, só letras e números, 40 ou mais
 #   ADMIN_EMAIL          e-mail do primeiro administrador
@@ -25,7 +28,8 @@
 #                        o tutor com inteligência artificial. Em branco, o Papo fica desligado
 #   MODELO_DO_PAPO       opcional. Em branco, o Papo usa o modelo padrão (Claude Haiku 4.5)
 #
-# Situação: testada no GitHub em Docker Swarm (sem o Traefik). Ainda não instalada na VPS.
+# Situação: testada no GitHub em Docker Swarm, também atrás de um Traefik montado como o da VPS
+# (entrada websecure, certificado letsencryptresolver).
 
 version: "3.7"
 services:
@@ -35,7 +39,7 @@ services:
     image: ghcr.io/gilsonalvesgwta/portugues-joao-paulo:latest
 
     networks:
-      - Wtatechor3Net ## Nome da rede interna
+      - rede_interna ## O nome verdadeiro da rede vem da variável REDE_INTERNA
 
     environment:
       ## Endereço público da plataforma
@@ -102,7 +106,7 @@ services:
       - portuguesjp_db_config:/etc/postgresql-custom
 
     networks:
-      - Wtatechor3Net ## Nome da rede interna
+      - rede_interna ## O nome verdadeiro da rede vem da variável REDE_INTERNA
 
     environment:
       - POSTGRES_HOST=/var/run/postgresql
@@ -131,7 +135,7 @@ services:
     image: supabase/gotrue:v2.182.1
 
     networks:
-      - Wtatechor3Net ## Nome da rede interna
+      - rede_interna ## O nome verdadeiro da rede vem da variável REDE_INTERNA
 
     environment:
       - GOTRUE_API_HOST=0.0.0.0
@@ -180,7 +184,7 @@ services:
       ]
 
     networks:
-      - Wtatechor3Net ## Nome da rede interna
+      - rede_interna ## O nome verdadeiro da rede vem da variável REDE_INTERNA
 
     environment:
       - PGRST_DB_URI=postgres://authenticator:${SENHA_DO_BANCO}@portuguesjp_db:5432/postgres
@@ -206,7 +210,7 @@ services:
     image: ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco:latest
 
     networks:
-      - Wtatechor3Net ## Nome da rede interna
+      - rede_interna ## O nome verdadeiro da rede vem da variável REDE_INTERNA
 
     environment:
       - PGHOST=portuguesjp_db
@@ -234,7 +238,9 @@ volumes:
   portuguesjp_db_config:
     name: portuguesjp_db_config
 
+# A rede é a que o Traefik da VPS usa. Ela já existe (foi criada na instalação do Traefik) e o
+# nome dela é preenchido no Portainer, na variável REDE_INTERNA.
 networks:
-  Wtatechor3Net: ## Nome da rede interna
+  rede_interna:
     external: true
-    name: Wtatechor3Net ## Nome da rede interna
+    name: ${REDE_INTERNA}
