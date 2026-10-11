@@ -172,6 +172,7 @@ jobs:
             docker swarm init --advertise-addr 127.0.0.1 > /dev/null
             docker network create --driver overlay --attachable Wtatechor3Net > /dev/null
             export DOMINIO=plataforma.exemplo.test
+            export REDE_INTERNA=Wtatechor3Net
             export SENHA_DO_BANCO="$STACK_SENHA_DO_BANCO"
             export SEGREDO_JWT="$STACK_SEGREDO_JWT"
             export ADMIN_EMAIL=dono@exemplo.test

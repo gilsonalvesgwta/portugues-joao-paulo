@@ -120,6 +120,7 @@ Guarde os quatro no gerenciador de senhas.
 | Variável | Valor |
 | --- | --- |
 | `DOMINIO` | `portuguescomjoaopaulo.wtatech.com.br` (sem `https://`) |
+| `REDE_INTERNA` | o nome da rede interna da VPS, escrito igualzinho, com maiúsculas e minúsculas. Na VPS atual é `Wtatechor3Net`. Para conferir: no Portainer, menu **Networks**, é a rede de tipo `overlay` que não se chama `ingress` (a mesma que aparece nas outras stacks, em `networks:`) |
 | `SENHA_DO_BANCO` | a do passo 3 |
 | `SEGREDO_JWT` | o do passo 3 |
 | `ADMIN_EMAIL` | o seu e-mail (será o primeiro administrador) |
@@ -131,8 +132,12 @@ Guarde os quatro no gerenciador de senhas.
 
 5. Clique em **Deploy the stack**.
 
-A stack já vem com o padrão da VPS: rede `Wtatechor3Net`, serviços no nó principal e, só no aplicativo, os rótulos
-do Traefik (`websecure`, certificado pelo `letsencryptresolver`).
+A stack já vem com o padrão da VPS: entra na rede interna que você informou em `REDE_INTERNA`, deixa os serviços no
+nó principal e, só no aplicativo, leva os rótulos do Traefik (`websecure`, certificado pelo `letsencryptresolver`).
+
+Se o Portainer responder que a rede não foi encontrada (`network ... not found` ou `network ... is declared as
+external, but could not be found`), o nome em `REDE_INTERNA` está diferente do nome da rede da VPS: corrija a
+variável e clique em **Deploy the stack** de novo. Nada foi criado nessa tentativa.
 
 ## Passo 5 — Conferir que subiu
 
@@ -147,7 +152,7 @@ Em **Stacks → portuguesjp**, a lista de serviços deve ficar assim em dois a q
 | `portuguesjp_banco` | **0/1** | **É o normal.** Ele prepara o banco e termina |
 
 Para ter certeza de que o banco foi preparado: clique em `portuguesjp_banco` → **Service logs**. A última linha
-deve ser `BANCO PRONTO (12 migração(ões) aplicada(s) agora).` (o número cresce conforme a versão).
+deve ser `BANCO PRONTO (13 migração(ões) aplicada(s) agora).` (o número cresce conforme a versão).
 
 Depois abra `https://portuguescomjoaopaulo.wtatech.com.br`. Deve aparecer a tela de acesso, em espanhol, com o
 cadeado do navegador fechado. O certificado pode levar um ou dois minutos na primeira vez.
@@ -320,13 +325,12 @@ Nas perguntas:
 | Pergunta | O que responder |
 | --- | --- |
 | Nome do Servidor | Um nome qualquer, por exemplo `portuguesjp` |
-| **Nome da Rede Interna** | **`Wtatechor3Net`**, escrito exatamente assim: é o nome que a stack da plataforma espera |
+| **Nome da Rede Interna** | Um nome sem espaços, por exemplo `WtatechNet`. **Anote como escreveu**, com maiúsculas e minúsculas: é o valor da variável `REDE_INTERNA` no passo 4 |
 | E-mail para Certificado SSL | O seu e-mail |
 | Domínio para o Portainer | O endereço criado na etapa B, por exemplo `portainer-jp.wtatech.com.br` |
 | Usuário e senha para o Portainer | Novos, guardados no gerenciador de senhas |
 
-Confirme com `Y` e espere terminar. Se preferir outro nome de rede, troque `Wtatechor3Net` pelo nome novo em todos
-os lugares do arquivo da stack (ele aparece 8 vezes) antes de colar no passo 4.
+Confirme com `Y` e espere terminar.
 
 Esse instalador é de terceiros e é o que montou a VPS atual; ele não faz parte dos testes deste repositório. O que
 os testes conferem é a stack da plataforma atrás de um Traefik montado do mesmo jeito (rede, entrada `websecure`,
@@ -335,8 +339,13 @@ certificado `letsencryptresolver`).
 **D — Abrir o Portainer** no endereço da etapa B e entrar com o usuário e a senha da etapa C. O cadeado fechado
 mostra que o Traefik e o certificado estão funcionando.
 
-**E — Instalar a plataforma**: os 12 passos deste roteiro, sem mudar nada. No passo 2, o registro
-`portuguescomjoaopaulo` aponta para o IP da VPS nova.
+**E — Instalar a plataforma**: os 12 passos deste roteiro. No passo 2, o registro da plataforma aponta para o IP
+da VPS nova. No passo 4, `DOMINIO` é o endereço que você criou na etapa B e `REDE_INTERNA` é o nome de rede da
+etapa C. O arquivo da stack é colado como está, sem editar nada.
+
+Se o instalador também colocou o **Supabase** nessa VPS, ele não é usado: a plataforma tem banco e login próprios,
+dentro da stack `portuguesjp`. As duas stacks não se atrapalham (os nomes de serviço e os volumes são diferentes),
+mas o Supabase ocupa memória à toa. Numa VPS só da plataforma, pode apagar a stack `supabase` no Portainer.
 
 **F — Trazer os dados da VPS antiga**, só se a plataforma já estava em uso lá: é a seção abaixo.
 
