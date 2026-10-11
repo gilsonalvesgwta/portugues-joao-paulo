@@ -139,6 +139,7 @@ test('a equipe trabalha na administração sem confirmar nada; a prévia da áre
   assert.equal(caminho(pagina), '/admin/conversacao');
   await pagina.goto(`${base}/conversacion`);
   await pagina.waitForURL('**/zona-horaria');
+  await pagina.getByText('La elegimos por la hora de tu dispositivo.').waitFor();
   assert.equal(await pagina.getByLabel('Tu zona horaria').inputValue(), 'America/Sao_Paulo');
   await pagina.getByRole('button', { name: 'Confirmar zona horaria' }).click();
   await pagina.waitForURL('**/inicio');
