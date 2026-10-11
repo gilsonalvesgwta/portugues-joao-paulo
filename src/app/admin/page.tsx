@@ -64,6 +64,19 @@ export default async function PaginaPainel({ searchParams }: Props) {
       ) : null}
 
       <Cartao>
+        <h2 className="text-lg font-bold">Ver como o aluno</h2>
+        <p className="mt-2 text-[15px] leading-normal text-apoio">
+          Abra a área do aluno para conferir os cursos publicados do jeito que ele vê: o dia de hoje, as aulas, os quizzes. O
+          que você fizer por lá não fica gravado.
+        </p>
+        <div className="mt-4">
+          <LinkBotao href="/inicio" variante="secundario">
+            Abrir a área do aluno
+          </LinkBotao>
+        </div>
+      </Cartao>
+
+      <Cartao>
         <h2 className="text-lg font-bold">Envio de e-mail</h2>
         <form action={enviarEmailDeTeste} className="mt-2 flex flex-col items-start gap-3">
           <p className="text-[15px] leading-normal text-apoio">
@@ -77,7 +90,7 @@ export default async function PaginaPainel({ searchParams }: Props) {
       <Cartao>
         <h2 className="text-lg font-bold">Ainda em construção</h2>
         <p className="mt-2 text-[15px] leading-normal text-apoio">
-          A área do aluno, a conversação e as configurações entram nas próximas etapas.
+          A conversação, o tutor de dúvidas e as configurações entram nas próximas etapas.
         </p>
       </Cartao>
     </>
