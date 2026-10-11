@@ -66,7 +66,9 @@ function CamposDaMatricula({ prefixo, estado, inicial }: { prefixo: string; esta
 
 export function FormularioNovoAluno({ cursos }: { cursos: CursoDaLista[] }) {
   const [estado, acao, enviando] = useActionState(criarPessoa, ESTADO_INICIAL);
-  // O curso é controlado pela tela para mostrar ou esconder os campos da matrícula.
+  // A tela acompanha o curso escolhido só para mostrar ou esconder os campos da matrícula. O campo
+  // em si não é controlado (usa defaultValue): depois de uma resposta do servidor o React devolve
+  // os campos ao valor padrão, e um campo de escolha controlado voltaria sozinho à primeira opção.
   const [curso, setCurso] = useState(cursos[0]?.id ?? '');
   const erros = estado.erros;
 
@@ -99,7 +101,7 @@ export function FormularioNovoAluno({ cursos }: { cursos: CursoDaLista[] }) {
           id="curso_id"
           rotulo="Matricular no curso"
           ajuda="O primeiro dia da trilha da pessoa começa a contar hoje."
-          value={curso}
+          defaultValue={curso}
           onChange={(evento) => setCurso(evento.target.value)}
           erro={erros.curso_id}
         >

@@ -122,6 +122,7 @@ test('novo aluno: os erros são apontados sem perder o que foi digitado; depois 
   await pagina.getByText('Escreva um número de 0 a 14.').waitFor();
   assert.equal(await campo('E-mail').inputValue(), 'lucia-sem-arroba');
   assert.equal(await campo('Acesso até (opcional)').inputValue(), '2020-01-31');
+  assert.equal(await campo('Matricular no curso').inputValue(), cursoAId, 'o curso escolhido continua escolhido');
   assert.equal(await perfilDe(aluna.email), null, 'nada foi criado');
 
   await campo('Nome').fill(`  ${aluna.nome}  `);

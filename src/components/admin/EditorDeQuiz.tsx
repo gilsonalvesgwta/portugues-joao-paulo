@@ -319,9 +319,13 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
               <label htmlFor="dificuldade" className="text-sm font-semibold">
                 Dificuldade
               </label>
+              {/* Sem "value": depois de cada resposta do servidor o React devolve os campos ao valor
+                  padrão, e um campo de escolha controlado voltaria sozinho à primeira opção. A chave
+                  remonta o campo com o valor atual como padrão. */}
               <select
+                key={estado.vez}
                 id="dificuldade"
-                value={quiz.dificuldade}
+                defaultValue={quiz.dificuldade}
                 onChange={(e) => mudar({ ...quiz, dificuldade: e.target.value as Dificuldade })}
                 className={classeDaEntrada}
               >
