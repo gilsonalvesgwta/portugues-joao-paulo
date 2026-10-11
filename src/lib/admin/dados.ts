@@ -103,3 +103,31 @@ export async function blocosPorAula(): Promise<Map<string, number>> {
   const linhas = (data ?? []) as unknown as { id: string; anotacoes: unknown }[];
   return new Map(linhas.map((linha) => [linha.id, Array.isArray(linha.anotacoes) ? linha.anotacoes.length : 0]));
 }
+
+export type Material = {
+  id: string;
+  aula_id: string | null;
+  titulo_pt: string;
+  titulo_es: string;
+  descricao_es: string | null;
+  link: string;
+  ordem: number;
+};
+
+const COLUNAS_DO_MATERIAL = 'id, aula_id, titulo_pt, titulo_es, descricao_es, link, ordem';
+
+// Materiais de apoio de uma aula, na ordem em que o aluno os vê.
+export async function carregarMateriaisDaAula(aulaId: string): Promise<Material[]> {
+  const supabase = await clienteDoServidor();
+  const { data, error } = await supabase.from('materiais').select(COLUNAS_DO_MATERIAL).eq('aula_id', aulaId).order('ordem').order('id');
+  if (error) throw new Error(`Não foi possível ler os materiais: ${error.message}`);
+  return (data ?? []) as unknown as Material[];
+}
+
+export async function carregarMaterial(id: string): Promise<Material | null> {
+  const supabase = await clienteDoServidor();
+  const { data, error } = await supabase.from('materiais').select(COLUNAS_DO_MATERIAL).eq('id', id).maybeSingle();
+  if (error) throw new Error(`Não foi possível ler o material: ${error.message}`);
+  return (data ?? null) as unknown as Material | null;
+}
+

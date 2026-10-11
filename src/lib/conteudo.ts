@@ -188,6 +188,43 @@ export function validarAula(entrada: Entrada, numerosEmUso: readonly number[] = 
   };
 }
 
+export const LINK_MAX = 500;
+
+// Link de um material guardado fora da plataforma (Google Drive e parecidos). Só https.
+// Quem cola sem o "https://" na frente ganha o prefixo. Vazio = sem link.
+export function lerLink(texto: unknown): string | null | 'invalido' {
+  const limpo = typeof texto === 'string' ? texto.trim() : '';
+  if (limpo === '') return null;
+  if (/\s/.test(limpo) || limpo.length > LINK_MAX) return 'invalido';
+  const comEsquema = /^[a-z][a-z0-9+.-]*:/i.test(limpo) ? limpo : `https://${limpo}`;
+  let endereco: URL;
+  try {
+    endereco = new URL(comEsquema);
+  } catch {
+    return 'invalido';
+  }
+  if (endereco.protocol !== 'https:' || endereco.username !== '' || endereco.password !== '') return 'invalido';
+  if (!endereco.hostname.includes('.') || endereco.href.length > LINK_MAX) return 'invalido';
+  return endereco.href;
+}
+
+export type DadosDoMaterial = { titulo_pt: string; titulo_es: string; descricao_es: string | null; link: string };
+
+export function validarMaterial(entrada: Entrada): Resultado<DadosDoMaterial> {
+  const erros: Erros = {};
+  const titulo_pt = limpar(entrada.titulo_pt);
+  const titulo_es = limpar(entrada.titulo_es);
+  conferirTitulo(erros, 'titulo_pt', titulo_pt, 'português');
+  conferirTitulo(erros, 'titulo_es', titulo_es, 'espanhol');
+  const descricao = limpar(entrada.descricao_es);
+  if (descricao.length > 300) erros.descricao_es = 'A descrição pode ter até 300 letras.';
+  const link = lerLink(entrada.link);
+  if (link === null) erros.link = 'Cole o link do material.';
+  if (link === 'invalido') erros.link = 'Cole um link que comece com https://, sem espaços. Exemplo: https://drive.google.com/file/d/...';
+  if (link === null || link === 'invalido' || Object.keys(erros).length > 0) return { ok: false, erros };
+  return { ok: true, valor: { titulo_pt, titulo_es, descricao_es: descricao === '' ? null : descricao, link } };
+}
+
 // Próximo número livre: um a mais que o maior em uso.
 export function proximoNumero(numeros: readonly number[]): number {
   return numeros.reduce((maior, n) => (n > maior ? n : maior), 0) + 1;

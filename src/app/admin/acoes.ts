@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { ehUuid, mover, validarAula, validarCurso, validarModulo } from '@/lib/conteudo';
+import { ehUuid, mover, validarAula, validarCurso, validarMaterial, validarModulo } from '@/lib/conteudo';
 import { enviarEmail } from '@/lib/correio';
 import { emailDeConferencia } from '@/lib/emails';
 import { motivoDaFalha } from '@/lib/smtp';
@@ -219,6 +219,82 @@ export async function salvarAnotacoes(anterior: EstadoDasAnotacoes, dados: FormD
   if (error) return falha({ geral: FALHA });
   if ((data ?? []).length === 0) return falha({ geral: 'Não encontrei esta aula. Ela pode ter ido para a lixeira.' });
   return { vez: anterior.vez + 1, situacao: 'salvo', erros: {}, blocos: conferido.blocos };
+}
+
+// ---------------------------------------------------------------------------
+// Materiais de apoio (por link)
+// ---------------------------------------------------------------------------
+
+function telaDaAula(aulaId: string, aviso: string): string {
+  return `/admin/aulas/${aulaId}?aviso=${aviso}#materiais`;
+}
+
+export async function salvarMaterial(anterior: EstadoDoFormulario, dados: FormData): Promise<EstadoDoFormulario> {
+  const supabase = await exigirEquipe();
+  const valores = valoresDe(dados, ['id', 'aula_id', 'titulo_pt', 'titulo_es', 'descricao_es', 'link']);
+  const conferido = validarMaterial(valores);
+  if (!conferido.ok) return comErros(anterior, conferido.erros, valores);
+
+  if (valores.id) {
+    if (!ehUuid(valores.id)) redirect('/admin/aulas?aviso=nao_encontrado');
+    const { data, error } = await supabase.from('materiais').update(conferido.valor).eq('id', valores.id).select('aula_id');
+    if (error) return comErros(anterior, { geral: FALHA }, valores);
+    const aulaId = ((data ?? []) as unknown as { aula_id: string | null }[])[0]?.aula_id;
+    if (typeof aulaId !== 'string') redirect('/admin/aulas?aviso=nao_encontrado');
+    redirect(telaDaAula(aulaId, 'material_salvo'));
+  }
+
+  if (!ehUuid(valores.aula_id)) redirect('/admin/aulas?aviso=nao_encontrado');
+  const { data: aula } = await supabase.from('aulas').select('id').eq('id', valores.aula_id).is('arquivado_em', null).maybeSingle();
+  if (!aula) redirect('/admin/aulas?aviso=nao_encontrado');
+  const { data: ultimo } = await supabase
+    .from('materiais')
+    .select('ordem')
+    .eq('aula_id', valores.aula_id)
+    .order('ordem', { ascending: false })
+    .limit(1);
+  const ordem = Number((ultimo ?? [])[0]?.ordem ?? 0) + 1;
+  const { error } = await supabase.from('materiais').insert({ ...conferido.valor, aula_id: valores.aula_id, ordem });
+  if (error) return comErros(anterior, { geral: FALHA }, valores);
+  redirect(telaDaAula(valores.aula_id, 'material_salvo'));
+}
+
+// Aula a que o material pertence, ou null se o material não existe.
+async function aulaDoMaterial(supabase: Cliente, id: string): Promise<string | null> {
+  const { data } = await supabase.from('materiais').select('aula_id').eq('id', id).maybeSingle();
+  return typeof data?.aula_id === 'string' ? data.aula_id : null;
+}
+
+export async function moverMaterial(dados: FormData): Promise<void> {
+  const supabase = await exigirEquipe();
+  const { id, direcao } = valoresDe(dados, ['id', 'direcao']);
+  if (!ehUuid(id) || (direcao !== 'subir' && direcao !== 'descer')) redirect('/admin/aulas?aviso=nao_encontrado');
+  const aulaId = await aulaDoMaterial(supabase, id);
+  if (aulaId === null) redirect('/admin/aulas?aviso=nao_encontrado');
+
+  const { data: lista, error } = await supabase.from('materiais').select('id, ordem').eq('aula_id', aulaId).order('ordem').order('id');
+  if (error) redirect(telaDaAula(aulaId, 'falhou'));
+  const atuais = (lista ?? []) as unknown as { id: string; ordem: number }[];
+  const novaOrdem = mover(atuais, atuais.findIndex((m) => m.id === id), direcao);
+  for (const [indice, item] of novaOrdem.entries()) {
+    if (item.ordem === indice + 1) continue;
+    const { error: erroDaOrdem } = await supabase.from('materiais').update({ ordem: indice + 1 }).eq('id', item.id);
+    if (erroDaOrdem) redirect(telaDaAula(aulaId, 'falhou'));
+  }
+  redirect(`/admin/aulas/${aulaId}#materiais`);
+}
+
+// Material não tem lixeira: é só um título e um link, fácil de cadastrar de novo.
+// A tela pede confirmação antes de chamar esta ação.
+export async function apagarMaterial(dados: FormData): Promise<void> {
+  const supabase = await exigirEquipe();
+  const { id } = valoresDe(dados, ['id']);
+  if (!ehUuid(id)) redirect('/admin/aulas?aviso=nao_encontrado');
+  const aulaId = await aulaDoMaterial(supabase, id);
+  if (aulaId === null) redirect('/admin/aulas?aviso=nao_encontrado');
+  const { error } = await supabase.from('materiais').delete().eq('id', id);
+  if (error) redirect(telaDaAula(aulaId, 'falhou'));
+  redirect(telaDaAula(aulaId, 'material_apagado'));
 }
 
 // ---------------------------------------------------------------------------

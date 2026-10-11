@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  ehUuid, formatarDuracao, incorporarYoutube, lerDuracao, lerVideoDoYoutube, limpar, linkDoYoutube, mover, proximoNumero,
-  validarAula, validarCurso, validarModulo,
+  ehUuid, formatarDuracao, incorporarYoutube, lerDuracao, lerLink, lerVideoDoYoutube, limpar, linkDoYoutube, mover, proximoNumero,
+  validarAula, validarCurso, validarMaterial, validarModulo,
 } from './conteudo.ts';
 
 const MODULO = '3f2b8a1c-0d4e-4f6a-9b7c-1a2b3c4d5e6f';
@@ -148,6 +148,43 @@ test('número da aula não aceita letras, sinal nem vírgula', () => {
     const r = validarAula({ ...aulaBoa, numero });
     assert.equal(r.ok, false, numero);
   }
+});
+
+test('lerLink aceita https e completa o que veio sem o começo', () => {
+  assert.equal(lerLink('https://drive.google.com/file/d/abc123/view?usp=sharing'), 'https://drive.google.com/file/d/abc123/view?usp=sharing');
+  assert.equal(lerLink('  drive.google.com/file/d/abc123/view  '), 'https://drive.google.com/file/d/abc123/view');
+  assert.equal(lerLink('https://www.dropbox.com/s/x/Lição%201.pdf'), 'https://www.dropbox.com/s/x/Li%C3%A7%C3%A3o%201.pdf');
+  assert.equal(lerLink(''), null);
+  assert.equal(lerLink(undefined), null);
+});
+
+test('lerLink recusa o que não é um endereço https de verdade', () => {
+  for (const ruim of [
+    'http://exemplo.com/a.pdf',
+    'javascript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'ftp://exemplo.com/a.pdf',
+    'https://usuario:senha@exemplo.com/a.pdf',
+    'https://semponto/a.pdf',
+    'tem espaço.com/a.pdf',
+    'https://exemplo.com/' + 'a'.repeat(500),
+    'file:///etc/passwd',
+  ]) {
+    assert.equal(lerLink(ruim), 'invalido', ruim);
+  }
+});
+
+test('material válido passa; sem link ou com link ruim é recusado', () => {
+  assert.deepEqual(validarMaterial({ titulo_pt: ' Lista de verbos ', titulo_es: 'Lista de verbos', descricao_es: '', link: 'drive.google.com/x' }), {
+    ok: true,
+    valor: { titulo_pt: 'Lista de verbos', titulo_es: 'Lista de verbos', descricao_es: null, link: 'https://drive.google.com/x' },
+  });
+  const semLink = validarMaterial({ titulo_pt: 'A', titulo_es: 'A', link: '' });
+  assert.equal(semLink.ok, false);
+  if (!semLink.ok) assert.equal(semLink.erros.link, 'Cole o link do material.');
+  const ruim = validarMaterial({ titulo_pt: '', titulo_es: 'A', descricao_es: 'x'.repeat(301), link: 'http://x.com' });
+  assert.equal(ruim.ok, false);
+  if (!ruim.ok) assert.deepEqual(Object.keys(ruim.erros).sort(), ['descricao_es', 'link', 'titulo_pt']);
 });
 
 test('proximoNumero é um a mais que o maior', () => {

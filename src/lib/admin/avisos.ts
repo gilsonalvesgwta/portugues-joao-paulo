@@ -8,6 +8,8 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
   modulo_salvo: { tipo: 'ok', texto: 'Módulo salvo.' },
   aula_salva: { tipo: 'ok', texto: 'Aula salva.' },
   aula_publicada: { tipo: 'ok', texto: 'Aula salva e publicada.' },
+  material_salvo: { tipo: 'ok', texto: 'Material salvo.' },
+  material_apagado: { tipo: 'ok', texto: 'Material apagado.' },
   na_lixeira: { tipo: 'ok', texto: 'Movido para a lixeira. Dá para restaurar quando quiser.' },
   restaurado: { tipo: 'ok', texto: 'Restaurado como rascunho.' },
   modulo_restaurado: { tipo: 'ok', texto: 'Módulo restaurado.' },
