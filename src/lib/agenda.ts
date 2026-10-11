@@ -9,20 +9,21 @@ export type TurmaDaAgenda = {
   jaReservada: boolean;
 };
 
-export type Horario = TurmaDaAgenda & {
+// "T" deixa quem chama levar junto o que mais precisar de cada turma (tema, nível...).
+export type Horario<T extends TurmaDaAgenda = TurmaDaAgenda> = T & {
   hora: string; // "20:00" no fuso do aluno
   lotada: boolean;
 };
 
-export type DiaDaAgenda = {
+export type DiaDaAgenda<T extends TurmaDaAgenda = TurmaDaAgenda> = {
   data: string; // "2026-10-08" no fuso do aluno
   diaDoMes: number;
   diaDaSemana: number; // 0 = domingo ... 6 = sábado
   ehHoje: boolean;
   turmasComVaga: number;
-  manha: Horario[];
-  tarde: Horario[];
-  noite: Horario[];
+  manha: Horario<T>[];
+  tarde: Horario<T>[];
+  noite: Horario<T>[];
 };
 
 type PartesLocais = { data: string; hora: number; minuto: number };
@@ -74,14 +75,14 @@ export function periodoDaHora(hora: number): 'manha' | 'tarde' | 'noite' {
 }
 
 // Monta um dia por data da janela, inclusive os dias sem turma (a tela mostra "Sin clases").
-export function diasDaAgenda(
-  turmas: readonly TurmaDaAgenda[],
+export function diasDaAgenda<T extends TurmaDaAgenda>(
+  turmas: readonly T[],
   fuso: string,
   agora: Date,
   janelaDias = 7,
-): DiaDaAgenda[] {
+): DiaDaAgenda<T>[] {
   const hoje = partesLocais(agora, fuso).data;
-  const dias = new Map<string, DiaDaAgenda>();
+  const dias = new Map<string, DiaDaAgenda<T>>();
 
   for (let i = 0; i < janelaDias; i += 1) {
     const data = somarDias(hoje, i);

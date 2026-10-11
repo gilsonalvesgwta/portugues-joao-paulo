@@ -54,13 +54,14 @@ test('sem nome, a saudação fica neutra', () => {
 });
 
 test('reserva confirmada traz tema, data local, duração, prazo e link do Meet', () => {
-  const e = emailReservaConfirmada({ ...clase, duracionMin: 60, cancelarHastaHoras: 2, material: 'https://app.example.com/m.pdf' });
+  const e = emailReservaConfirmada({ ...clase, duracionMin: 60, cancelarHastaMin: 120, material: 'https://app.example.com/m.pdf' });
   assert.equal(e.asunto, 'Reserva confirmada: En el restaurante');
   for (const trecho of ['jueves, 8 de octubre de 2026, 20:00', '60 minutos', 'hasta 2 horas antes', clase.meetUrl, 'https://app.example.com/m.pdf']) {
     assert.ok(e.texto.includes(trecho), trecho);
   }
   assert.ok(e.html.includes(`href="${clase.meetUrl}"`));
-  assert.ok(emailReservaConfirmada({ ...clase, duracionMin: 60, cancelarHastaHoras: 1 }).texto.includes('hasta 1 hora antes'));
+  assert.ok(emailReservaConfirmada({ ...clase, duracionMin: 60, cancelarHastaMin: 60 }).texto.includes('hasta 1 hora antes'));
+  assert.ok(emailReservaConfirmada({ ...clase, duracionMin: 60, cancelarHastaMin: 90 }).texto.includes('hasta 90 minutos antes'));
 });
 
 test('lembrete, cancelamento pelo aluno e cancelamento pelo professor', () => {
@@ -76,7 +77,7 @@ test('lembrete, cancelamento pelo aluno e cancelamento pelo professor', () => {
 
 test('dados do aluno e do tema nunca entram como HTML', () => {
   assert.equal(escaparHtml(`<b>"x" & 'y'</b>`), '&lt;b&gt;&quot;x&quot; &amp; &#39;y&#39;&lt;/b&gt;');
-  const e = emailReservaConfirmada({ ...clase, nombre: '<script>alert(1)</script>', tema: '<img src=x onerror=alert(1)>', duracionMin: 60, cancelarHastaHoras: 2 });
+  const e = emailReservaConfirmada({ ...clase, nombre: '<script>alert(1)</script>', tema: '<img src=x onerror=alert(1)>', duracionMin: 60, cancelarHastaMin: 120 });
   assert.equal(e.html.includes('<script>'), false);
   assert.equal(e.html.includes('<img'), false);
   assert.ok(e.html.includes('&lt;script&gt;'));
@@ -86,7 +87,7 @@ test('link que não é https é recusado', () => {
   for (const ruim of ['javascript:alert(1)', 'http://inseguro.example.com', 'https://a.example.com/" onclick="x', '']) {
     assert.throws(() => emailBienvenida({ nombre: 'Ana', enlace: ruim }), /enlace_invalido/, ruim);
   }
-  assert.throws(() => emailReservaConfirmada({ ...clase, duracionMin: 60, cancelarHastaHoras: 2, material: 'javascript:x' }), /enlace_invalido/);
+  assert.throws(() => emailReservaConfirmada({ ...clase, duracionMin: 60, cancelarHastaMin: 120, material: 'javascript:x' }), /enlace_invalido/);
 });
 
 test('link http só é aceito para o próprio computador, usado nos testes', () => {

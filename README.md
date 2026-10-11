@@ -8,11 +8,11 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
-| `supabase/tests/` | Testes do banco: 177 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz e conversação | 153 testes passando |
-| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas) e quiz corrigido pelo servidor |
+| `supabase/tests/` | Testes do banco: 191 verificações de regra e 2 testes de disputa simultânea | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação e reservas do aluno | 159 testes passando |
+| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas), quiz corrigido pelo servidor, conversação (agenda no fuso do aluno, reservar, cancelar, avaliar) e «Mi cuenta» |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 119 testes passando nos dois |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 132 testes passando nos dois |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -101,6 +101,26 @@ Em `/admin/conversacao`, para o professor e o administrador:
 - **Inscritos**: quem reservou, a presença (marcada a partir do início da aula) e a avaliação que cada um deu.
 - **Regras de reserva** (só o administrador): quantos dias de agenda o aluno vê, até quando reserva e até
   quando cancela. Quantas aulas cada aluno reserva por semana vem da matrícula.
+
+## Aulas de conversação ao vivo (aluno)
+
+Em `/conversacion`, em espanhol, para quem tem conversação na matrícula:
+
+- A **agenda** dos próximos dias aparece no fuso do aluno, por dia e por período (mañana, tarde, noche), com o
+  tema, o nível, as vagas que restam e o que ele vai aprender. Dá para filtrar por nível.
+- **Reservar** é um toque. O banco confere, de uma vez só, vaga, limite da semana (segunda a domingo, no fuso
+  do aluno), prazo e janela; a última vaga nunca vai para dois alunos.
+- Reserva feita: o **link da sala** aparece em «Mis reservas» e vai por e-mail, com o material da aula.
+- **Cancelar** dentro do prazo devolve a reserva à semana e a vaga à turma, e sai um e-mail de confirmação.
+- Depois da aula, o aluno **avalia** de 1 a 5, com comentário opcional; o professor vê na turma.
+- Se o aparelho está em outro fuso, a tela oferece trocar. Em `/cuenta` («Mi cuenta») o aluno muda o nome, o
+  fuso e a senha. O e-mail e o papel não mudam por ali.
+- A equipe abre a mesma tela como prévia, sem reservar e sem o link.
+
+**Lembretes por e-mail.** O servidor confere a cada 5 minutos (`LEMBRETES_INTERVALO_SEG`; 0 desliga) e manda um
+lembrete **24 horas antes** e outro **1 hora antes**, com o link da sala e a hora no fuso do aluno. Cada lembrete
+sai uma vez só por reserva; quem reservou em cima da hora não recebe (acabou de receber a confirmação); reserva
+ou turma cancelada não recebe. Se o envio falhar, o servidor tenta de novo depois de 10 minutos, até 5 vezes.
 
 ## Como o administrador cuida dos alunos
 

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { MenuDelAlumno } from '@/components/aluno/MenuDelAlumno';
 import { CabecalhoInterno } from '@/components/Cabecalho';
 import { es } from '@/i18n/es';
 import { pessoaLogada } from '@/lib/supabase/servidor';
@@ -12,7 +13,7 @@ export default async function LayoutDoAluno({ children }: { children: ReactNode 
 
   return (
     <div className="min-h-dvh">
-      <CabecalhoInterno inicio="/inicio" nome={pessoa.nome || pessoa.email} rotuloSair={es.comum.salir} />
+      <CabecalhoInterno inicio="/inicio" nome={pessoa.nome || pessoa.email} rotuloSair={es.comum.salir} menu={<MenuDelAlumno />} />
       <main className="mx-auto max-w-[1208px] px-4 py-8 sm:px-6">{children}</main>
     </div>
   );
