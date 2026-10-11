@@ -6,7 +6,8 @@ import { enviarEmail } from '@/lib/correio';
 import { emailDeConferencia } from '@/lib/emails';
 import { motivoDaFalha } from '@/lib/smtp';
 import { validarAnotacoes } from '@/lib/anotacoes';
-import type { EstadoDasAnotacoes, EstadoDoFormulario } from '@/lib/formulario';
+import type { EstadoDasAnotacoes, EstadoDoFormulario, EstadoDoQuiz } from '@/lib/formulario';
+import { paraOBanco, validarQuiz } from '@/lib/quiz-editor';
 import { ehEquipe } from '@/lib/papeis';
 import { clienteDoServidor, pessoaLogada } from '@/lib/supabase/servidor';
 
@@ -295,6 +296,46 @@ export async function apagarMaterial(dados: FormData): Promise<void> {
   const { error } = await supabase.from('materiais').delete().eq('id', id);
   if (error) redirect(telaDaAula(aulaId, 'falhou'));
   redirect(telaDaAula(aulaId, 'material_apagado'));
+}
+
+// Grava o quiz da aula (configuração e perguntas) de uma vez. A troca das perguntas acontece
+// dentro do banco, em uma única transação (função salvar_quiz): ou entra tudo, ou nada muda.
+export async function salvarQuiz(anterior: EstadoDoQuiz, dados: FormData): Promise<EstadoDoQuiz> {
+  const supabase = await exigirEquipe();
+  const falha = (erros: Record<string, string>): EstadoDoQuiz => ({
+    vez: anterior.vez + 1,
+    situacao: 'erro',
+    erros,
+    quiz: null,
+    publicado: anterior.publicado,
+  });
+
+  const { aula_id: aulaId, quiz: texto, situacao } = valoresDe(dados, ['aula_id', 'quiz', 'situacao']);
+  if (!ehUuid(aulaId)) return falha({ geral: 'Não encontrei esta aula.' });
+  if (situacao !== 'rascunho' && situacao !== 'publicado') return falha({ geral: 'Escolha entre salvar como rascunho e publicar.' });
+  if (typeof texto !== 'string' || texto.length > 200_000) return falha({ geral: 'O quiz ficou grande demais para salvar de uma vez.' });
+  let lido: unknown;
+  try {
+    lido = JSON.parse(texto);
+  } catch {
+    return falha({ geral: 'O quiz chegou em um formato inesperado.' });
+  }
+  const conferido = validarQuiz(lido, situacao === 'publicado');
+  if (!conferido.ok) return falha(conferido.erros);
+
+  const { error } = await supabase.rpc('salvar_quiz', {
+    p_aula: aulaId,
+    p_dificuldade: conferido.quiz.dificuldade,
+    p_nota_minima: conferido.quiz.nota_minima,
+    p_situacao: situacao,
+    p_perguntas: conferido.quiz.perguntas.map(paraOBanco),
+  });
+  if (error) {
+    return falha({
+      geral: error.message.includes('aula_inexistente') ? 'Não encontrei esta aula. Ela pode ter ido para a lixeira.' : FALHA,
+    });
+  }
+  return { vez: anterior.vez + 1, situacao: 'salvo', erros: {}, quiz: conferido.quiz, publicado: situacao === 'publicado' };
 }
 
 // ---------------------------------------------------------------------------

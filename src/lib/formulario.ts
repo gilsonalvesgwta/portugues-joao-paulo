@@ -1,5 +1,6 @@
 import type { Bloco } from './anotacoes';
 import type { Erros } from './conteudo';
+import type { QuizNoEditor } from './quiz-editor';
 
 // O que uma ação de formulário devolve quando há erro: a mensagem de cada campo e o que a
 // pessoa tinha digitado, para a tela não perder nada. "vez" muda a cada resposta, e a tela
@@ -19,3 +20,15 @@ export type EstadoDasAnotacoes = {
 };
 
 export const ANOTACOES_INICIAL: EstadoDasAnotacoes = { vez: 0, situacao: 'inicial', erros: {}, blocos: null };
+
+// Resposta da gravação do quiz, no mesmo espírito das anotações: erro por pergunta (pelo id)
+// ou "geral"; ao salvar, devolve o quiz como ficou gravado e se ficou publicado.
+export type EstadoDoQuiz = {
+  vez: number;
+  situacao: 'inicial' | 'salvo' | 'erro';
+  erros: Record<string, string>;
+  quiz: QuizNoEditor | null;
+  publicado: boolean;
+};
+
+export const QUIZ_INICIAL: EstadoDoQuiz = { vez: 0, situacao: 'inicial', erros: {}, quiz: null, publicado: false };

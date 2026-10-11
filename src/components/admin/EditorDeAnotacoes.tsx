@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { salvarAnotacoes } from '@/app/admin/acoes';
+import { useAvisoAoSair } from '@/components/admin/aoSair';
 import { Apuntes } from '@/components/aula/Apuntes';
 import {
   blocoVazio, CAMPOS_DA_LISTA, itemVazio, LIMITES, nomeDoTipo, paraPrevia, TIPOS, type Bloco, type Item, type TipoDeBloco, type TipoDeLista,
@@ -274,6 +275,8 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
   const [blocos, setBlocos] = useState<Bloco[]>(iniciais);
   const [sujo, setSujo] = useState(false);
   const [recemCriado, setRecemCriado] = useState<string | null>(null);
+  // Resposta do servidor cujo aviso geral já ficou para trás, porque o professor mexeu nos blocos depois dela.
+  const [avisoVencido, setAvisoVencido] = useState(-1);
   const [estado, acao, enviando] = useActionState(salvarAnotacoes, ANOTACOES_INICIAL);
 
   // Depois de salvar, a tela passa a mostrar exatamente o que ficou gravado.
@@ -285,31 +288,12 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
     }
   }, [estado]);
 
-  // Com alteração sem salvar, avisa antes de fechar a aba, recarregar ou seguir um link.
-  useEffect(() => {
-    if (!sujo) return;
-    const aoSair = (evento: BeforeUnloadEvent) => {
-      evento.preventDefault();
-    };
-    const aoClicar = (evento: MouseEvent) => {
-      const alvo = evento.target instanceof Element ? evento.target.closest('a[href]') : null;
-      if (!alvo || evento.defaultPrevented) return;
-      if (!window.confirm('Há alterações nas anotações que ainda não foram salvas. Sair mesmo assim?')) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
-    };
-    window.addEventListener('beforeunload', aoSair);
-    document.addEventListener('click', aoClicar, true);
-    return () => {
-      window.removeEventListener('beforeunload', aoSair);
-      document.removeEventListener('click', aoClicar, true);
-    };
-  }, [sujo]);
+  useAvisoAoSair(sujo, 'Há alterações nas anotações que ainda não foram salvas. Sair mesmo assim?');
 
   const mudar = (proximos: Bloco[]) => {
     setBlocos(proximos);
     setSujo(true);
+    setAvisoVencido(estado.vez);
   };
   const temCapa = blocos.some((bloco) => bloco.tipo === 'capa');
   const adicionar = (tipo: TipoDeBloco) => {
@@ -326,7 +310,8 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
   const erros: Record<string, string> = {};
   if (estado.situacao === 'erro') {
     for (const [chave, mensagem] of Object.entries(estado.erros)) {
-      if (chave === 'geral' || blocos.some((bloco) => bloco.id === chave)) erros[chave] = mensagem;
+      const vale = chave === 'geral' ? avisoVencido !== estado.vez : blocos.some((bloco) => bloco.id === chave);
+      if (vale) erros[chave] = mensagem;
     }
   }
   const comErro = Object.keys(erros).length > 0;
