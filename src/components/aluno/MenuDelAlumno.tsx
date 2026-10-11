@@ -8,14 +8,16 @@ import { es } from '@/i18n/es';
 const SECOES = [
   { href: '/inicio', rotulo: es.comum.curso, prefixos: ['/inicio', '/clase', '/quiz'] },
   { href: '/conversacion', rotulo: es.comum.conversacion, prefixos: ['/conversacion'] },
+  { href: '/papo', rotulo: es.comum.papo, prefixos: ['/papo'] },
   { href: '/cuenta', rotulo: es.comum.cuenta, prefixos: ['/cuenta'] },
 ];
 
-export function MenuDelAlumno() {
+// "conPapo": o tutor só entra no menu quando a instalação tem a chave dele.
+export function MenuDelAlumno({ conPapo }: { conPapo: boolean }) {
   const caminho = usePathname();
   return (
     <nav aria-label={es.comum.menu} className="order-last flex w-full flex-wrap gap-1 sm:order-none sm:w-auto">
-      {SECOES.map((secao) => {
+      {SECOES.filter((secao) => conPapo || secao.href !== '/papo').map((secao) => {
         const atual = secao.prefixos.some((prefixo) => caminho === prefixo || caminho.startsWith(`${prefixo}/`));
         return (
           <Link

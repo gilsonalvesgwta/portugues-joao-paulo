@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { ehUuid, mover, validarAula, validarCurso, validarMaterial, validarModulo, validarTarefa } from '@/lib/conteudo';
+import { lerLimiteDoPapo } from '@/lib/papo';
 import { enviarEmail } from '@/lib/correio';
 import { emailDeConferencia } from '@/lib/emails';
 import { motivoDaFalha } from '@/lib/smtp';
@@ -559,4 +560,18 @@ export async function enviarEmailDeTeste(): Promise<void> {
   }
   if (motivo === null) redirect('/admin?aviso=email_enviado');
   redirect(`/admin?aviso=email_${motivo === 'outro' ? 'falhou' : motivo}`);
+}
+
+// Quantas mensagens cada pessoa manda por dia ao Papo (o tutor com IA). Só o administrador muda:
+// cada mensagem tem um custo na conta da Anthropic.
+export async function salvarLimiteDoPapo(dados: FormData): Promise<void> {
+  const supabase = await exigirEquipe();
+  const pessoa = await pessoaLogada();
+  if (pessoa?.papel !== 'admin') redirect('/admin?aviso=so_administrador');
+  const limite = lerLimiteDoPapo(dados.get('papo_mensagens_por_dia'));
+  if (limite === null) redirect('/admin?aviso=papo_invalido#papo');
+  const { error } = await supabase
+    .from('configuracoes')
+    .upsert({ chave: 'papo_mensagens_por_dia', valor: limite, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' });
+  redirect(error ? '/admin?aviso=falhou' : '/admin?aviso=papo_salvo');
 }

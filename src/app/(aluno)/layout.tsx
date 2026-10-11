@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { MenuDelAlumno } from '@/components/aluno/MenuDelAlumno';
 import { CabecalhoInterno } from '@/components/Cabecalho';
 import { es } from '@/i18n/es';
+import { configDoPapo } from '@/lib/papo';
 import { pessoaLogada } from '@/lib/supabase/servidor';
 
 // Moldura da área do aluno. O proxy já barra quem não está logado; a checagem aqui
@@ -13,7 +14,7 @@ export default async function LayoutDoAluno({ children }: { children: ReactNode 
 
   return (
     <div className="min-h-dvh">
-      <CabecalhoInterno inicio="/inicio" nome={pessoa.nome || pessoa.email} rotuloSair={es.comum.salir} menu={<MenuDelAlumno />} />
+      <CabecalhoInterno inicio="/inicio" nome={pessoa.nome || pessoa.email} rotuloSair={es.comum.salir} menu={<MenuDelAlumno conPapo={configDoPapo() !== null} />} />
       <main className="mx-auto max-w-[1208px] px-4 py-8 sm:px-6">{children}</main>
     </div>
   );

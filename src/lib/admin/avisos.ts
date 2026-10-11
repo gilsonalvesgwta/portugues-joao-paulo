@@ -68,6 +68,8 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
   turma_ja_aconteceu: { tipo: 'erro', texto: 'Esta turma já aconteceu e não pode ser cancelada.' },
   presenca_salva: { tipo: 'ok', texto: 'Presença salva.' },
   configuracoes_salvas: { tipo: 'ok', texto: 'Regras salvas. Valem para as próximas reservas e cancelamentos.' },
+  papo_salvo: { tipo: 'ok', texto: 'Limite do Papo salvo.' },
+  papo_invalido: { tipo: 'erro', texto: 'O limite do Papo é um número de 0 a 500.' },
   so_administrador: { tipo: 'erro', texto: 'Essa parte é só para o administrador.' },
   conta_apagada: { tipo: 'ok', texto: 'Conta apagada. A pessoa não entra mais, e os dados dela saíram da plataforma.' },
   pessoa_criada: { tipo: 'ok', texto: 'Pessoa cadastrada. Nenhum e-mail foi enviado: quando quiser, use o botão “Enviar link de acesso”.' },

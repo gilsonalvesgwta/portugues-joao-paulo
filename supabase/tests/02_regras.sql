@@ -369,7 +369,7 @@ begin
   where p.pronamespace = 'public'::regnamespace and has_function_privilege('authenticated', p.oid, 'execute');
   perform teste.confere(v_abertas = array['agenda_turmas', 'aluno_ve_aula', 'aluno_ve_curso', 'avaliar_aula', 'cancelar_reserva',
       'cancelar_turma', 'config_int', 'curso_do_aluno', 'definir_papel', 'eh_admin', 'eh_equipe', 'ler_trilha', 'lista_de_pessoas',
-      'lista_de_turmas', 'meu_progresso', 'minhas_reservas', 'pode_conversacao', 'reservar_turma', 'resumo_dos_quizzes', 'salvar_quiz',
+      'lista_de_turmas', 'meu_papo', 'meu_progresso', 'minhas_reservas', 'pode_conversacao', 'reservar_turma', 'resumo_dos_quizzes', 'salvar_quiz',
       'salvar_trilha', 'turma_da_equipe'],
     'quem está logado só chama as funções da lista: ' || array_to_string(v_abertas, ', '));
 
@@ -723,6 +723,90 @@ do $$
 begin
   perform teste.espera_erro($q$select apagar_dados_de_compra(gen_random_uuid(), 'x@exemplo.test')$q$, 'permission denied',
     'nem o administrador logado chama direto a limpeza dos dados de compra');
+end $$;
+reset role;
+
+-- ============ 16. Papo: quem pode usar e o limite de mensagens por dia ============
+reset role;
+select set_config('request.jwt.claims', '', false);
+update public.matriculas set situacao = 'ativa', expira_em = null where aluno_id = teste.uid(9);
+update public.matriculas set situacao = 'ativa', expira_em = now() - interval '1 day' where aluno_id = teste.uid(11);
+update public.matriculas set situacao = 'suspensa', expira_em = null where aluno_id = teste.uid(7);
+update public.perfis set fuso = 'America/Bogota' where id = teste.uid(9);
+delete from public.uso_diario where aluno_id in (teste.uid(9), teste.uid(7), teste.uid(11), teste.uid(901));
+insert into public.configuracoes (chave, valor) values ('papo_mensagens_por_dia', '3')
+  on conflict (chave) do update set valor = excluded.valor;
+set role service_role;
+do $$
+declare
+  v jsonb;
+begin
+  perform teste.confere(papo_liberado(teste.uid(9)) and papo_liberado(teste.uid(901)) and papo_liberado(teste.uid(900)),
+    'aluno com matrícula ativa e a equipe podem usar o Papo');
+  perform teste.confere(not papo_liberado(teste.uid(11)) and not papo_liberado(teste.uid(7)) and not papo_liberado(gen_random_uuid()),
+    'matrícula vencida, matrícula bloqueada e pessoa que não existe não podem');
+  perform teste.confere(papo_usar(teste.uid(11)) = '{"resultado": "sem_acesso"}'::jsonb
+                        and not exists (select 1 from uso_diario where aluno_id = teste.uid(11)),
+    'sem acesso, nenhuma mensagem é contada');
+
+  v := papo_usar(teste.uid(9));
+  perform teste.confere(v = '{"resultado": "ok", "usadas": 1, "limite": 3}'::jsonb, 'a primeira mensagem do dia é contada');
+  perform teste.confere((select dia from uso_diario where aluno_id = teste.uid(9)) = (now() at time zone 'America/Bogota')::date,
+    'o dia do limite é o dia no fuso do aluno');
+  perform papo_usar(teste.uid(9));
+  v := papo_usar(teste.uid(9));
+  perform teste.confere(v ->> 'resultado' = 'ok' and (v ->> 'usadas')::integer = 3, 'a terceira mensagem ainda entra');
+  v := papo_usar(teste.uid(9));
+  perform teste.confere(v = '{"resultado": "limite", "usadas": 3, "limite": 3}'::jsonb
+                        and (select mensagens from uso_diario where aluno_id = teste.uid(9)) = 3,
+    'no limite, a mensagem é recusada e a contagem não passa dele');
+
+  perform papo_devolver(teste.uid(9));
+  perform teste.confere((select mensagens from uso_diario where aluno_id = teste.uid(9)) = 2
+                        and papo_usar(teste.uid(9)) ->> 'resultado' = 'ok',
+    'mensagem devolvida (o tutor não respondeu) pode ser usada de novo');
+  perform papo_devolver(teste.uid(901));
+  perform teste.confere(not exists (select 1 from uso_diario where aluno_id = teste.uid(901)), 'devolver sem ter usado não cria contagem');
+  perform teste.confere(papo_usar(teste.uid(901)) ->> 'resultado' = 'ok', 'a equipe usa o Papo para testar, com o mesmo limite');
+  perform teste.espera_erro($q$update uso_diario set mensagens = -1 where aluno_id = teste.uid(9)$q$, 'uso_diario_mensagens_nao_negativas',
+    'a contagem do dia nunca fica negativa');
+
+  -- O dia vira: a contagem de ontem não vale para hoje.
+  update uso_diario set dia = dia - 1 where aluno_id = teste.uid(9);
+  perform teste.confere(papo_usar(teste.uid(9)) = '{"resultado": "ok", "usadas": 1, "limite": 3}'::jsonb, 'no dia seguinte a contagem recomeça');
+end $$;
+reset role;
+update public.configuracoes set valor = '0' where chave = 'papo_mensagens_por_dia';
+set role service_role;
+do $$
+begin
+  perform teste.confere(papo_usar(teste.uid(901)) = '{"resultado": "limite", "usadas": 0, "limite": 0}'::jsonb, 'com o limite em zero, ninguém envia');
+end $$;
+reset role;
+update public.configuracoes set valor = '3' where chave = 'papo_mensagens_por_dia';
+
+-- O aluno consulta a própria situação e lê só as próprias conversas; não grava nada direto.
+insert into public.conversas_papo (id, aluno_id) values (teste.tid(140), teste.uid(9)), (teste.tid(141), teste.uid(8));
+insert into public.mensagens_papo (conversa_id, autor, texto) values
+  (teste.tid(140), 'aluno', 'Oi, Papo'), (teste.tid(140), 'papo', 'Oi! Tudo bem?'), (teste.tid(141), 'aluno', 'Mensagem de outra pessoa');
+select teste.entrar(9);
+set role authenticated;
+do $$
+begin
+  perform teste.confere(meu_papo() = '{"liberado": true, "limite": 3, "usadas": 1}'::jsonb, 'o aluno vê se pode usar o Papo e quanto já usou hoje');
+  perform teste.confere((select count(*) from mensagens_papo) = 2 and (select count(*) from conversas_papo) = 1,
+    'o aluno lê só as próprias conversas com o Papo');
+  perform teste.espera_erro($q$insert into mensagens_papo (conversa_id, autor, texto) values (teste.tid(140), 'papo', 'falsa')$q$, 'permission denied',
+    'o aluno não grava mensagem direto no banco');
+  perform teste.espera_erro($q$insert into conversas_papo (aluno_id) values (teste.uid(9))$q$, 'permission denied', 'nem abre conversa direto');
+  perform teste.espera_erro($q$update uso_diario set mensagens = 0 where aluno_id = teste.uid(9)$q$, 'permission denied', 'nem zera a própria contagem');
+  perform teste.espera_erro($q$select papo_usar(teste.uid(9))$q$, 'permission denied', 'quem está logado não chama a contagem do Papo');
+  perform teste.espera_erro($q$select papo_devolver(teste.uid(9))$q$, 'permission denied', 'nem devolve mensagens para si');
+end $$;
+select teste.entrar(11);
+do $$
+begin
+  perform teste.confere(meu_papo() = '{"liberado": false, "limite": 3, "usadas": 0}'::jsonb, 'quem está com a matrícula vencida vê que não pode usar');
 end $$;
 reset role;
 

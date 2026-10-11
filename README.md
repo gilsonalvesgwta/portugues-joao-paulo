@@ -8,11 +8,11 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
-| `supabase/tests/` | Testes do banco: 199 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno e limite de tentativas de senha | 164 testes passando |
-| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas), quiz corrigido pelo servidor, conversação (agenda no fuso do aluno, reservar, cancelar, avaliar) e «Mi cuenta» |
+| `supabase/tests/` | Testes do banco: 220 verificações de regra e 2 testes de disputa simultânea | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno, limite de tentativas de senha e o Papo | 174 testes passando |
+| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas), quiz corrigido pelo servidor, conversação (agenda no fuso do aluno, reservar, cancelar, avaliar), Papo (tutor com IA) e «Mi cuenta» |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 142 testes passando nos dois |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 152 testes: 151 passando no Supabase local (com o Papo ligado, falando com um serviço de imitação) e 143 na stack (com o Papo desligado, como fica sem a chave) |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -125,6 +125,25 @@ Em `/conversacion`, em espanhol, para quem tem conversação na matrícula:
 lembrete **24 horas antes** e outro **1 hora antes**, com o link da sala e a hora no fuso do aluno. Cada lembrete
 sai uma vez só por reserva; quem reservou em cima da hora não recebe (acabou de receber a confirmação); reserva
 ou turma cancelada não recebe. Se o envio falhar, o servidor tenta de novo depois de 10 minutos, até 5 vezes.
+
+## Papo, o tutor com inteligência artificial
+
+Em `/papo`, o aluno com curso ativo pratica português por escrito. O tutor responde em português simples e
+explica as correções em espanhol.
+
+- **Opcional.** Só existe quando a instalação tem a chave da Anthropic (`ANTHROPIC_API_KEY`; na stack,
+  `CHAVE_DA_ANTHROPIC`). Sem a chave, o link some do menu e a tela avisa que o tutor não está disponível.
+- O servidor fala com a Anthropic; a chave nunca vai para o navegador. Para o modelo vão as instruções do
+  tutor, o nome do aluno (como forma de tratamento) e as últimas mensagens da conversa.
+  O e-mail e os demais dados do aluno não vão.
+- **Limite por dia** (40 mensagens por pessoa, contadas no fuso do aluno; o administrador muda no painel, de 0
+  a 500). Duas mensagens ao mesmo tempo não furam o limite. Se o tutor não responde, a mensagem não é contada.
+- O aluno lê só as próprias conversas e não grava nada direto no banco; quem grava é o servidor.
+- A resposta do tutor é sempre mostrada como texto, nunca como HTML.
+- "Empezar una conversación nueva" guarda a anterior e faz o tutor esquecer o que foi dito.
+- O modelo padrão é `claude-haiku-4-5-20251001` (`PAPO_MODELO` troca). Cada mensagem tem custo na conta da
+  Anthropic; o painel mostra quantas foram enviadas nos últimos 7 dias.
+- Nos testes, a Anthropic é imitada por um servidor do próprio teste: nenhum pedido sai para fora.
 
 ## Como o administrador cuida dos alunos
 
