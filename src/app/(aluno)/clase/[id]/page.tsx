@@ -62,58 +62,59 @@ export default async function PaginaDaClase({ params, searchParams }: Props) {
         ) : null}
       </header>
 
-      {aula.video_id ? (
-        <div className="flex flex-col gap-2">
-          <VideoDeLaClase
-            aulaId={aula.id}
-            codigo={aula.video_id}
-            titulo={`${t.video}: ${aula.titulo_es}`}
-            inicio={pontoDeRetomada(posicao, vista)}
-            origem={process.env.SITE_URL ?? ''}
-            registrar={!equipe && !vista}
-          />
-          <a
-            href={linkDoYoutube(aula.video_id)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="self-start text-[15px] text-verde-link underline hover:text-verde"
-          >
-            {t.verEnYoutube} <span className="text-apoio">{t.otraPestana}</span>
-          </a>
-        </div>
-      ) : (
-        <Tarjeta>
-          <p className="text-base text-apoio">{t.sinVideo}</p>
-        </Tarjeta>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          {vista ? <Sello tom="verde">✓ {t.vista}</Sello> : null}
-          {equipe ? null : (
-            <form action={marcarClase}>
-              <input type="hidden" name="aula_id" value={aula.id} />
-              <input type="hidden" name="vista" value={vista ? '0' : '1'} />
-              <Boton variante={vista ? 'secundario' : 'principal'}>{vista ? t.desmarcar : t.marcarVista}</Boton>
-            </form>
-          )}
-        </div>
-        <nav aria-label={es.inicio.todasLasClases} className="flex flex-wrap gap-3">
-          {anterior && !painel.fechados.has(anterior) ? (
-            <EnlaceBoton href={`/clase/${anterior}`} variante="secundario">
-              ← {t.anterior}
-            </EnlaceBoton>
-          ) : null}
-          {seguinte && !painel.fechados.has(seguinte) ? (
-            <EnlaceBoton href={`/clase/${seguinte}`} variante="secundario">
-              {t.siguiente} →
-            </EnlaceBoton>
-          ) : null}
-        </nav>
-      </div>
-
+      {/* No computador, o vídeo e as anotações ficam à esquerda; quiz, tarefas e materiais, ao lado. */}
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         <div className="flex min-w-0 flex-col gap-6">
+          {aula.video_id ? (
+            <div className="flex flex-col gap-2">
+              <VideoDeLaClase
+                aulaId={aula.id}
+                codigo={aula.video_id}
+                titulo={`${t.video}: ${aula.titulo_es}`}
+                inicio={pontoDeRetomada(posicao, vista)}
+                origem={process.env.SITE_URL ?? ''}
+                registrar={!equipe && !vista}
+              />
+              <a
+                href={linkDoYoutube(aula.video_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="self-start text-[15px] text-verde-link underline hover:text-verde"
+              >
+                {t.verEnYoutube} <span className="text-apoio">{t.otraPestana}</span>
+              </a>
+            </div>
+          ) : (
+            <Tarjeta>
+              <p className="text-base text-apoio">{t.sinVideo}</p>
+            </Tarjeta>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {vista ? <Sello tom="verde">✓ {t.vista}</Sello> : null}
+              {equipe ? null : (
+                <form action={marcarClase}>
+                  <input type="hidden" name="aula_id" value={aula.id} />
+                  <input type="hidden" name="vista" value={vista ? '0' : '1'} />
+                  <Boton variante={vista ? 'secundario' : 'principal'}>{vista ? t.desmarcar : t.marcarVista}</Boton>
+                </form>
+              )}
+            </div>
+            <nav aria-label={es.inicio.todasLasClases} className="flex flex-wrap gap-3">
+              {anterior && !painel.fechados.has(anterior) ? (
+                <EnlaceBoton href={`/clase/${anterior}`} variante="secundario">
+                  ← {t.anterior}
+                </EnlaceBoton>
+              ) : null}
+              {seguinte && !painel.fechados.has(seguinte) ? (
+                <EnlaceBoton href={`/clase/${seguinte}`} variante="secundario">
+                  {t.siguiente} →
+                </EnlaceBoton>
+              ) : null}
+            </nav>
+          </div>
+
           {aula.blocos.length > 0 ? <Apuntes numero={aula.numero} tituloDaAula={aula.titulo_es} blocos={aula.blocos} /> : null}
         </div>
 
