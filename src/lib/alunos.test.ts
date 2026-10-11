@@ -71,14 +71,14 @@ test('matrícula: sem prazo, com prazo, conversação e reservas', () => {
 
 test('novo aluno: só cadastro, ou cadastro com matrícula', () => {
   assert.deepEqual(validarNovaPessoa({ nome: ' Lucía Peña ', email: 'LUCIA@exemplo.com', curso_id: '' }, agora), {
-    ok: true, valor: { nome: 'Lucía Peña', email: 'lucia@exemplo.com', curso_id: null, matricula: null, enviar_email: false },
+    ok: true, valor: { nome: 'Lucía Peña', email: 'lucia@exemplo.com', papel: 'aluno', curso_id: null, matricula: null, enviar_email: false },
   });
   assert.deepEqual(
     validarNovaPessoa({ nome: 'Ana', email: 'ana@exemplo.com', curso_id: curso, acesso_ate: '2027-01-31', inclui_conversacao: 'on', reservas_por_semana: '1', enviar_email: 'on' }, agora),
     {
       ok: true,
       valor: {
-        nome: 'Ana', email: 'ana@exemplo.com', curso_id: curso, enviar_email: true,
+        nome: 'Ana', email: 'ana@exemplo.com', papel: 'aluno', curso_id: curso, enviar_email: true,
         matricula: { expira_em: '2027-02-01T02:59:59.999Z', inclui_conversacao: true, reservas_por_semana: 1 },
       },
     },
@@ -86,6 +86,12 @@ test('novo aluno: só cadastro, ou cadastro com matrícula', () => {
   const ruim = validarNovaPessoa({ nome: '', email: 'ana', curso_id: 'curso', acesso_ate: '2020-01-01' }, agora);
   assert.equal(ruim.ok, false);
   assert.deepEqual(!ruim.ok && Object.keys(ruim.erros).sort(), ['acesso_ate', 'curso_id', 'email', 'nome']);
+  // O papel vem escolhido da lista; em branco, a pessoa é aluna; fora da lista, é recusado.
+  const equipe = validarNovaPessoa({ nome: 'Rui', email: 'rui@exemplo.com', papel: 'admin', curso_id: '' }, agora);
+  assert.equal(equipe.ok && equipe.valor.papel, 'admin');
+  assert.equal(validarNovaPessoa({ nome: 'Bia', email: 'bia@exemplo.com', papel: 'professor', curso_id: '' }, agora).ok, true);
+  const semPapel = validarNovaPessoa({ nome: 'Rui', email: 'rui@exemplo.com', papel: 'dono', curso_id: '' }, agora);
+  assert.deepEqual(!semPapel.ok && semPapel.erros, { papel: 'Escolha um papel da lista.' });
   // Sem curso escolhido, os campos da matrícula não são conferidos.
   assert.equal(validarNovaPessoa({ nome: 'Ana', email: 'ana@exemplo.com', curso_id: '', acesso_ate: '2020-01-01' }, agora).ok, true);
 });

@@ -548,7 +548,7 @@ export async function restaurar(dados: FormData): Promise<void> {
 export async function enviarEmailDeTeste(): Promise<void> {
   await exigirEquipe();
   const pessoa = await pessoaLogada();
-  if (!pessoa || pessoa.email === '') redirect('/admin?aviso=email_falhou');
+  if (!pessoa || pessoa.email === '') redirect('/admin?aviso=email_falhou#email');
 
   const quando = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date());
   let motivo: string | null = null;
@@ -558,8 +558,9 @@ export async function enviarEmailDeTeste(): Promise<void> {
     motivo = motivoDaFalha(erro);
     console.error(`Falha no e-mail de teste (${motivo}):`, erro instanceof Error ? erro.message : erro);
   }
-  if (motivo === null) redirect('/admin?aviso=email_enviado');
-  redirect(`/admin?aviso=email_${motivo === 'outro' ? 'falhou' : motivo}`);
+  // A resposta aparece no próprio quadro do e-mail, ao lado do botão (âncora #email).
+  if (motivo === null) redirect('/admin?aviso=email_enviado#email');
+  redirect(`/admin?aviso=email_${motivo === 'outro' ? 'falhou' : motivo}#email`);
 }
 
 // Quantas mensagens cada pessoa manda por dia ao Papo (o tutor com IA). Só o administrador muda:

@@ -82,6 +82,10 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
     tipo: 'erro',
     texto: 'A pessoa foi cadastrada, mas o e-mail de acesso não saiu: esse endereço já recebeu links demais há pouco. Mande de novo daqui a 10 minutos.',
   },
+  criada_sem_papel: {
+    tipo: 'erro',
+    texto: 'A pessoa foi cadastrada como aluno, mas o papel escolhido não foi gravado. Troque o papel por esta tela e depois envie o link de acesso.',
+  },
   criada_sem_matricula: { tipo: 'erro', texto: 'A pessoa foi cadastrada, mas a matrícula não foi gravada. Matricule por esta tela.' },
   nome_salvo: { tipo: 'ok', texto: 'Nome salvo.' },
   email_corrigido: { tipo: 'ok', texto: 'E-mail trocado. A pessoa passa a entrar com o e-mail novo; a senha continua a mesma.' },

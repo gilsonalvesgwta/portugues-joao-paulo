@@ -21,7 +21,7 @@ test('o painel manda um e-mail de teste para quem está logado', async () => {
   await entrar(pagina, admin.email, senha);
   await pagina.waitForURL('**/admin');
   await pagina.getByRole('button', { name: 'Enviar e-mail de teste' }).click();
-  await pagina.waitForURL('**/admin?aviso=email_enviado');
+  await pagina.waitForURL('**/admin?aviso=email_enviado#email');
   assert.equal(await textoDoAviso(pagina, 'status'), 'E-mail de teste enviado. Confira a sua caixa de entrada e a pasta de spam.');
 
   const emails = await emailsPara(admin.email);

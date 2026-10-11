@@ -201,6 +201,53 @@ test('cadastrar sem matrícula e sem e-mail: a pessoa existe, não vê nada e ne
   assert.equal((await emailsPara(email)).length, 0);
 });
 
+test('novo administrador ou professor: o botão da lista abre o cadastro com o papel escolhido; a pessoa nasce com o papel, sem matrícula, e recebe o e-mail', async () => {
+  // Nomes sem o sufixo deste arquivo: o teste da lista conta quem aparece na busca por ele.
+  const marca = randomBytes(4).toString('hex');
+  const novaAdmin = emailDeTeste('nova-admin');
+  await pagina.goto(`${base}/admin/alunos`);
+  await pagina.getByRole('link', { name: 'Novo administrador ou professor' }).click();
+  await pagina.waitForURL('**/admin/alunos/novo?papel=admin');
+  await pagina.getByRole('heading', { level: 1, name: 'Novo administrador ou professor' }).waitFor();
+  assert.equal(await campo('Papel na plataforma').inputValue(), 'admin');
+  assert.equal(await campo('Matricular no curso').inputValue(), '', 'a equipe não precisa de matrícula');
+  assert.equal(await campo('Acesso até (opcional)').count(), 0);
+
+  // Um erro no formulário não desfaz o papel escolhido.
+  await campo('Nome').fill(`Rita Equipe ${marca}`);
+  await campo('E-mail').fill('rita-sem-arroba');
+  await pagina.getByRole('button', { name: 'Cadastrar' }).click();
+  await pagina.locator('form[data-vez="1"]').waitFor();
+  assert.equal(await campo('Papel na plataforma').inputValue(), 'admin');
+
+  await campo('E-mail').fill(novaAdmin);
+  await pagina.getByRole('button', { name: 'Cadastrar' }).click();
+  await pagina.waitForURL('**/admin/alunos/*?aviso=criada_link_enviado');
+  const perfil = await perfilDe(novaAdmin);
+  assert.deepEqual({ nome: perfil.nome, papel: perfil.papel }, { nome: `Rita Equipe ${marca}`, papel: 'admin' });
+  assert.equal((await admin.from('matriculas').select('id').eq('aluno_id', perfil.id)).data.length, 0);
+  assert.equal((await emailsPara(novaAdmin)).length, 1, 'o link para criar a senha foi enviado');
+  assert.equal(await campo('O que esta pessoa pode fazer').inputValue(), 'admin', 'a ficha mostra o papel');
+
+  // Pelo botão "Novo aluno" o papel começa em aluno, e dá para escolher professor ali mesmo.
+  const novoProfessor = emailDeTeste('novo-professor');
+  await pagina.goto(`${base}/admin/alunos/novo`);
+  await pagina.getByRole('heading', { level: 1, name: 'Novo aluno' }).waitFor();
+  assert.equal(await campo('Papel na plataforma').inputValue(), 'aluno');
+  await campo('Nome').fill(`Paulo Equipe ${marca}`);
+  await campo('E-mail').fill(novoProfessor);
+  await campo('Papel na plataforma').selectOption('professor');
+  await campo('Matricular no curso').selectOption('');
+  await campo('Enviar agora o e-mail com o link para criar a senha').uncheck();
+  await pagina.getByRole('button', { name: 'Cadastrar' }).click();
+  await pagina.waitForURL('**/admin/alunos/*?aviso=pessoa_criada');
+  assert.equal((await perfilDe(novoProfessor)).papel, 'professor');
+
+  // Papel fora da lista no endereço é ignorado.
+  await pagina.goto(`${base}/admin/alunos/novo?papel=dono`);
+  assert.equal(await campo('Papel na plataforma').inputValue(), 'aluno');
+});
+
 test('bloquear tira o acesso da aluna na hora; liberar devolve', async () => {
   await pagina.goto(`${base}/admin/alunos/${alunaId}`);
   await pagina.getByRole('button', { name: `Bloquear o acesso a ${cursoA}` }).click();

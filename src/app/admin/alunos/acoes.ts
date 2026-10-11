@@ -57,14 +57,14 @@ async function avisoDoEnvio(email: string, prefixo: string): Promise<string> {
 // Novo aluno
 // ---------------------------------------------------------------------------
 
-// Cadastra a pessoa (a conta nasce sem senha), matricula no curso escolhido e manda o e-mail
-// com o link para ela criar a senha.
+// Cadastra a pessoa (a conta nasce sem senha), dá o papel escolhido (aluno, professor ou
+// administrador), matricula no curso escolhido e manda o e-mail com o link para ela criar a senha.
 export async function criarPessoa(anterior: EstadoDoFormulario, dados: FormData): Promise<EstadoDoFormulario> {
   const { supabase } = await exigirAdmin();
-  const valores = valoresDe(dados, ['nome', 'email', 'curso_id', ...CAMPOS_DA_MATRICULA, 'enviar_email']);
+  const valores = valoresDe(dados, ['nome', 'email', 'papel', 'curso_id', ...CAMPOS_DA_MATRICULA, 'enviar_email']);
   const conferido = validarNovaPessoa(valores, new Date());
   if (!conferido.ok) return comErros(anterior, conferido.erros, valores);
-  const { nome, email, curso_id: cursoId, matricula, enviar_email: enviar } = conferido.valor;
+  const { nome, email, papel, curso_id: cursoId, matricula, enviar_email: enviar } = conferido.valor;
 
   if (cursoId !== null && !(await cursoExiste(supabase, cursoId))) {
     return comErros(anterior, { curso_id: 'Esse curso não existe mais. Escolha outro.' }, valores);
@@ -86,6 +86,17 @@ export async function criarPessoa(anterior: EstadoDoFormulario, dados: FormData)
   }
   const id = criada.user.id;
 
+  // A conta nasce como aluno. O papel da equipe é dado pela mesma função da ficha, que confere de
+  // novo no banco se quem pede é administrador.
+  let papelGravado = true;
+  if (papel !== 'aluno') {
+    const { error: erroDoPapel } = await supabase.rpc('definir_papel', { p_pessoa: id, p_papel: papel });
+    if (erroDoPapel) {
+      console.error('Conta criada, mas o papel não foi gravado:', erroDoPapel.message);
+      papelGravado = false;
+    }
+  }
+
   if (cursoId !== null && matricula !== null) {
     const { error: erroDaMatricula } = await supabase.from('matriculas').insert({ aluno_id: id, curso_id: cursoId, origem: 'manual', ...matricula });
     if (erroDaMatricula) {
@@ -94,6 +105,8 @@ export async function criarPessoa(anterior: EstadoDoFormulario, dados: FormData)
     }
   }
 
+  // Sem o papel, o convite não sai: a pessoa entraria como aluno.
+  if (!papelGravado) redirect(ficha(id, 'criada_sem_papel'));
   if (!enviar) redirect(ficha(id, 'pessoa_criada'));
   redirect(ficha(id, await avisoDoEnvio(email, 'criada_link')));
 }

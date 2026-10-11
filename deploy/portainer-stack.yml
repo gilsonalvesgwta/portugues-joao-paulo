@@ -21,6 +21,9 @@
 #   ADMIN_SENHA_INICIAL  senha do primeiro acesso do administrador (8 ou mais)
 #   SMTP_USER            endereço completo da caixa de e-mail da Hostinger
 #   SMTP_PASS            senha dessa caixa
+#   SMTP_PORT            opcional. Em branco, 465. Use 587 se o provedor da VPS bloquear a saída
+#                        pela porta 465 (o painel avisa "Não consegui conectar ao servidor de e-mail")
+#   SMTP_HOST            opcional. Em branco, smtp.hostinger.com
 #   SEGREDO_DA_GREENN    segredo novo, só letras e números, 24 ou mais. Faz parte do endereço que a
 #                        Greenn chama (https://DOMINIO/api/greenn/SEGREDO). Em branco, a plataforma
 #                        não aceita avisos de compra e as matrículas são só as manuais
@@ -56,8 +59,8 @@ services:
 
       ## E-mail pela caixa da Hostinger
       - EMAIL_DRIVER=smtp
-      - SMTP_HOST=smtp.hostinger.com
-      - SMTP_PORT=465
+      - SMTP_HOST=${SMTP_HOST:-smtp.hostinger.com}
+      - SMTP_PORT=${SMTP_PORT:-465}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_REMETENTE=${SMTP_USER}

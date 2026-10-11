@@ -46,6 +46,9 @@ export default async function PaginaAlunos({ searchParams }: Props) {
   return (
     <>
       <TituloDaPagina titulo="Alunos" texto="Quem tem conta na plataforma e a que cursos cada pessoa tem acesso.">
+        <LinkBotao href="/admin/alunos/novo?papel=admin" variante="secundario">
+          Novo administrador ou professor
+        </LinkBotao>
         <LinkBotao href="/admin/alunos/novo">Novo aluno</LinkBotao>
       </TituloDaPagina>
       <AvisoDaPagina aviso={avisoDe(aviso)} />

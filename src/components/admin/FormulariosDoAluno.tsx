@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useActionState, useState } from 'react';
 import { apagarConta, corrigirEmail, criarPessoa, matricular, salvarMatricula, salvarNome } from '@/app/admin/alunos/acoes';
 import { Botao, Caixa, Entrada, LinkBotao, Selecao } from '@/components/admin/ui';
+import { NOME_DO_PAPEL, PAPEIS, type Papel } from '@/lib/alunos';
 import { ESTADO_INICIAL, type EstadoDoFormulario } from '@/lib/formulario';
 
 // Formulários da tela de alunos: novo aluno, nome, e-mail e matrícula. Todos devolvem os erros
@@ -64,12 +65,13 @@ function CamposDaMatricula({ prefixo, estado, inicial }: { prefixo: string; esta
 // Novo aluno
 // ---------------------------------------------------------------------------
 
-export function FormularioNovoAluno({ cursos }: { cursos: CursoDaLista[] }) {
+export function FormularioNovoAluno({ cursos, papelInicial = 'aluno' }: { cursos: CursoDaLista[]; papelInicial?: Papel }) {
   const [estado, acao, enviando] = useActionState(criarPessoa, ESTADO_INICIAL);
   // A tela acompanha o curso escolhido só para mostrar ou esconder os campos da matrícula. O campo
   // em si não é controlado (usa defaultValue): depois de uma resposta do servidor o React devolve
   // os campos ao valor padrão, e um campo de escolha controlado voltaria sozinho à primeira opção.
-  const [curso, setCurso] = useState(cursos[0]?.id ?? '');
+  // Quem chega para cadastrar alguém da equipe não precisa de matrícula: a equipe abre todos os cursos.
+  const [curso, setCurso] = useState(papelInicial === 'aluno' ? (cursos[0]?.id ?? '') : '');
   const erros = estado.erros;
 
   return (
@@ -97,6 +99,19 @@ export function FormularioNovoAluno({ cursos }: { cursos: CursoDaLista[] }) {
             ) : null}
           </div>
         </div>
+        <Selecao
+          id="papel"
+          rotulo="Papel na plataforma"
+          ajuda="Aluno vê os cursos em que está matriculado. Professor cuida do conteúdo e das aulas ao vivo. Administrador faz tudo isso e também cuida de alunos e pagamentos."
+          defaultValue={estado.vez > 0 ? (estado.valores.papel ?? 'aluno') : papelInicial}
+          erro={erros.papel}
+        >
+          {PAPEIS.map((papel) => (
+            <option key={papel} value={papel}>
+              {NOME_DO_PAPEL[papel]}
+            </option>
+          ))}
+        </Selecao>
         <Selecao
           id="curso_id"
           rotulo="Matricular no curso"
