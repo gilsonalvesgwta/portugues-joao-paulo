@@ -13,6 +13,9 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
   na_lixeira: { tipo: 'ok', texto: 'Movido para a lixeira. Dá para restaurar quando quiser.' },
   restaurado: { tipo: 'ok', texto: 'Restaurado como rascunho.' },
   modulo_restaurado: { tipo: 'ok', texto: 'Módulo restaurado.' },
+  tarefa_salva: { tipo: 'ok', texto: 'Tarefa salva.' },
+  tarefa_restaurada: { tipo: 'ok', texto: 'Tarefa restaurada.' },
+  restaurar_curso_da_tarefa: { tipo: 'erro', texto: 'O curso desta tarefa está na lixeira. Restaure o curso antes.' },
   curso_com_modulos: {
     tipo: 'erro',
     texto: 'Este curso ainda tem módulos. Mova os módulos para a lixeira antes de mover o curso.',

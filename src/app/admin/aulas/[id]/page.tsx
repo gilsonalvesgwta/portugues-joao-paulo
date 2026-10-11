@@ -6,7 +6,9 @@ import { FormularioDaAula } from '@/components/admin/FormularioDaAula';
 import { AvisoDaPagina, Botao, Cartao, Etiqueta, LinkBotao, TituloDaPagina, Trilha } from '@/components/admin/ui';
 import { gruposParaAula } from '@/lib/admin/aulas';
 import { avisoDe } from '@/lib/admin/avisos';
-import { ativos, blocosPorAula, carregarConteudo, carregarMateriaisDaAula, quizzesPorAula } from '@/lib/admin/dados';
+import {
+  ativos, blocosPorAula, carregarConteudo, carregarMateriaisDaAula, carregarTarefas, cursoDaAula, quizzesPorAula,
+} from '@/lib/admin/dados';
 import { formatarDuracao, incorporarYoutube, lerVideoDoYoutube, linkDoYoutube } from '@/lib/conteudo';
 
 export const metadata: Metadata = { title: 'Editar aula' };
@@ -24,6 +26,8 @@ export default async function PaginaEditarAula({ params, searchParams }: Props) 
   const video = codigo !== null && codigo !== 'invalido' ? codigo : null;
   const quantos = blocos.get(aula.id) ?? 0;
   const quiz = (await quizzesPorAula()).get(aula.id) ?? null;
+  const tarefas = ativos(await carregarTarefas()).filter((tarefa) => tarefa.aula_id === aula.id);
+  const cursoId = cursoDaAula(conteudo, aula.id);
   const materiais = await carregarMateriaisDaAula(aula.id);
 
   return (
@@ -147,6 +151,34 @@ export default async function PaginaEditarAula({ params, searchParams }: Props) 
               </li>
             ))}
           </ol>
+        )}
+      </Cartao>
+      <Cartao>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-bold">Tarefas da aula</h2>
+          {cursoId ? (
+            <LinkBotao href={`/admin/tarefas/nova?curso=${cursoId}&aula=${aula.id}`} variante="secundario">
+              Nova tarefa
+            </LinkBotao>
+          ) : null}
+        </div>
+        {tarefas.length === 0 ? (
+          <p className="mt-2 text-[15px] leading-normal text-apoio">
+            Nenhuma tarefa ligada a esta aula. Tarefa é o que o aluno faz além do vídeo e do quiz.
+          </p>
+        ) : (
+          <ul className="mt-3 flex flex-col divide-y divide-linha border-y border-linha">
+            {tarefas.map((tarefa) => (
+              <li key={tarefa.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <span className="min-w-0 text-base font-semibold" lang="es">
+                  {tarefa.titulo_es}
+                </span>
+                <LinkBotao href={`/admin/tarefas/${tarefa.id}`} variante="secundario">
+                  Editar<span className="sr-only"> a tarefa {tarefa.titulo_es}</span>
+                </LinkBotao>
+              </li>
+            ))}
+          </ul>
         )}
       </Cartao>
       <Cartao>

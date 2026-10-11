@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  ehUuid, formatarDuracao, incorporarYoutube, lerDuracao, lerLink, lerVideoDoYoutube, limpar, linkDoYoutube, mover, proximoNumero,
-  validarAula, validarCurso, validarMaterial, validarModulo,
+  ehUuid, formatarDuracao, incorporarYoutube, lerDuracao, lerLink, lerVideoDoYoutube, limpar, limparTexto, linkDoYoutube, mover, proximoNumero, validarAula, validarCurso, validarMaterial, validarModulo, validarTarefa,
 } from './conteudo.ts';
 
 const MODULO = '3f2b8a1c-0d4e-4f6a-9b7c-1a2b3c4d5e6f';
@@ -198,4 +197,31 @@ test('mover troca com o vizinho e não passa das pontas', () => {
   assert.deepEqual(mover(['a', 'b', 'c'], 0, 'subir'), ['a', 'b', 'c']);
   assert.deepEqual(mover(['a', 'b', 'c'], 2, 'descer'), ['a', 'b', 'c']);
   assert.deepEqual(mover(['a', 'b', 'c'], 7, 'subir'), ['a', 'b', 'c']);
+});
+
+test('limparTexto mantém as quebras de linha e tira o que sobra', () => {
+  assert.equal(limparTexto('  Uma linha.  \r\n\r\n\r\n\r\n  Outra   linha. \n'), 'Uma linha.\n\nOutra linha.');
+  assert.equal(limparTexto(undefined), '');
+});
+
+test('tarefa válida passa, com aula e link opcionais', () => {
+  const aula = '3f2b8a1c-0d4e-4f6a-9b7c-1a2b3c4d5e6f';
+  assert.deepEqual(validarTarefa({ aula_id: aula, titulo_es: ' Escribe  5 frases ', instrucao_es: 'Usa el verbo ser.\n\n\n\nEnvíalas.', link: 'docs.google.com/document/d/abc' }), {
+    ok: true,
+    valor: { aula_id: aula, titulo_es: 'Escribe 5 frases', instrucao_es: 'Usa el verbo ser.\n\nEnvíalas.', link: 'https://docs.google.com/document/d/abc' },
+  });
+  assert.deepEqual(validarTarefa({ aula_id: '', titulo_es: 'Repasa', instrucao_es: 'Lee tus apuntes.', link: '' }), {
+    ok: true,
+    valor: { aula_id: null, titulo_es: 'Repasa', instrucao_es: 'Lee tus apuntes.', link: null },
+  });
+});
+
+test('tarefa com campos errados aponta cada um', () => {
+  const r = validarTarefa({ aula_id: 'x', titulo_es: '', instrucao_es: '  \n ', link: 'http://exemplo.com' });
+  assert.equal(r.ok, false);
+  if (r.ok) return;
+  assert.deepEqual(Object.keys(r.erros).sort(), ['aula_id', 'instrucao_es', 'link', 'titulo_es']);
+  const longa = validarTarefa({ titulo_es: 'T', instrucao_es: 'a'.repeat(2001), link: '' });
+  assert.equal(longa.ok, false);
+  if (!longa.ok) assert.equal(longa.erros.instrucao_es, 'A instrução pode ter até 2000 letras.');
 });

@@ -225,6 +225,39 @@ export function validarMaterial(entrada: Entrada): Resultado<DadosDoMaterial> {
   return { ok: true, valor: { titulo_pt, titulo_es, descricao_es: descricao === '' ? null : descricao, link } };
 }
 
+// Texto de várias linhas: mantém as quebras, sem espaços sobrando nem mais de uma linha em branco seguida.
+export function limparTexto(valor: unknown): string {
+  if (typeof valor !== 'string') return '';
+  return valor
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((linha) => linha.replace(/[^\S\n]+/g, ' ').trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+export const INSTRUCAO_MAX = 2000;
+
+// Tarefa: o que o aluno deve fazer fora do vídeo e do quiz. Fica ligada ao curso e, se fizer
+// sentido, a uma aula. O texto é em espanhol, que é o que o aluno lê.
+export type DadosDaTarefa = { aula_id: string | null; titulo_es: string; instrucao_es: string; link: string | null };
+
+export function validarTarefa(entrada: Entrada): Resultado<DadosDaTarefa> {
+  const erros: Erros = {};
+  const aulaEscrita = typeof entrada.aula_id === 'string' ? entrada.aula_id.trim() : '';
+  if (aulaEscrita !== '' && !ehUuid(aulaEscrita)) erros.aula_id = 'Escolha uma aula da lista.';
+  const titulo_es = limpar(entrada.titulo_es);
+  conferirTitulo(erros, 'titulo_es', titulo_es, 'espanhol');
+  const instrucao_es = limparTexto(entrada.instrucao_es);
+  if (instrucao_es === '') erros.instrucao_es = 'Escreva o que o aluno deve fazer.';
+  else if (instrucao_es.length > INSTRUCAO_MAX) erros.instrucao_es = `A instrução pode ter até ${INSTRUCAO_MAX} letras.`;
+  const link = lerLink(entrada.link);
+  if (link === 'invalido') erros.link = 'Cole um link que comece com https://, sem espaços, ou deixe em branco.';
+  if (link === 'invalido' || Object.keys(erros).length > 0) return { ok: false, erros };
+  return { ok: true, valor: { aula_id: aulaEscrita === '' ? null : aulaEscrita, titulo_es, instrucao_es, link } };
+}
+
 // Próximo número livre: um a mais que o maior em uso.
 export function proximoNumero(numeros: readonly number[]): number {
   return numeros.reduce((maior, n) => (n > maior ? n : maior), 0) + 1;
