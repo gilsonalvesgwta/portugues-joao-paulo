@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// Só entram no menu as partes que já funcionam. As próximas (conversação e configurações)
+// Só entram no menu as partes que já funcionam. As próximas (tutor de dúvidas e configurações)
 // aparecem aqui conforme forem construídas. "soAdmin": o professor não vê.
 const ITENS = [
   { href: '/admin', rotulo: 'Painel', prefixos: [] as string[], soAdmin: false },
@@ -11,6 +11,7 @@ const ITENS = [
   { href: '/admin/aulas', rotulo: 'Aulas', prefixos: ['/admin/aulas', '/admin/materiais'], soAdmin: false },
   { href: '/admin/tarefas', rotulo: 'Tarefas', prefixos: ['/admin/tarefas'], soAdmin: false },
   { href: '/admin/trilha', rotulo: 'Trilha por dia', prefixos: ['/admin/trilha'], soAdmin: false },
+  { href: '/admin/conversacao', rotulo: 'Conversação', prefixos: ['/admin/conversacao'], soAdmin: false },
   { href: '/admin/alunos', rotulo: 'Alunos', prefixos: ['/admin/alunos'], soAdmin: true },
   { href: '/admin/pagamentos', rotulo: 'Pagamentos', prefixos: ['/admin/pagamentos'], soAdmin: true },
   { href: '/admin/lixeira', rotulo: 'Lixeira', prefixos: ['/admin/lixeira'], soAdmin: false },

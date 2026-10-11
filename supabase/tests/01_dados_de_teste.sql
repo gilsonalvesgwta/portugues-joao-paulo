@@ -91,16 +91,16 @@ update public.matriculas set expira_em = now() - interval '1 day' where aluno_id
 -- Conversação.
 insert into public.temas_conversacao (id, titulo_es, nivel) values (teste.tid(70), 'Tema de ejemplo', 'basico');
 
-insert into public.turmas (id, tema_id, inicio, vagas) values
-  (teste.tid(101), teste.tid(70), now() + interval '2 days', 10),                                              -- uso geral
-  (teste.tid(102), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '1 day 18 hours', 10), -- terça da semana que vem
-  (teste.tid(103), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '2 days 18 hours', 10), -- quarta
-  (teste.tid(104), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '3 days 18 hours', 10), -- quinta
-  (teste.tid(105), teste.tid(70), date_trunc('week', now()) + interval '14 days' + interval '1 day 18 hours', 10),  -- semana seguinte
-  (teste.tid(106), teste.tid(70), now() + interval '10 minutes', 10),                                          -- reserva já encerrada
-  (teste.tid(107), teste.tid(70), now() + interval '60 minutes', 10),                                          -- cancelamento fora do prazo
-  (teste.tid(108), teste.tid(70), now() + interval '3 days', 10),                                              -- 11 alunos, 10 vagas
-  (teste.tid(109), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '1 day 20 hours', 10),
-  (teste.tid(110), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '2 days 20 hours', 10),
-  (teste.tid(111), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '3 days 20 hours', 10),
-  (teste.tid(112), teste.tid(70), now() + interval '9 days', 10);                                              -- fora da janela de 7 dias
+insert into public.turmas (id, tema_id, inicio, vagas, meet_url) values
+  (teste.tid(101), teste.tid(70), now() + interval '2 days', 10, 'https://meet.google.com/abc-defg-hij'),                                              -- uso geral
+  (teste.tid(102), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '1 day 18 hours', 10, 'https://meet.google.com/abc-defg-hij'), -- terça da semana que vem
+  (teste.tid(103), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '2 days 18 hours', 10, 'https://meet.google.com/abc-defg-hij'), -- quarta
+  (teste.tid(104), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '3 days 18 hours', 10, 'https://meet.google.com/abc-defg-hij'), -- quinta
+  (teste.tid(105), teste.tid(70), date_trunc('week', now()) + interval '14 days' + interval '1 day 18 hours', 10, 'https://meet.google.com/abc-defg-hij'),  -- semana seguinte
+  (teste.tid(106), teste.tid(70), now() + interval '10 minutes', 10, 'https://meet.google.com/abc-defg-hij'),                                          -- reserva já encerrada
+  (teste.tid(107), teste.tid(70), now() + interval '60 minutes', 10, 'https://meet.google.com/abc-defg-hij'),                                          -- cancelamento fora do prazo
+  (teste.tid(108), teste.tid(70), now() + interval '3 days', 10, 'https://meet.google.com/abc-defg-hij'),                                              -- 11 alunos, 10 vagas
+  (teste.tid(109), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '1 day 20 hours', 10, 'https://meet.google.com/abc-defg-hij'),
+  (teste.tid(110), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '2 days 20 hours', 10, 'https://meet.google.com/abc-defg-hij'),
+  (teste.tid(111), teste.tid(70), date_trunc('week', now()) + interval '7 days'  + interval '3 days 20 hours', 10, 'https://meet.google.com/abc-defg-hij'),
+  (teste.tid(112), teste.tid(70), now() + interval '9 days', 10, 'https://meet.google.com/abc-defg-hij');                                              -- fora da janela de 7 dias

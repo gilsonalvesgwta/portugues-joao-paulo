@@ -8,11 +8,11 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
-| `supabase/tests/` | Testes do banco: 151 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno e correção do quiz | 146 testes passando |
+| `supabase/tests/` | Testes do banco: 177 verificações de regra e 2 testes de disputa simultânea | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz e conversação | 153 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas) e quiz corrigido pelo servidor |
-| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) e pagamentos (ofertas e avisos da Greenn) | Funcionando |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 107 testes passando nos dois |
+| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 119 testes passando nos dois |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -85,6 +85,22 @@ Em `/admin`, o curso é dividido em módulos e cada módulo reúne aulas.
   O texto do professor é sempre texto: nunca vira HTML. O único destaque é `**negrito**`.
 - "Apagar" é mover para a lixeira: o item some para o aluno, pode ser restaurado e volta como rascunho.
   Curso só vai para a lixeira sem módulos; módulo, só sem aulas.
+
+## Aulas de conversação ao vivo (equipe)
+
+Em `/admin/conversacao`, para o professor e o administrador:
+
+- **Tema**: o assunto da aula (título, nível, descrição, o que o aluno vai aprender e um material por link).
+  Tema com turma marcada não é arquivado.
+- **Turma**: tema, data e hora (no horário de Brasília; a tela mostra como fica em Madri, Buenos Aires, Bogotá
+  e Cidade do México), duração, vagas e o **link da sala**, que o professor cria no Google Meet e cola. Sem link
+  a turma não é criada, porque ele vai no e-mail de quem reserva.
+- O link da sala não é lido na tabela de turmas: o aluno só o recebe nas reservas dele.
+- Com gente inscrita, o tema, a data e a hora não mudam mais; para mudar o horário, cancela-se a turma.
+- **Cancelar a turma** cancela as reservas (o crédito da semana volta) e avisa cada inscrito por e-mail.
+- **Inscritos**: quem reservou, a presença (marcada a partir do início da aula) e a avaliação que cada um deu.
+- **Regras de reserva** (só o administrador): quantos dias de agenda o aluno vê, até quando reserva e até
+  quando cancela. Quantas aulas cada aluno reserva por semana vem da matrícula.
 
 ## Como o administrador cuida dos alunos
 

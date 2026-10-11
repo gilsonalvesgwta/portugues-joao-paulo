@@ -10,3 +10,12 @@ export async function exigirAdmin(): Promise<PessoaLogada> {
   if (pessoa.papel !== 'admin') redirect(ehEquipe(pessoa.papel) ? '/admin?aviso=so_administrador' : '/inicio');
   return pessoa;
 }
+
+// Telas que só a equipe (professor e administrador) abre e cujos dados vêm de funções do banco
+// que recusam quem não é da equipe: a tela confere antes de pedir os dados.
+export async function exigirEquipe(): Promise<PessoaLogada> {
+  const pessoa = await pessoaLogada();
+  if (!pessoa) redirect('/entrar');
+  if (!ehEquipe(pessoa.papel)) redirect('/inicio');
+  return pessoa;
+}
