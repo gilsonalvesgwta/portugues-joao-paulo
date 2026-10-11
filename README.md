@@ -9,7 +9,7 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
 | `supabase/tests/` | Testes do banco: 133 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas | 130 testes passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas | 131 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` ainda é tela de espera |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) e pagamentos (ofertas e avisos da Greenn) | Funcionando |
 | `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 94 testes passando nos dois |
@@ -39,7 +39,7 @@ Depois, com o aplicativo no ar, `npm run e2e` roda os testes de ponta a ponta.
    administrador em `/admin/alunos`. Ninguém se cadastra sozinho.
 2. Em `/primer-acceso` (ou `/recuperar`), a pessoa informa o e-mail. A tela responde o mesmo exista ou não a
    conta. No máximo 3 links por e-mail a cada 10 minutos.
-3. O link do e-mail abre uma tela com um botão. Só o clique gasta o link, que vale uma vez.
+3. O link do e-mail abre uma tela com um botão. Só o clique gasta o link, que vale uma vez e por 24 horas.
 4. A pessoa escolhe a senha e entra: aluno em `/inicio`, professor e administrador em `/admin`.
 
 ## Como o professor organiza o conteúdo

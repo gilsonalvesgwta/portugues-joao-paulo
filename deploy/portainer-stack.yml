@@ -142,6 +142,8 @@ services:
       - GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED=false
       - GOTRUE_MAILER_AUTOCONFIRM=true
       - GOTRUE_PASSWORD_MIN_LENGTH=8
+      ## O link de criar ou trocar a senha vale 24 horas e só pode ser usado uma vez.
+      - GOTRUE_MAILER_OTP_EXP=86400
 
       ## Sessão: o crachá de acesso vale 1 hora e é renovado sozinho.
       - GOTRUE_JWT_SECRET=${SEGREDO_JWT}
