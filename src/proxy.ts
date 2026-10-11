@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { configDoSupabase } from '@/lib/supabase/config';
+import { cookieDaSessao } from '@/lib/supabase/cookies';
 
 type CookieParaGravar = { name: string; value: string; options: CookieOptions };
 
@@ -28,7 +29,7 @@ export async function proxy(pedido: NextRequest) {
       setAll(lista: CookieParaGravar[]) {
         for (const { name, value } of lista) pedido.cookies.set(name, value);
         resposta = NextResponse.next({ request: pedido });
-        for (const { name, value, options } of lista) resposta.cookies.set(name, value, options);
+        for (const { name, value, options } of lista) resposta.cookies.set(name, value, cookieDaSessao(options));
       },
     },
   });

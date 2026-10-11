@@ -3,16 +3,19 @@
 Plataforma de português do Brasil para quem fala espanhol. Este repositório guarda o código;
 o plano completo está no documento "Plano mestre — Plataforma Português com João Paulo".
 
+- **Instalar na VPS**: [`docs/INSTALACAO.md`](docs/INSTALACAO.md)
+- **O que foi revisado e testado**: [`docs/REVISAO.md`](docs/REVISAO.md)
+
 ## O que já existe
 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
 | `supabase/tests/` | Testes do banco: 220 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno, limite de tentativas de senha e o Papo | 174 testes passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno, limite de tentativas de senha e o Papo | 176 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas), quiz corrigido pelo servidor, conversação (agenda no fuso do aluno, reservar, cancelar, avaliar), Papo (tutor com IA) e «Mi cuenta» |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 152 testes: 151 passando no Supabase local (com o Papo ligado, falando com um serviço de imitação) e 143 na stack (com o Papo desligado, como fica sem a chave) |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 155 testes: 154 passando no Supabase local (com o Papo ligado, falando com um serviço de imitação) e 146 na stack (com o Papo desligado, como fica sem a chave) |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -245,7 +248,16 @@ Dois roteiros, para rodar na VPS como root:
 A cada mudança, o GitHub roda os dois na stack de teste: copia, estraga o banco de propósito, restaura, confere
 as contagens e refaz os testes de login, de conteúdo e da área do aluno.
 
-O passo a passo da instalação ainda será escrito.
+O passo a passo está em [`docs/INSTALACAO.md`](docs/INSTALACAO.md), e o resumo do que foi revisado e testado em
+[`docs/REVISAO.md`](docs/REVISAO.md).
+
+## Proteções do aplicativo
+
+- A sessão fica em cookie `httpOnly` (os programas da página não leem) e, em https, `secure`.
+- Toda resposta leva cabeçalhos de segurança (`next.config.mjs`): a plataforma não abre dentro de outra página,
+  formulários só enviam para ela mesma e os únicos quadros de fora são os do YouTube.
+- 8 senhas erradas seguidas para o mesmo e-mail: espera de 15 minutos (`src/lib/tentativas.ts`).
+- Endereço que não existe e tela que falha têm páginas próprias, sem detalhe técnico.
 
 ## Pontos provisórios
 

@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { configDoSupabase } from './config';
+import { cookieDaSessao } from './cookies';
 
 type CookieParaGravar = { name: string; value: string; options: CookieOptions };
 
@@ -21,7 +22,7 @@ export async function clienteDoServidor() {
       },
       setAll(lista: CookieParaGravar[]) {
         try {
-          for (const { name, value, options } of lista) guardados.set(name, value, options);
+          for (const { name, value, options } of lista) guardados.set(name, value, cookieDaSessao(options));
         } catch {
           // Páginas (ao contrário das ações) não podem gravar cookies.
           // Sem problema: o proxy renova a sessão a cada pedido.
