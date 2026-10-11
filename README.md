@@ -8,11 +8,11 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
-| `supabase/tests/` | Testes do banco: 133 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas | 132 testes passando |
-| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` ainda é tela de espera |
+| `supabase/tests/` | Testes do banco: 151 verificações de regra e 2 testes de disputa simultânea | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno e correção do quiz | 146 testes passando |
+| `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas) e quiz corrigido pelo servidor |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) e pagamentos (ofertas e avisos da Greenn) | Funcionando |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 94 testes passando nos dois |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 107 testes passando nos dois |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -41,6 +41,24 @@ Depois, com o aplicativo no ar, `npm run e2e` roda os testes de ponta a ponta.
    conta. No máximo 3 links por e-mail a cada 10 minutos.
 3. O link do e-mail abre uma tela com um botão. Só o clique gasta o link, que vale uma vez e por 24 horas.
 4. A pessoa escolhe a senha e entra: aluno em `/inicio`, professor e administrador em `/admin`.
+
+## O que o aluno vê
+
+Depois de entrar, o aluno cai em `/inicio` (em espanhol):
+
+- **O curso**: quantas aulas já viu e o botão "Continuar", que leva à aula ou ao quiz que falta hoje.
+- **Hoy**: os itens do dia da trilha. A aula conta como feita quando é vista, o quiz quando é respondido (mesmo
+  sem acertar) e a tarefa quando o aluno marca. O dia vira quando os itens obrigatórios estão feitos. Itens que
+  o aluno não pode ver (aula ou quiz em rascunho) somem da trilha dele e não travam o dia.
+- **Todas as aulas**, por módulo. Em curso "em sequência", o que está em um dia depois de hoje fica fechado, na
+  tela e pelo endereço; em curso "livre", tudo abre.
+- **Aula** (`/clase/...`): vídeo do YouTube, botão "Marcar como vista", quiz, tarefas, materiais e anotações.
+  Enquanto o aluno assiste, a página guarda onde ele parou (o vídeo retoma dali) e marca a aula como vista
+  quando o vídeo passa de 90%.
+- **Quiz** (`/quiz/...`): o servidor entrega as perguntas sem a resposta e com as opções embaralhadas, corrige,
+  grava a tentativa e mostra o que estava certo. O aluno pode repetir; vale a melhor nota.
+- A equipe abre as mesmas telas para ver o curso como o aluno ("Abrir a área do aluno", no painel): tudo aberto,
+  sem rascunhos, e nada do que faz fica gravado.
 
 ## Como o professor organiza o conteúdo
 
@@ -169,3 +187,7 @@ O passo a passo da instalação ainda será escrito.
   liberar pelo nome só se a tela precisar.
 - A tabela `perguntas` não tem regra de leitura para o aluno porque guarda o gabarito. O servidor entrega as
   perguntas sem a resposta e faz a correção.
+- O registro do vídeo (onde o aluno parou e a marca de aula vista) conversa com o reprodutor pela ferramenta
+  oficial do YouTube. Nos testes ela é imitada, porque o YouTube não é chamado: o caminho inteiro foi exercitado,
+  menos o YouTube de verdade. Se a ferramenta não carregar, o vídeo toca do mesmo jeito e o aluno marca a aula
+  no botão.

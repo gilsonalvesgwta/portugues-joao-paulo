@@ -368,8 +368,8 @@ begin
   from pg_proc p
   where p.pronamespace = 'public'::regnamespace and has_function_privilege('authenticated', p.oid, 'execute');
   perform teste.confere(v_abertas = array['agenda_turmas', 'aluno_ve_aula', 'aluno_ve_curso', 'avaliar_aula', 'cancelar_reserva',
-      'config_int', 'definir_papel', 'eh_admin', 'eh_equipe', 'ler_trilha', 'lista_de_pessoas', 'pode_conversacao', 'reservar_turma',
-      'resumo_dos_quizzes', 'salvar_quiz', 'salvar_trilha'],
+      'config_int', 'curso_do_aluno', 'definir_papel', 'eh_admin', 'eh_equipe', 'ler_trilha', 'lista_de_pessoas', 'meu_progresso',
+      'pode_conversacao', 'reservar_turma', 'resumo_dos_quizzes', 'salvar_quiz', 'salvar_trilha'],
     'quem está logado só chama as funções da lista: ' || array_to_string(v_abertas, ', '));
 
   select coalesce(array_agg(p.proname::text order by p.proname), '{}') into v_abertas
@@ -441,6 +441,70 @@ begin
   perform aplicar_evento_pagamento(v_id, teste.uid(11));
   perform teste.confere((select expira_em between now() + interval '364 days' and now() + interval '366 days' from matriculas where aluno_id = teste.uid(11)),
     'com o acesso vencido, os dias contam a partir de hoje');
+end $$;
+reset role;
+
+-- ============ 12. Área do aluno: o curso e o progresso em uma resposta ============
+insert into public.tentativas_quiz (aluno_id, quiz_id, acertos, total, concluida_em) values
+  (teste.uid(1), teste.tid(30), 1, 2, now()),
+  (teste.uid(1), teste.tid(30), 2, 2, now()),
+  (teste.uid(1), teste.tid(30), 0, 2, null),   -- tentativa que não terminou: não conta
+  (teste.uid(5), teste.tid(30), 0, 2, now());
+set role authenticated;
+select teste.entrar(1);
+do $$
+declare
+  v_curso jsonb := curso_do_aluno(teste.tid(1));
+  v_feito jsonb := meu_progresso(teste.tid(1));
+begin
+  perform teste.confere(v_curso -> 'curso' ->> 'titulo_es' = 'Portugués de Brasil' and v_curso -> 'curso' ->> 'modo' = 'livre',
+    'aluno recebe o curso em que está matriculado');
+  perform teste.confere(jsonb_array_length(v_curso -> 'modulos') = 1 and jsonb_array_length(v_curso -> 'aulas') = 1
+                        and v_curso -> 'aulas' -> 0 ->> 'titulo_es' = 'Clase 1', 'só a aula publicada entra; a em rascunho não');
+  perform teste.confere(not (v_curso -> 'aulas' -> 0) ? 'video_id' and not (v_curso -> 'aulas' -> 0) ? 'anotacoes',
+    'a lista de aulas não carrega vídeo nem anotações (vêm só na tela da aula)');
+  perform teste.confere(jsonb_array_length(v_curso -> 'quizzes') = 1 and jsonb_array_length(v_curso -> 'tarefas') = 1
+                        and jsonb_array_length(v_curso -> 'trilha') = 1 and jsonb_array_length(v_curso -> 'trilha' -> 0 -> 'itens') >= 1,
+    'quiz publicado, tarefa e trilha vêm junto');
+  perform teste.confere(v_curso::text not like '%correta%', 'o gabarito não vai junto com o curso');
+  perform teste.confere(curso_do_aluno(teste.tid(3)) is null, 'curso em rascunho não é entregue');
+  perform teste.confere(curso_do_aluno(gen_random_uuid()) is null, 'curso inexistente não é entregue');
+
+  perform teste.confere(v_feito -> 'aulas' = jsonb_build_array(jsonb_build_object('aula_id', teste.tid(20), 'posicao_seg', 42, 'concluida', false)),
+    'progresso: a aula começada, com o ponto em que parou');
+  perform teste.confere(v_feito -> 'quizzes' = jsonb_build_array(jsonb_build_object('quiz_id', teste.tid(30), 'tentativas', 2, 'melhor', 100)),
+    'progresso: duas tentativas terminadas e a melhor nota; a que não terminou não conta');
+  insert into itens_concluidos (aluno_id, item_dia_id) values (teste.uid(1), teste.tid(51)) on conflict do nothing;
+  perform teste.confere(meu_progresso(teste.tid(1)) -> 'itens' = jsonb_build_array(teste.tid(51)), 'progresso: o item da trilha marcado');
+
+  update progresso_aulas set concluida_em = now() where aluno_id = teste.uid(1) and aula_id = teste.tid(20);
+  perform teste.confere((meu_progresso(teste.tid(1)) -> 'aulas' -> 0 ->> 'concluida')::boolean, 'aluno marca a aula como vista');
+  perform teste.espera_erro($q$insert into tentativas_quiz (aluno_id, quiz_id, acertos, total, concluida_em) values (teste.uid(1), teste.tid(30), 2, 2, now())$q$,
+    'permission denied', 'aluno não grava a própria nota: quem corrige é o servidor');
+  perform teste.espera_erro($q$update tentativas_quiz set acertos = 2 where aluno_id = teste.uid(1)$q$,
+    'permission denied', 'aluno não altera uma tentativa');
+end $$;
+select teste.entrar(6);
+do $$
+begin
+  perform teste.confere(meu_progresso(teste.tid(1)) = '{"aulas": [], "quizzes": [], "itens": []}'::jsonb, 'cada aluno recebe só o próprio progresso');
+end $$;
+reset role;
+update public.matriculas set situacao = 'suspensa' where aluno_id = teste.uid(6);
+set role authenticated;
+select teste.entrar(6);
+do $$
+begin
+  perform teste.confere(curso_do_aluno(teste.tid(1)) is null, 'com o acesso bloqueado, o curso não é entregue');
+end $$;
+select teste.entrar(901);
+do $$
+declare
+  v_curso jsonb := curso_do_aluno(teste.tid(1));
+begin
+  perform teste.confere(jsonb_array_length(v_curso -> 'aulas') = 1, 'a equipe vê o curso como o aluno: sem a aula em rascunho');
+  perform teste.confere(curso_do_aluno(teste.tid(3)) is null, 'nem a equipe recebe curso em rascunho pela visão do aluno');
+  perform teste.confere(meu_progresso(teste.tid(1)) = '{"aulas": [], "quizzes": [], "itens": []}'::jsonb, 'a equipe não recebe o progresso dos alunos por aqui');
 end $$;
 reset role;
 
