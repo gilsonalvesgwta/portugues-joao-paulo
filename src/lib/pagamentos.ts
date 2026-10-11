@@ -131,7 +131,8 @@ export async function processarAviso(eventoId: number, servico: Servico = client
     const { data: criada, error } = await servico.auth.admin.createUser({
       email,
       email_confirm: true,
-      user_metadata: { nome: evento.cliente.nome },
+      // O nome vem de fora: fica só com o tamanho de um nome.
+      user_metadata: { nome: evento.cliente.nome.slice(0, 120) },
     });
     // Dois avisos da mesma compra podem chegar juntos: se o outro criou a conta, ela é usada.
     alunoId = criada?.user?.id ?? (await acharPessoa(servico, email));

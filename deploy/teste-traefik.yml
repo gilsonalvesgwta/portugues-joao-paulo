@@ -1,0 +1,34 @@
+# Só para o teste no GitHub: um Traefik montado como o da VPS (Docker Swarm, rede Wtatechor3Net,
+# entrada "websecure" na porta 443 e certificado pelo "letsencryptresolver"), para conferir que os
+# rótulos da stack da plataforma funcionam atrás dele. O endereço do teste é inventado, então o
+# Let's Encrypt não emite certificado e o Traefik serve o de fábrica: o navegador do teste aceita.
+version: "3.7"
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - --providers.docker=true
+      - --providers.docker.swarmMode=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=Wtatechor3Net
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencryptresolver.acme.email=teste@exemplo.test
+      - --certificatesresolvers.letsencryptresolver.acme.storage=/tmp/acme.json
+      - --certificatesresolvers.letsencryptresolver.acme.httpchallenge.entrypoint=web
+      - --log.level=ERROR
+    ports:
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - Wtatechor3Net
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  Wtatechor3Net:
+    external: true
+    name: Wtatechor3Net

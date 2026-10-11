@@ -23,6 +23,35 @@ inteligência artificial, uma **chave da Anthropic** (passo 12).
 > **Regra das senhas.** Senhas e chaves vão **só** nas variáveis da stack, dentro do Portainer. Nunca em
 > conversa, e-mail, WhatsApp ou no repositório.
 
+## Antes de instalar — uma cópia da VPS como ela está hoje
+
+Dá para guardar a VPS inteira e voltar a esse ponto: é o **snapshot** do provedor da VPS. Ele copia o disco todo,
+com todos os projetos, e a restauração devolve tudo exatamente como estava.
+
+Na Hostinger ([como fazer backup ou restaurar um VPS](https://www.hostinger.com/br/support/1583232-como-fazer-backup-ou-restaurar-um-servidor-vps/)):
+
+1. No hPanel, abra **VPS → Gerenciar → Backups e Monitoramento → Snapshots e Backups**.
+2. Clique em criar snapshot e espere terminar (o andamento aparece em **Ações recentes**).
+3. Só então comece o passo 1.
+
+O que saber antes de contar com ele:
+
+- Só existe um snapshot por vez: criar outro apaga o anterior. Ele é apagado sozinho depois de 20 dias.
+- Restaurar troca o conteúdo inteiro da VPS pelo do snapshot. Tudo o que os outros projetos gravaram depois dele se
+  perde, e não dá para desfazer.
+- Em outro provedor (Hetzner, DigitalOcean, Contabo) o recurso tem o mesmo nome, snapshot, no painel da VPS.
+
+Na prática o snapshot é a rede de segurança, não o caminho normal de volta. A instalação só acrescenta coisas:
+cinco serviços e dois volumes com nome `portuguesjp_`, e um endereço novo no Traefik. Para desfazer só a plataforma,
+sem tocar no resto:
+
+1. No Portainer, **Stacks → portuguesjp → Delete this stack**.
+2. Em **Volumes**, remova `portuguesjp_db_dados` e `portuguesjp_db_config`.
+3. No Cloudflare, apague o registro `portuguescomjoaopaulo`.
+
+Para não arriscar nada nos outros projetos, a alternativa é instalar em uma VPS nova: veja
+[Instalar em uma VPS nova, zerada](#instalar-em-uma-vps-nova-zerada), no fim deste roteiro.
+
 ## Passo 1 — Deixar as imagens públicas no GitHub
 
 A VPS baixa duas imagens do GitHub: a do aplicativo e a do preparo do banco. Elas não têm nenhuma senha dentro
@@ -253,6 +282,53 @@ Quando houver versão nova:
   Remover a stack não apaga os volumes; apagar os volumes apaga tudo.
 - **Não troque** `SENHA_DO_BANCO` nem `SEGREDO_JWT` depois da primeira subida.
 - **Não abra portas** nem ponha rótulos do Traefik no banco, no login ou nos dados: só o aplicativo é público.
+
+## Instalar em uma VPS nova, zerada
+
+Em uma VPS vazia são três etapas a mais antes dos 12 passos: contratar a máquina, apontar dois endereços para ela
+e instalar o Traefik e o Portainer com o mesmo instalador da VPS atual
+([SetupOrion](https://github.com/oriondesign2015/SetupOrion/blob/main/README.md)). Depois disso, a instalação da
+plataforma é idêntica.
+
+**A — Contratar a VPS.** Ubuntu 20.04 ou Debian 11, limpo, sem nada instalado (é o que o instalador pede). Pelo
+menos 4 GB de memória e 2 vCPU, o mínimo do instalador; a plataforma sozinha usou cerca de 250 MB nos testes, com o
+banco quase vazio. Anote o IP e a senha de root. As portas 80 e 443 precisam estar abertas no firewall do provedor.
+
+**B — Criar dois endereços no Cloudflare**, do tipo `A`, apontando para o IP da VPS nova, com **DNS only**: um para
+o Portainer (por exemplo `portainer-jp`) e o da plataforma (`portuguescomjoaopaulo`; se esse nome já aponta para a
+VPS atual, troque o IP dele só quando a nova estiver pronta).
+
+**C — Instalar o Traefik e o Portainer.** Na VPS, por SSH, como root:
+
+```sh
+bash <(curl -sSL setup.oriondesign.art.br)
+```
+
+No menu, escolha a **opção 1 (Traefik & Portainer)**: ela instala o Docker, o Docker Swarm, o Traefik e o Portainer.
+Nas perguntas:
+
+| Pergunta | O que responder |
+| --- | --- |
+| Nome do Servidor | Um nome qualquer, por exemplo `portuguesjp` |
+| **Nome da Rede Interna** | **`Wtatechor3Net`**, escrito exatamente assim: é o nome que a stack da plataforma espera |
+| E-mail para Certificado SSL | O seu e-mail |
+| Domínio para o Portainer | O endereço criado na etapa B, por exemplo `portainer-jp.wtatech.com.br` |
+| Usuário e senha para o Portainer | Novos, guardados no gerenciador de senhas |
+
+Confirme com `Y` e espere terminar. Se preferir outro nome de rede, troque `Wtatechor3Net` pelo nome novo em todos
+os lugares do arquivo da stack (ele aparece 8 vezes) antes de colar no passo 4.
+
+Esse instalador é de terceiros e é o que montou a VPS atual; ele não faz parte dos testes deste repositório. O que
+os testes conferem é a stack da plataforma atrás de um Traefik montado do mesmo jeito (rede, entrada `websecure`,
+certificado `letsencryptresolver`).
+
+**D — Abrir o Portainer** no endereço da etapa B e entrar com o usuário e a senha da etapa C. O cadeado fechado
+mostra que o Traefik e o certificado estão funcionando.
+
+**E — Instalar a plataforma**: os 12 passos deste roteiro, sem mudar nada. No passo 2, o registro
+`portuguescomjoaopaulo` aponta para o IP da VPS nova.
+
+**F — Trazer os dados da VPS antiga**, só se a plataforma já estava em uso lá: é a seção abaixo.
 
 ## Mudar para uma VPS só da plataforma, mais tarde
 

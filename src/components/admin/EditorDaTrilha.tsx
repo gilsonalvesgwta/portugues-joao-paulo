@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useMemo, useState } from 'react';
+import { usePronto } from '@/components/usePronto';
 import { salvarTrilha } from '@/app/admin/acoes';
 import { useAvisoAoSair } from '@/components/admin/aoSair';
 import { TRILHA_INICIAL } from '@/lib/formulario';
@@ -62,6 +63,8 @@ function AdicionarAoDia({ numero, fora, cheio, aoAdicionar }: { numero: number; 
 type Props = { cursoId: string; iniciais: DiaDaTrilha[]; disponiveis: Disponivel[] };
 
 export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
+  // Até a página acordar no navegador, o editor fica parado: o que fosse digitado antes se perderia.
+  const pronto = usePronto();
   const [dias, setDias] = useState<DiaDaTrilha[]>(iniciais);
   const [gravados, setGravados] = useState<DiaDaTrilha[]>(iniciais);
   const [sujo, setSujo] = useState(false);
@@ -117,7 +120,7 @@ export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
           </p>
           <button
             type="submit"
-            disabled={enviando}
+            disabled={enviando || !pronto}
             className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-verde bg-verde px-4 text-[15px] font-bold text-white hover:bg-verde-link disabled:cursor-default disabled:opacity-50"
           >
             {enviando ? 'Salvando…' : 'Salvar trilha'}
@@ -130,7 +133,7 @@ export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
           </p>
         ) : null}
 
-        <fieldset disabled={enviando} className="flex min-w-0 flex-col gap-4">
+        <fieldset disabled={enviando || !pronto} className="flex min-w-0 flex-col gap-4">
           <legend className="sr-only">Dias da trilha</legend>
           {dias.map((dia, d) => (
             <section key={d} aria-label={`Dia ${d + 1}`} className="flex flex-col gap-4 rounded-2xl border border-linha bg-cartao p-5">
@@ -272,7 +275,7 @@ export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
             </ul>
             <button
               type="button"
-              disabled={aulasFora === 0 || enviando}
+              disabled={aulasFora === 0 || enviando || !pronto}
               onClick={() => mudar(montarSozinho(dias, disponiveis, idsGravados))}
               className={classeDoBotaoMenor}
             >

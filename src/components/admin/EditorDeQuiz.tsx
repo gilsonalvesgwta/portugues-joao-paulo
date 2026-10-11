@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useState, type KeyboardEvent } from 'react';
+import { usePronto } from '@/components/usePronto';
 import { salvarQuiz } from '@/app/admin/acoes';
 import { useAvisoAoSair } from '@/components/admin/aoSair';
 import { es } from '@/i18n/es';
@@ -217,6 +218,8 @@ function PreviaDoQuiz({ numero, perguntas }: { numero: number; perguntas: Pergun
 type Props = { aulaId: string; numero: number; inicial: QuizNoEditor; publicadoNoInicio: boolean; existeNoInicio: boolean };
 
 export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, existeNoInicio }: Props) {
+  // Até a página acordar no navegador, o editor fica parado: o que fosse digitado antes se perderia.
+  const pronto = usePronto();
   const [quiz, setQuiz] = useState<QuizNoEditor>(inicial);
   const [sujo, setSujo] = useState(false);
   const [recemCriada, setRecemCriada] = useState<string | null>(null);
@@ -288,7 +291,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
               type="submit"
               name="situacao"
               value="rascunho"
-              disabled={enviando}
+              disabled={enviando || !pronto}
               className={`${classeDoBotaoDeSalvar} border-borda-campo bg-cartao text-texto hover:bg-fundo`}
             >
               Salvar como rascunho
@@ -297,7 +300,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
               type="submit"
               name="situacao"
               value="publicado"
-              disabled={enviando}
+              disabled={enviando || !pronto}
               className={`${classeDoBotaoDeSalvar} border-verde bg-verde text-white hover:bg-verde-link`}
             >
               Salvar e publicar
@@ -311,7 +314,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
           </p>
         ) : null}
 
-        <fieldset disabled={enviando} className="flex min-w-0 flex-col gap-4">
+        <fieldset disabled={enviando || !pronto} className="flex min-w-0 flex-col gap-4">
           <legend className="sr-only">Quiz da aula</legend>
 
           <section aria-label="Configuração do quiz" className="grid gap-4 rounded-2xl border border-linha bg-cartao p-5 sm:grid-cols-2">

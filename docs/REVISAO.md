@@ -21,9 +21,10 @@ A cada mudança, o GitHub roda tudo do zero. Nada entra no ramo principal sem pa
 
 | Conjunto | Quantidade | O que confere |
 | --- | --- | --- |
-| Lógica do aplicativo | 176 testes | Regras sem dependências: datas e fusos, quiz, trilha, validação do que o professor digita, e-mails, avisos da Greenn, limites |
-| Banco de dados | 220 verificações e 2 testes de disputa | Quem lê e grava o quê (regras por linha), reserva de turmas, pagamento, lembretes, Papo, e a lista do que fica aberto a quem está logado |
-| Ponta a ponta | 155 testes | Navegador de verdade clicando nas telas, do login à reserva de aula, contra dois ambientes: o Supabase local e a **mesma stack que vai para a VPS**, em Docker Swarm |
+| Lógica do aplicativo | 179 testes | Regras sem dependências: datas e fusos, quiz, trilha, validação do que o professor digita, e-mails, avisos da Greenn, limites |
+| Banco de dados | 232 verificações e 2 testes de disputa | Quem lê e grava o quê (regras por linha), reserva de turmas, pagamento, lembretes, Papo, e a lista do que fica aberto a quem está logado |
+| Ponta a ponta | 163 testes | Navegador de verdade clicando nas telas, do login à reserva de aula, contra dois ambientes: o Supabase local e a **mesma stack que vai para a VPS**, em Docker Swarm. Um deles é a jornada inteira de uma aluna, em sequência: compra, e-mail, senha, aula, quiz, reserva, fuso, telas do administrador, reembolso |
+| Atrás do Traefik | a cada execução | A stack atrás de um Traefik montado como o da VPS (rede, entrada `websecure`, `letsencryptresolver`), por https, no endereço da variável `DOMINIO`: rótulos, redirecionamentos, cookie da sessão cifrado, formulários, primeiro acesso e a jornada da aluna |
 | Cópia de segurança | a cada execução | Copia, estraga o banco de propósito, restaura, confere as contagens e refaz os testes de login, de conteúdo e da área do aluno |
 | Imagem | a cada execução | Construída sem nenhuma chave; conferido que nenhuma chave fica dentro; roda como usuário comum |
 
@@ -57,7 +58,7 @@ Hoje tudo nasce fechado e os testes do banco acusam qualquer coisa que fique abe
 
 | Item | Como conferir | Passo do roteiro |
 | --- | --- | --- |
-| Traefik e certificado | A tela de acesso abre com o cadeado fechado | 5 |
+| Certificado de verdade (Let's Encrypt) e o Traefik da sua VPS | A tela de acesso abre com o cadeado fechado. Nos testes o Traefik é montado igual, mas com certificado de teste | 5 |
 | Imagens públicas no GitHub | Os serviços sobem sem erro de download | 1 |
 | Caixa de e-mail da Hostinger | Botão "Enviar e-mail de teste" no painel | 7 |
 | Entrega dos e-mails (SPF e DKIM) | O e-mail de teste não cai no spam | 7 |
@@ -69,6 +70,17 @@ Hoje tudo nasce fechado e os testes do banco acusam qualquer coisa que fique abe
 Nos testes, esses serviços de fora são imitados (o e-mail é gravado em arquivo; a Greenn, o YouTube e a Anthropic
 são simulados), então o caminho da plataforma está exercitado até a porta de cada um.
 
+## O que a revisão minuciosa achou e corrigiu
+
+| Achado | O que foi feito |
+| --- | --- |
+| Redirecionamento montado a partir do endereço do pedido, que atrás do Traefik é interno | Passa a usar o endereço público da plataforma (`SITE_URL`); testado atrás de um Traefik de verdade |
+| Quem recebia reembolso (ou era bloqueado) continuava com a vaga nas aulas ao vivo já reservadas | As reservas de aulas que ainda não aconteceram são canceladas e a vaga volta para a turma |
+| No quiz e nos editores, o que a pessoa marcasse antes de a página terminar de carregar se perdia (conexão lenta) | Os campos ficam parados até a página estar pronta |
+| O vídeo podia marcar como vista uma aula ainda fechada, chamando o servidor direto | O servidor confere se a aula está aberta antes de marcar |
+| Comentário de avaliação sem limite no banco | Limite de 1000 letras no banco, além do da tela |
+| Sessão em cookie legível pelos programas da página; sem cabeçalhos de segurança; páginas de erro em inglês | Cookie fechado, cabeçalhos em toda resposta e páginas próprias |
+
 ## Limites conhecidos
 
 - A Greenn manda um cabeçalho `x-webhook-token` que a plataforma não confere: a documentação não diz como ele é
@@ -78,4 +90,5 @@ são simulados), então o caminho da plataforma está exercitado até a porta de
   do Traefik). Uma rede só da plataforma é uma melhoria possível na VPS própria.
 - Não há tela de termos de uso nem de política de privacidade: o texto depende de orientação jurídica (há alunos na
   União Europeia).
+- Reembolso de uma segunda compra feita com o acesso ainda em dia encerra o acesso inteiro, e não só os dias dessa compra: o administrador ajusta a validade na ficha do aluno.
 - Sem funções de áudio, por decisão do projeto.

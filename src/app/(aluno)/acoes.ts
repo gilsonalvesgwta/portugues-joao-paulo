@@ -69,6 +69,10 @@ export async function registrarVideo(aulaId: string, posicao: number, duracao: n
     .upsert({ aluno_id: pessoa.id, aula_id: aulaId, posicao_seg: segundos }, { onConflict: 'aluno_id,aula_id' });
   if (error || !videoConcluido(segundos, duracao)) return { vista: false };
 
+  // Aula que ainda está fechada (curso em sequência) não é marcada como vista por aqui.
+  const contexto = await carregarAulaNoCurso(aulaId);
+  if (!contexto || montarPainel(contexto.curso, contexto.progresso).fechados.has(aulaId)) return { vista: false };
+
   // Só marca quem ainda não estava marcado: a data da primeira vez fica.
   const { data } = await supabase
     .from('progresso_aulas')

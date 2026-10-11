@@ -810,4 +810,77 @@ begin
 end $$;
 reset role;
 
+-- ============ 17. Quem perde o direito à conversação perde as reservas que ainda não aconteceram ============
+reset role;
+select set_config('request.jwt.claims', '', false);
+update public.matriculas set situacao = 'ativa', expira_em = null, inclui_conversacao = true where aluno_id in (teste.uid(8), teste.uid(9));
+insert into public.turmas (id, tema_id, inicio, vagas, meet_url) values
+  (teste.tid(150), teste.tid(70), now() + interval '3 days', 10, 'https://meet.google.com/solta-reservas'),
+  (teste.tid(151), teste.tid(70), now() - interval '3 days', 10, 'https://meet.google.com/solta-reservas');
+delete from public.reservas where aluno_id in (teste.uid(8), teste.uid(9));
+insert into public.reservas (id, turma_id, aluno_id) values
+  (teste.tid(160), teste.tid(150), teste.uid(8)),   -- futura, da aluna que vai perder o acesso
+  (teste.tid(161), teste.tid(151), teste.uid(8)),   -- já aconteceu: fica como está
+  (teste.tid(162), teste.tid(150), teste.uid(9));   -- futura, de outra pessoa
+do $$
+begin
+  -- Mudar o que não tira o direito não mexe nas reservas.
+  update matriculas set reservas_por_semana = 5 where aluno_id = teste.uid(8);
+  update matriculas set expira_em = now() + interval '30 days' where aluno_id = teste.uid(8);
+  perform teste.confere((select situacao from reservas where id = teste.tid(160)) = 'confirmada',
+    'mudar o limite ou uma validade que ainda vale não cancela reserva nenhuma');
+
+  update matriculas set situacao = 'suspensa' where aluno_id = teste.uid(8);
+  perform teste.confere((select situacao = 'cancelada' and cancelada_em is not null from reservas where id = teste.tid(160)),
+    'matrícula bloqueada: a reserva da aula que ainda não aconteceu é cancelada');
+  perform teste.confere((select situacao from reservas where id = teste.tid(161)) = 'confirmada', 'a reserva da aula que já aconteceu fica como está');
+  perform teste.confere((select situacao from reservas where id = teste.tid(162)) = 'confirmada', 'a reserva de outra pessoa não é tocada');
+  perform teste.confere((select vagas_restantes from (
+      select t.vagas - (select count(*)::integer from reservas r where r.turma_id = t.id and r.situacao = 'confirmada') as vagas_restantes
+      from turmas t where t.id = teste.tid(150)) x) = 9, 'a vaga volta para a turma');
+
+  -- Liberar de novo não ressuscita a reserva: a pessoa reserva outra vez, se quiser.
+  update matriculas set situacao = 'ativa' where aluno_id = teste.uid(8);
+  perform teste.confere((select situacao from reservas where id = teste.tid(160)) = 'cancelada', 'liberar o acesso de novo não refaz a reserva');
+
+  update reservas set situacao = 'confirmada', cancelada_em = null where id = teste.tid(160);
+  update matriculas set inclui_conversacao = false where aluno_id = teste.uid(8);
+  perform teste.confere((select situacao from reservas where id = teste.tid(160)) = 'cancelada', 'conversação tirada da matrícula: a reserva futura é cancelada');
+
+  update matriculas set inclui_conversacao = true where aluno_id = teste.uid(8);
+  update reservas set situacao = 'confirmada', cancelada_em = null where id = teste.tid(160);
+  update matriculas set expira_em = now() - interval '1 minute' where aluno_id = teste.uid(8);
+  perform teste.confere((select situacao from reservas where id = teste.tid(160)) = 'cancelada', 'validade encurtada para o passado: a reserva futura é cancelada');
+
+  perform teste.espera_erro(
+    $q$insert into avaliacoes (reserva_id, nota, comentario) values (teste.tid(161), 5, repeat('a', 1001))$q$,
+    'avaliacoes_comentario_curto', 'comentário de avaliação grande demais é recusado pelo banco');
+end $$;
+-- Reembolso pela Greenn: o acesso é encerrado e a reserva futura some junto.
+update public.matriculas set situacao = 'ativa', expira_em = null, inclui_conversacao = true where aluno_id = teste.uid(8);
+update public.reservas set situacao = 'confirmada', cancelada_em = null where id = teste.tid(160);
+insert into public.ofertas (greenn_product_id, curso_id, nome, dias_de_acesso)
+  select 7102, m.curso_id, 'Oferta do reembolso', 365 from public.matriculas m where m.aluno_id = teste.uid(8) limit 1;
+set role service_role;
+do $$
+declare
+  v_evento bigint;
+begin
+  select evento_id into v_evento from registrar_evento_pagamento(
+    jsonb_build_object('type', 'sale', 'event', 'saleUpdated', 'currentStatus', 'refunded',
+                       'sale', jsonb_build_object('id', 910001), 'product', jsonb_build_object('id', 7102),
+                       'client', jsonb_build_object('email', 'pessoa8@exemplo.test')));
+  perform teste.confere(aplicar_evento_pagamento(v_evento, teste.uid(8)) = 'acesso_encerrado', 'o reembolso encerra o acesso');
+  perform teste.confere((select situacao from reservas where id = teste.tid(160)) = 'cancelada',
+    'e a reserva da aula que ainda não aconteceu é cancelada junto');
+end $$;
+reset role;
+select teste.entrar(1);
+set role authenticated;
+do $$
+begin
+  perform teste.espera_erro($q$select soltar_reservas_sem_direito()$q$, 'permission denied', 'a função do gatilho não é chamada por quem está logado');
+end $$;
+reset role;
+
 \echo 'REGRAS: todos os testes passaram'

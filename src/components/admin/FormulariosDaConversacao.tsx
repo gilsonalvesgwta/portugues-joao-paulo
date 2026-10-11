@@ -144,7 +144,7 @@ export function FormularioDaTurma({ turma, temas, travada }: PropsDaTurma) {
         <Entrada
           id="meet_url"
           rotulo="Link da sala (Google Meet)"
-          ajuda="Crie a reunião no Google Meet e cole o link aqui. É o mesmo para todos da turma e só chega a quem reservar."
+          ajuda="Crie a reunião no Google Meet e cole o link aqui. É o mesmo para todos da turma e só chega a quem reservar. Se trocar o link com gente já inscrita, o novo aparece na tela do aluno e nos lembretes, mas o e-mail de confirmação que já saiu fica com o antigo."
           placeholder="https://meet.google.com/..."
           defaultValue={valor('meet_url')}
           erro={erros.meet_url}

@@ -11,11 +11,11 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
-| `supabase/tests/` | Testes do banco: 220 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno, limite de tentativas de senha e o Papo | 176 testes passando |
+| `supabase/tests/` | Testes do banco: 232 verificações de regra e 2 testes de disputa simultânea | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno, limite de tentativas de senha e o Papo | 179 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas), quiz corrigido pelo servidor, conversação (agenda no fuso do aluno, reservar, cancelar, avaliar), Papo (tutor com IA) e «Mi cuenta» |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 155 testes: 154 passando no Supabase local (com o Papo ligado, falando com um serviço de imitação) e 146 na stack (com o Papo desligado, como fica sem a chave) |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 163 testes: 162 passando no Supabase local (com o Papo ligado, falando com um serviço de imitação) e 154 na stack (com o Papo desligado, como fica sem a chave). Parte deles roda de novo com a stack atrás de um Traefik, por https |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -232,7 +232,9 @@ A memória foi medida com o banco quase vazio, logo depois dos testes; com aluno
 - O aplicativo assina as próprias chaves de acesso ao banco a partir de `SUPABASE_JWT_SECRET`, e cria o primeiro
   administrador a partir de `ADMIN_EMAIL` e `ADMIN_SENHA_INICIAL` (só enquanto não existir nenhum).
 - A cada mudança, o GitHub sobe esse mesmo arquivo em Docker Swarm e roda todos os testes de ponta a ponta
-  contra ele. Ficam para a instalação de verdade: o Traefik, o certificado e a caixa de e-mail.
+  contra ele; depois põe um Traefik na frente, montado como o da VPS (`deploy/teste-traefik.yml`), e repete por
+  https os testes de acesso e a jornada da aluna. Ficam para a instalação de verdade: o certificado do Let's
+  Encrypt e a caixa de e-mail.
 
 ### Cópia de segurança
 

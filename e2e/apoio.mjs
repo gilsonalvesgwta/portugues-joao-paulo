@@ -47,7 +47,9 @@ export async function criarPessoa({ email, nome = '', papel = 'aluno', comSenha 
 
 // Os testes não dependem de sites de fora: a prévia do YouTube fica sem carregar.
 export async function novoContexto(navegador, largura = 1280, altura = 800) {
-  const contexto = await navegador.newContext({ viewport: { width: largura, height: altura } });
+  // Na passagem pelo Traefik de teste, o certificado é o de fábrica dele (não há um de verdade
+  // para um endereço inventado): só nesse caso o navegador aceita certificado sem conferir.
+  const contexto = await navegador.newContext({ viewport: { width: largura, height: altura }, ignoreHTTPSErrors: process.env.E2E_CERTIFICADO_DE_TESTE === '1' });
   await contexto.route(/^https?:\/\/([^/]+\.)?(youtube\.com|youtube-nocookie\.com|ytimg\.com|googlevideo\.com)\//, (rota) => rota.abort());
   return contexto;
 }

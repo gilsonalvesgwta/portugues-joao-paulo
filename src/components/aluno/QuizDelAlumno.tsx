@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useState } from 'react';
 import { responderQuiz } from '@/app/(aluno)/acoes';
 import { Aviso, Boton, Sello } from '@/components/aluno/ui';
+import { usePronto } from '@/components/usePronto';
 import { es } from '@/i18n/es';
 import { RESPOSTA_INICIAL, type PerguntaEntregue } from '@/lib/quiz-aluno';
 
@@ -87,6 +88,8 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
   const [estado, acao, enviando] = useActionState(responderQuiz, RESPOSTA_INICIAL);
   const [escolhas, setEscolhas] = useState<Record<string, Escolha>>({});
   const [faltam, setFaltam] = useState<number[]>([]);
+  // Até a página acordar no navegador, as respostas ficam paradas: o que fosse marcado antes se perderia.
+  const pronto = usePronto();
 
   const escolher = (id: string, escolha: Escolha) => {
     setEscolhas((atuais) => ({ ...atuais, [id]: escolha }));
@@ -147,7 +150,7 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
       ) : null}
       {estado.situacao === 'error' && estado.error ? <Aviso tipo="error">{es.quiz.errores[estado.error]}</Aviso> : null}
 
-      <fieldset disabled={enviando || corrigido} className="flex min-w-0 flex-col gap-5">
+      <fieldset disabled={enviando || corrigido || !pronto} className="flex min-w-0 flex-col gap-5">
         <legend className="sr-only">{es.quiz.titulo}</legend>
         {perguntas.map((pergunta, i) => {
           const conferida = corrigido ? conferencia.get(pergunta.id) : undefined;
@@ -211,7 +214,7 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
       ) : null}
       {corrigido ? null : (
         <div>
-          <Boton disabled={enviando}>{es.quiz.enviar}</Boton>
+          <Boton disabled={enviando || !pronto}>{es.quiz.enviar}</Boton>
         </div>
       )}
     </form>
