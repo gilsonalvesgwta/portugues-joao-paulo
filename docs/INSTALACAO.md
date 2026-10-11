@@ -169,6 +169,9 @@ No **Painel**, clique em **Enviar e-mail de teste**. O e-mail chega no endereço
 Para os e-mails não caírem no spam dos alunos, o domínio da caixa precisa dos registros **SPF** e **DKIM**. A
 Hostinger mostra os dois no painel do e-mail; como o DNS fica no Cloudflare, é lá que eles são criados.
 
+Os e-mails orientam o aluno a **responder àquela mensagem** quando tem problema de acesso ou quer trocar o e-mail
+do cadastro. As respostas chegam nessa caixa: alguém precisa ler.
+
 A caixa tem um limite de envios por dia, que depende do plano da Hostinger. A plataforma manda um e-mail a cada
 aluno novo e de um a três por reserva de aula ao vivo (confirmação e lembretes): confira se o limite do plano cobre
 o movimento que vocês esperam.
