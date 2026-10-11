@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { enviarLinkDeSenha } from '@/lib/link-de-acesso';
 import { ehEquipe } from '@/lib/papeis';
+import { tentativasDeEntrada } from '@/lib/tentativas';
 import { clienteDoServidor } from '@/lib/supabase/servidor';
 
 // Ações dos formulários de acesso. Os formulários enviam por aqui (POST), então a
@@ -23,10 +24,19 @@ export async function entrar(dados: FormData): Promise<void> {
   const clave = texto(dados, 'clave');
   if (correo === '' || clave.length < 8) redirect('/entrar?error=datos');
 
+  // Muitas senhas erradas seguidas para o mesmo e-mail: espera, mesmo que a próxima esteja certa.
+  // Vale igual para e-mail que não tem conta, para a tela não revelar quem tem.
+  const tentativas = tentativasDeEntrada();
+  if (tentativas.bloqueado(correo)) redirect('/entrar?error=intentos');
+
   const supabase = await clienteDoServidor();
   const { data, error } = await supabase.auth.signInWithPassword({ email: correo, password: clave });
   // Mesma mensagem para e-mail desconhecido e senha errada: não revela quem tem conta.
-  if (error || !data.user) redirect('/entrar?error=credenciales');
+  if (error || !data.user) {
+    tentativas.registrarFalha(correo);
+    redirect('/entrar?error=credenciales');
+  }
+  tentativas.limpar(correo);
 
   // O mesmo cliente já está com a sessão nova: consulta o papel para decidir o destino.
   const { data: perfil } = await supabase.from('perfis').select('papel').eq('id', data.user.id).maybeSingle();

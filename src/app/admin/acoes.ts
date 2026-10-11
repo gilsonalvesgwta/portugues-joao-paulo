@@ -228,63 +228,82 @@ export async function salvarAnotacoes(anterior: EstadoDasAnotacoes, dados: FormD
 // Materiais de apoio (por link)
 // ---------------------------------------------------------------------------
 
-function telaDaAula(aulaId: string, aviso: string): string {
-  return `/admin/aulas/${aulaId}?aviso=${aviso}#materiais`;
+// Um material é de uma aula ou do curso inteiro (aula em branco).
+type DonoDoMaterial = { aula_id: string | null; curso_id: string | null };
+
+// A tela de quem é o dono do material: a da aula ou a do curso.
+function telaDoDono(dono: DonoDoMaterial, aviso?: string): string {
+  const tela = dono.aula_id !== null ? `/admin/aulas/${dono.aula_id}` : `/admin/cursos/${dono.curso_id}`;
+  return `${tela}${aviso ? `?aviso=${aviso}` : ''}#materiais`;
 }
 
 export async function salvarMaterial(anterior: EstadoDoFormulario, dados: FormData): Promise<EstadoDoFormulario> {
   const supabase = await exigirEquipe();
-  const valores = valoresDe(dados, ['id', 'aula_id', 'titulo_pt', 'titulo_es', 'descricao_es', 'link']);
+  const valores = valoresDe(dados, ['id', 'aula_id', 'curso_id', 'titulo_pt', 'titulo_es', 'descricao_es', 'link']);
   const conferido = validarMaterial(valores);
   if (!conferido.ok) return comErros(anterior, conferido.erros, valores);
 
   if (valores.id) {
     if (!ehUuid(valores.id)) redirect('/admin/aulas?aviso=nao_encontrado');
-    const { data, error } = await supabase.from('materiais').update(conferido.valor).eq('id', valores.id).select('aula_id');
+    const { data, error } = await supabase.from('materiais').update(conferido.valor).eq('id', valores.id).select('aula_id, curso_id');
     if (error) return comErros(anterior, { geral: FALHA }, valores);
-    const aulaId = ((data ?? []) as unknown as { aula_id: string | null }[])[0]?.aula_id;
-    if (typeof aulaId !== 'string') redirect('/admin/aulas?aviso=nao_encontrado');
-    redirect(telaDaAula(aulaId, 'material_salvo'));
+    const dono = ((data ?? []) as unknown as DonoDoMaterial[])[0];
+    if (!dono || (dono.aula_id === null && dono.curso_id === null)) redirect('/admin/aulas?aviso=nao_encontrado');
+    redirect(telaDoDono(dono, 'material_salvo'));
   }
 
-  if (!ehUuid(valores.aula_id)) redirect('/admin/aulas?aviso=nao_encontrado');
-  const { data: aula } = await supabase.from('aulas').select('id').eq('id', valores.aula_id).is('arquivado_em', null).maybeSingle();
-  if (!aula) redirect('/admin/aulas?aviso=nao_encontrado');
-  const { data: ultimo } = await supabase
-    .from('materiais')
-    .select('ordem')
-    .eq('aula_id', valores.aula_id)
-    .order('ordem', { ascending: false })
-    .limit(1);
-  const ordem = Number((ultimo ?? [])[0]?.ordem ?? 0) + 1;
-  const { error } = await supabase.from('materiais').insert({ ...conferido.valor, aula_id: valores.aula_id, ordem });
+  // Material novo: da aula, quando a tela mandou a aula; senão, do curso.
+  let dono: DonoDoMaterial;
+  if (valores.aula_id) {
+    if (!ehUuid(valores.aula_id)) redirect('/admin/aulas?aviso=nao_encontrado');
+    const { data: aula } = await supabase.from('aulas').select('id').eq('id', valores.aula_id).is('arquivado_em', null).maybeSingle();
+    if (!aula) redirect('/admin/aulas?aviso=nao_encontrado');
+    dono = { aula_id: valores.aula_id, curso_id: null };
+  } else {
+    if (!ehUuid(valores.curso_id)) redirect('/admin/cursos?aviso=nao_encontrado');
+    const { data: curso } = await supabase.from('cursos').select('id').eq('id', valores.curso_id).is('arquivado_em', null).maybeSingle();
+    if (!curso) redirect('/admin/cursos?aviso=nao_encontrado');
+    dono = { aula_id: null, curso_id: valores.curso_id };
+  }
+  const atuais = (await materiaisDoDono(supabase, dono)) ?? [];
+  const ordem = atuais.reduce((maior, item) => Math.max(maior, Number(item.ordem)), 0) + 1;
+  const { error } = await supabase.from('materiais').insert({ ...conferido.valor, ...dono, ordem });
   if (error) return comErros(anterior, { geral: FALHA }, valores);
-  redirect(telaDaAula(valores.aula_id, 'material_salvo'));
+  redirect(telaDoDono(dono, 'material_salvo'));
 }
 
-// Aula a que o material pertence, ou null se o material não existe.
-async function aulaDoMaterial(supabase: Cliente, id: string): Promise<string | null> {
-  const { data } = await supabase.from('materiais').select('aula_id').eq('id', id).maybeSingle();
-  return typeof data?.aula_id === 'string' ? data.aula_id : null;
+// Os materiais do mesmo dono, na ordem: os da aula, ou os do curso que não são de aula nenhuma.
+async function materiaisDoDono(supabase: Cliente, dono: DonoDoMaterial): Promise<{ id: string; ordem: number }[] | null> {
+  const consulta = supabase.from('materiais').select('id, ordem');
+  const filtrada = dono.aula_id !== null ? consulta.eq('aula_id', dono.aula_id) : consulta.eq('curso_id', dono.curso_id ?? '').is('aula_id', null);
+  const { data, error } = await filtrada.order('ordem').order('id');
+  return error ? null : ((data ?? []) as unknown as { id: string; ordem: number }[]);
+}
+
+// De quem é o material, ou null se o material não existe.
+async function donoDoMaterial(supabase: Cliente, id: string): Promise<DonoDoMaterial | null> {
+  const { data } = await supabase.from('materiais').select('aula_id, curso_id').eq('id', id).maybeSingle();
+  const aula = typeof data?.aula_id === 'string' ? data.aula_id : null;
+  const curso = typeof data?.curso_id === 'string' ? data.curso_id : null;
+  return aula === null && curso === null ? null : { aula_id: aula, curso_id: curso };
 }
 
 export async function moverMaterial(dados: FormData): Promise<void> {
   const supabase = await exigirEquipe();
   const { id, direcao } = valoresDe(dados, ['id', 'direcao']);
   if (!ehUuid(id) || (direcao !== 'subir' && direcao !== 'descer')) redirect('/admin/aulas?aviso=nao_encontrado');
-  const aulaId = await aulaDoMaterial(supabase, id);
-  if (aulaId === null) redirect('/admin/aulas?aviso=nao_encontrado');
+  const dono = await donoDoMaterial(supabase, id);
+  if (dono === null) redirect('/admin/aulas?aviso=nao_encontrado');
 
-  const { data: lista, error } = await supabase.from('materiais').select('id, ordem').eq('aula_id', aulaId).order('ordem').order('id');
-  if (error) redirect(telaDaAula(aulaId, 'falhou'));
-  const atuais = (lista ?? []) as unknown as { id: string; ordem: number }[];
+  const atuais = await materiaisDoDono(supabase, dono);
+  if (atuais === null) redirect(telaDoDono(dono, 'falhou'));
   const novaOrdem = mover(atuais, atuais.findIndex((m) => m.id === id), direcao);
   for (const [indice, item] of novaOrdem.entries()) {
     if (item.ordem === indice + 1) continue;
     const { error: erroDaOrdem } = await supabase.from('materiais').update({ ordem: indice + 1 }).eq('id', item.id);
-    if (erroDaOrdem) redirect(telaDaAula(aulaId, 'falhou'));
+    if (erroDaOrdem) redirect(telaDoDono(dono, 'falhou'));
   }
-  redirect(`/admin/aulas/${aulaId}#materiais`);
+  redirect(telaDoDono(dono));
 }
 
 // Material não tem lixeira: é só um título e um link, fácil de cadastrar de novo.
@@ -293,11 +312,11 @@ export async function apagarMaterial(dados: FormData): Promise<void> {
   const supabase = await exigirEquipe();
   const { id } = valoresDe(dados, ['id']);
   if (!ehUuid(id)) redirect('/admin/aulas?aviso=nao_encontrado');
-  const aulaId = await aulaDoMaterial(supabase, id);
-  if (aulaId === null) redirect('/admin/aulas?aviso=nao_encontrado');
+  const dono = await donoDoMaterial(supabase, id);
+  if (dono === null) redirect('/admin/aulas?aviso=nao_encontrado');
   const { error } = await supabase.from('materiais').delete().eq('id', id);
-  if (error) redirect(telaDaAula(aulaId, 'falhou'));
-  redirect(telaDaAula(aulaId, 'material_apagado'));
+  if (error) redirect(telaDoDono(dono, 'falhou'));
+  redirect(telaDoDono(dono, 'material_apagado'));
 }
 
 // Grava o quiz da aula (configuração e perguntas) de uma vez. A troca das perguntas acontece

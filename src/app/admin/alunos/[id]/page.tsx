@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { enviarAcesso, mudarAcesso, mudarPapel } from '@/app/admin/alunos/acoes';
 import {
+  FormularioApagarConta,
   FormularioDaMatricula,
   FormularioDoEmail,
   FormularioDoNome,
@@ -203,6 +204,30 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
           </form>
         )}
       </Cartao>
+
+      {perfil.id === eu.id ? null : (
+        <Cartao>
+          <h2 id="apagar" className="text-lg font-bold">
+            Apagar a conta
+          </h2>
+          {papel === 'aluno' ? (
+            <>
+              <p className="mt-2 text-[15px] leading-normal text-apoio">
+                Para quando a pessoa pede para sair de vez. Somem o login, o cadastro, as matrículas, o progresso, as reservas
+                e as avaliações dela. Os avisos de compra continuam na tela de pagamentos, sem o nome e o e-mail. Não tem
+                volta. Para só tirar o acesso, use “Bloquear” na matrícula.
+              </p>
+              <div className="mt-4">
+                <FormularioApagarConta id={perfil.id} />
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 text-[15px] leading-normal text-apoio">
+              Esta pessoa é da equipe. Para apagar a conta, mude antes o papel dela para aluno.
+            </p>
+          )}
+        </Cartao>
+      )}
     </>
   );
 }

@@ -69,6 +69,7 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
   presenca_salva: { tipo: 'ok', texto: 'Presença salva.' },
   configuracoes_salvas: { tipo: 'ok', texto: 'Regras salvas. Valem para as próximas reservas e cancelamentos.' },
   so_administrador: { tipo: 'erro', texto: 'Essa parte é só para o administrador.' },
+  conta_apagada: { tipo: 'ok', texto: 'Conta apagada. A pessoa não entra mais, e os dados dela saíram da plataforma.' },
   pessoa_criada: { tipo: 'ok', texto: 'Pessoa cadastrada. Nenhum e-mail foi enviado: quando quiser, use o botão “Enviar link de acesso”.' },
   criada_link_enviado: { tipo: 'ok', texto: 'Pessoa cadastrada. O e-mail com o link para criar a senha foi enviado.' },
   criada_link_falhou: {

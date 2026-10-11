@@ -5,7 +5,7 @@ import { marcarTarea } from '@/app/(aluno)/acoes';
 import { Antetitulo, Aviso, Boton, EnlaceBoton, Marca, Sello, Tarjeta } from '@/components/aluno/ui';
 import { es } from '@/i18n/es';
 import { duracaoCurta, montarPainel } from '@/lib/aluno';
-import { carregarCurso, cursosVisiveis } from '@/lib/aluno/dados';
+import { carregarCurso, carregarMateriaisDoCurso, cursosVisiveis } from '@/lib/aluno/dados';
 import { ehEquipe } from '@/lib/papeis';
 import { pessoaLogada } from '@/lib/supabase/servidor';
 
@@ -53,6 +53,7 @@ export default async function PaginaInicio({ searchParams }: Props) {
   }
 
   const { curso, progresso } = carregado;
+  const materiais = await carregarMateriaisDoCurso(curso.curso.id);
   const painel = montarPainel(curso, progresso, equipe);
   const aulaPorId = new Map(curso.aulas.map((aula) => [aula.id, aula]));
   const aulaDoQuiz = new Map(curso.quizzes.map((quiz) => [quiz.id, aulaPorId.get(quiz.aula_id)]));
@@ -234,6 +235,27 @@ export default async function PaginaInicio({ searchParams }: Props) {
           );
         })}
       </Tarjeta>
+
+      {materiais.length > 0 ? (
+        <Tarjeta id="materiales" className="flex flex-col gap-3">
+          <h2 className="text-xl font-bold">{t.materialesDelCurso}</h2>
+          <ul className="flex flex-col gap-3">
+            {materiais.map((material) => (
+              <li key={material.id} className="flex flex-col gap-0.5">
+                <a
+                  href={material.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="self-start text-base font-semibold text-verde-link underline hover:text-verde"
+                >
+                  {material.titulo_es} <span className="font-normal text-apoio">{es.clase.otraPestana}</span>
+                </a>
+                {material.descricao_es ? <p className="text-[15px] leading-normal text-apoio">{material.descricao_es}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </Tarjeta>
+      ) : null}
 
       {outros.length > 0 ? (
         <Tarjeta className="flex flex-col gap-3">

@@ -224,6 +224,47 @@ jobs:
             docker service logs portuguesjp_portuguesjp_banco 2>&1 | sed -E 's/^[^|]*\| //' | tail -n 6
             test -n "$DENOVO"
           } 2>&1 | tee -a saida/11-stack.txt
+      # A cópia de segurança só vale se a restauração funciona: os dois roteiros da VPS são
+      # rodados de verdade aqui, e depois da restauração o login é testado de novo.
+      - name: Cópia de segurança e restauração na stack
+        run: |
+          {
+            sql() { docker exec "$(docker ps -q --filter name=portuguesjp_db | head -n 1)" psql -X -q -h 127.0.0.1 -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -Atc "$1"; }
+            contagem() { sql "select (select count(*) from auth.users) || ' contas, ' || (select count(*) from public.perfis) || ' perfis, ' || (select count(*) from public.matriculas) || ' matrículas, ' || (select count(*) from public.aulas) || ' aulas, ' || (select count(*) from public.reservas) || ' reservas, ' || (select count(*) from controle.migracoes) || ' migrações'"; }
+            sh deploy/copia-de-seguranca.sh "$RUNNER_TEMP/copias" | sed -E 's|/[^ ]*/||'
+            ARQUIVO="$(ls "$RUNNER_TEMP"/copias/portuguesjp-*.sql.gz | head -n 1)"
+            ANTES="$(contagem)"
+            echo "na hora da cópia: $ANTES"
+            # Depois da cópia o banco muda; a restauração tem de trazer tudo de volta.
+            sql "insert into public.cursos (titulo_pt, titulo_es) values ('Criado depois da cópia', 'Creado después'); delete from public.reservas; delete from auth.users where email like 'aluna-%'"
+            echo "depois de mexer: $(contagem)"
+            CONFIRMAR=sim sh deploy/restaurar-copia.sh "$ARQUIVO"
+            DEPOIS="$(contagem)"
+            echo "depois de restaurar: $DEPOIS"
+            test "$ANTES" = "$DEPOIS"
+            test "$(sql "select count(*) from public.cursos where titulo_pt = 'Criado depois da cópia'")" = "0"
+            echo "esperando o aplicativo, o login e os dados voltarem..."
+            SEGUIDAS=0
+            for i in $(seq 1 90); do
+              APP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3200/api/saude || true)
+              LOGIN=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:9999/health || true)
+              DADOS=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/ || true)
+              if [ "$APP" = "200" ] && [ "$LOGIN" = "200" ] && [ "$DADOS" = "200" ]; then SEGUIDAS=$((SEGUIDAS + 1)); else SEGUIDAS=0; fi
+              if [ "$SEGUIDAS" -ge 4 ]; then break; fi
+              sleep 2
+            done
+            echo "respostas: aplicativo $APP, login $LOGIN, dados $DADOS"
+            test "$SEGUIDAS" -ge 4
+            echo "== login, regras de acesso e administração de conteúdo depois da restauração =="
+            env -u SUPABASE_URL -u SUPABASE_ANON_KEY -u SUPABASE_SERVICE_ROLE_KEY \
+              BASE_URL=http://127.0.0.1:3200 \
+              SUPABASE_AUTH_URL=http://127.0.0.1:9999 SUPABASE_REST_URL=http://127.0.0.1:3001 \
+              SUPABASE_JWT_SECRET="$STACK_SEGREDO_JWT" \
+              ADMIN_EMAIL=dono@exemplo.test ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA" \
+              EMAIL_PASTA="$STACK_PASTA_DA_CAIXA" \
+              GREENN_WEBHOOK_SEGREDO="$STACK_SEGREDO_DA_GREENN" \
+              node --test e2e/acesso.test.mjs e2e/admin-conteudo.test.mjs e2e/aluno.test.mjs
+          } 2>&1 | tee saida/13-copia-de-seguranca.txt
       - name: Medir a stack e guardar os registros
         if: always()
         run: |

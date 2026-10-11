@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { apagarMaterial, moverMaterial, moverParaLixeira } from '@/app/admin/acoes';
-import { BotaoComConfirmacao } from '@/components/admin/BotaoComConfirmacao';
+import { moverParaLixeira } from '@/app/admin/acoes';
 import { FormularioDaAula } from '@/components/admin/FormularioDaAula';
+import { ListaDeMateriais } from '@/components/admin/ListaDeMateriais';
 import { AvisoDaPagina, Botao, Cartao, Etiqueta, LinkBotao, TituloDaPagina, Trilha } from '@/components/admin/ui';
 import { gruposParaAula } from '@/lib/admin/aulas';
 import { avisoDe } from '@/lib/admin/avisos';
@@ -83,75 +83,11 @@ export default async function PaginaEditarAula({ params, searchParams }: Props) 
         </div>
       </Cartao>
       <Cartao>
-        <div id="materiais" className="flex scroll-mt-6 flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-bold">Materiais de apoio</h2>
-          <LinkBotao href={`/admin/aulas/${aula.id}/materiais/novo`} variante="secundario">
-            Adicionar material
-          </LinkBotao>
-        </div>
-        {materiais.length === 0 ? (
-          <p className="mt-2 text-[15px] leading-normal text-apoio">
-            Esta aula ainda não tem materiais. O arquivo fica no Google Drive (ou parecido) e aqui entra só o link.
-          </p>
-        ) : (
-          <ol className="mt-3 flex flex-col divide-y divide-linha border-y border-linha">
-            {materiais.map((material, indice) => (
-              <li key={material.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-base font-semibold">{material.titulo_pt}</span>
-                  <span className="text-sm text-apoio" lang="es">
-                    {material.titulo_es}
-                    {material.descricao_es ? ` · ${material.descricao_es}` : ''}
-                  </span>
-                  <a
-                    href={material.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="break-all text-sm text-verde-link underline hover:text-verde"
-                  >
-                    {material.link}
-                  </a>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <form action={moverMaterial} className="flex gap-1">
-                    <input type="hidden" name="id" value={material.id} />
-                    <Botao
-                      name="direcao"
-                      value="subir"
-                      variante="secundario"
-                      quadrado
-                      disabled={indice === 0}
-                      aria-label={`Subir o material ${material.titulo_pt}`}
-                    >
-                      ↑
-                    </Botao>
-                    <Botao
-                      name="direcao"
-                      value="descer"
-                      variante="secundario"
-                      quadrado
-                      disabled={indice === materiais.length - 1}
-                      aria-label={`Descer o material ${material.titulo_pt}`}
-                    >
-                      ↓
-                    </Botao>
-                  </form>
-                  <LinkBotao href={`/admin/materiais/${material.id}`} variante="secundario">
-                    Editar<span className="sr-only"> o material {material.titulo_pt}</span>
-                  </LinkBotao>
-                  <BotaoComConfirmacao
-                    acao={apagarMaterial}
-                    campos={{ id: material.id }}
-                    pergunta={`Apagar o material "${material.titulo_pt}"? Isso não tem volta.`}
-                    rotulo={`Apagar o material ${material.titulo_pt}`}
-                  >
-                    Apagar
-                  </BotaoComConfirmacao>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
+        <ListaDeMateriais
+          materiais={materiais}
+          novo={`/admin/aulas/${aula.id}/materiais/novo`}
+          vazio="Esta aula ainda não tem materiais. O arquivo fica no Google Drive (ou parecido) e aqui entra só o link."
+        />
       </Cartao>
       <Cartao>
         <div className="flex flex-wrap items-center justify-between gap-3">

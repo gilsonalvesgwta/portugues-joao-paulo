@@ -34,6 +34,7 @@ export const es = {
     errores: {
       credenciales: 'El correo o la contraseña no coinciden.',
       datos: 'Escribe tu correo y una contraseña de al menos 8 caracteres.',
+      intentos: 'Demasiados intentos con este correo. Espera 15 minutos o crea una contraseña nueva con «Olvidé mi contraseña».',
     },
   },
   inicio: {
@@ -68,6 +69,7 @@ export const es = {
     vista: 'Vista',
     cerrada: 'Se abre más adelante',
     sinClases: 'Este curso todavía no tiene clases publicadas.',
+    materialesDelCurso: 'Materiales del curso',
     otrosCursos: 'Tus otros cursos',
     avisos: {
       bloqueada: 'Esa clase se abre cuando completes los días anteriores.',

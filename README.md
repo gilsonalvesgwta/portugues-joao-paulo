@@ -8,11 +8,11 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
-| `supabase/tests/` | Testes do banco: 191 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação e reservas do aluno | 159 testes passando |
+| `supabase/tests/` | Testes do banco: 199 verificações de regra e 2 testes de disputa simultânea | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno e limite de tentativas de senha | 164 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas), quiz corrigido pelo servidor, conversação (agenda no fuso do aluno, reservar, cancelar, avaliar) e «Mi cuenta» |
 | `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 132 testes passando nos dois |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 142 testes passando nos dois |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -41,6 +41,8 @@ Depois, com o aplicativo no ar, `npm run e2e` roda os testes de ponta a ponta.
    conta. No máximo 3 links por e-mail a cada 10 minutos.
 3. O link do e-mail abre uma tela com um botão. Só o clique gasta o link, que vale uma vez e por 24 horas.
 4. A pessoa escolhe a senha e entra: aluno em `/inicio`, professor e administrador em `/admin`.
+5. Depois de 8 senhas erradas seguidas para o mesmo e-mail, aquele e-mail espera 15 minutos (nem a senha certa
+   entra nesse tempo). Criar uma senha nova pelo link do e-mail continua funcionando.
 
 ## O que o aluno vê
 
@@ -68,6 +70,8 @@ Em `/admin`, o curso é dividido em módulos e cada módulo reúne aulas.
 - O vídeo fica no YouTube: o professor cola o link na aula. O vídeo precisa estar como Não listado ou Público,
   com a incorporação permitida. Quem tem o link de um vídeo não listado consegue abrir direto no YouTube.
 - Aula não é publicada sem vídeo, e o número da aula não se repete dentro do curso.
+- **Materiais de apoio** são links (Google Drive ou parecido). Os de uma aula ficam na tela da aula; os do curso
+  inteiro (um guia de estudo, por exemplo) ficam na tela do curso, e o aluno os vê na tela inicial.
 - Os materiais de apoio (PDFs e afins) ficam fora da plataforma, no Google Drive ou parecido: o professor
   cadastra o título e o link na tela da aula. Só link `https://` é aceito, na tela e no banco.
 - A trilha por dia diz o que o aluno faz em cada dia, a contar da matrícula dele: aulas, quizzes e tarefas,
@@ -137,6 +141,9 @@ Em `/admin/alunos`, que só o administrador abre (o professor cuida do conteúdo
 - **Link de acesso**: reenvia o e-mail para criar ou trocar a senha, no máximo 3 por endereço a cada 10 minutos.
   A ficha mostra a última entrada da pessoa e os últimos envios.
 - Toda mudança em matrícula, papel e e-mail fica gravada em `registro_alteracoes`, com quem fez.
+- **Apagar a conta** (quando a pessoa pede para sair de vez): só de aluno, e só com o e-mail da pessoa escrito
+  para confirmar. Somem o login, o cadastro, as matrículas, o progresso, as reservas e as avaliações. Os avisos de
+  compra ficam, sem o nome e o e-mail. Não tem volta; para só tirar o acesso, o caminho é bloquear a matrícula.
 
 ## Como a compra na Greenn vira matrícula
 
@@ -204,6 +211,20 @@ A memória foi medida com o banco quase vazio, logo depois dos testes; com aluno
   administrador a partir de `ADMIN_EMAIL` e `ADMIN_SENHA_INICIAL` (só enquanto não existir nenhum).
 - A cada mudança, o GitHub sobe esse mesmo arquivo em Docker Swarm e roda todos os testes de ponta a ponta
   contra ele. Ficam para a instalação de verdade: o Traefik, o certificado e a caixa de e-mail.
+
+### Cópia de segurança
+
+Dois roteiros, para rodar na VPS como root:
+
+- `sh deploy/copia-de-seguranca.sh [pasta]` grava os dados da plataforma (tabelas, contas e senhas) em um arquivo
+  `.sql.gz` com data e hora, sem tirar nada do ar. Guarda 14 dias (`MANTER_DIAS`). A pasta padrão é
+  `/root/copias-portuguesjp`. O arquivo tem dados dos alunos: vale guardar também fora da VPS.
+- `sh deploy/restaurar-copia.sh <arquivo>` troca todos os dados atuais pelos da cópia (pede confirmação). Para a
+  plataforma por cerca de um minuto; se falhar no meio, nada muda. A cópia entra em uma plataforma já instalada,
+  na mesma versão ou em uma mais nova.
+
+A cada mudança, o GitHub roda os dois na stack de teste: copia, estraga o banco de propósito, restaura, confere
+as contagens e refaz os testes de login, de conteúdo e da área do aluno.
 
 O passo a passo da instalação ainda será escrito.
 

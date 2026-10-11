@@ -12,6 +12,7 @@ type Props = { searchParams: Promise<{ error?: string | string[] }> };
 function mensagemDeErro(codigo: string | string[] | undefined): string | null {
   if (codigo === 'credenciales') return es.entrar.errores.credenciales;
   if (codigo === 'datos') return es.entrar.errores.datos;
+  if (codigo === 'intentos') return es.entrar.errores.intentos;
   return null;
 }
 

@@ -43,6 +43,21 @@ export const carregarCurso = cache(async (cursoId: string): Promise<{ curso: Cur
 
 export type Material = { id: string; titulo_es: string; descricao_es: string | null; link: string };
 
+// Materiais do curso inteiro (os que não são de nenhuma aula). As regras do banco só entregam
+// os de curso que a pessoa pode ver.
+export async function carregarMateriaisDoCurso(cursoId: string): Promise<Material[]> {
+  if (!ehUuid(cursoId)) return [];
+  const supabase = await clienteDoServidor();
+  const { data } = await supabase
+    .from('materiais')
+    .select('id, titulo_es, descricao_es, link')
+    .eq('curso_id', cursoId)
+    .is('aula_id', null)
+    .order('ordem')
+    .order('id');
+  return (data ?? []) as unknown as Material[];
+}
+
 export type AulaDoAluno = {
   id: string;
   curso_id: string;

@@ -49,6 +49,29 @@ test('senha errada e e-mail desconhecido mostram o mesmo aviso e não entram', a
   assert.equal(caminho(pagina), '/entrar');
 });
 
+test('depois de 8 senhas erradas, aquele e-mail espera: nem a senha certa entra; as outras contas seguem normais', async () => {
+  const teimosa = { email: emailDeTeste('aluna-teimosa'), nome: 'Tere Terca' };
+  await criarPessoa(teimosa);
+  const pagina = await novaPagina(navegador);
+  for (let vez = 1; vez <= 8; vez += 1) {
+    await entrar(pagina, teimosa.email, `senha-errada-${vez}`);
+    await pagina.waitForURL('**/entrar?error=credenciales');
+  }
+  await entrar(pagina, teimosa.email, senha);
+  await pagina.waitForURL('**/entrar?error=intentos');
+  assert.equal(
+    await textoDoAviso(pagina),
+    'Demasiados intentos con este correo. Espera 15 minutos o crea una contraseña nueva con «Olvidé mi contraseña».',
+  );
+  await pagina.goto(`${base}/inicio`);
+  assert.equal(caminho(pagina), '/entrar', 'continua de fora');
+
+  // O bloqueio é só daquele e-mail.
+  await entrar(pagina, aluna.email, senha);
+  await pagina.waitForURL('**/inicio');
+  await pagina.context().close();
+});
+
 test('a senha nunca aparece no endereço da página', async () => {
   const pagina = await novaPagina(navegador);
   const enderecos = [];
