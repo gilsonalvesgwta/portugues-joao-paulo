@@ -306,6 +306,16 @@ jobs:
           }
           publicar plataforma:teste "ghcr.io/${GITHUB_REPOSITORY,,}"
           publicar banco:teste "ghcr.io/${GITHUB_REPOSITORY,,}-banco"
+          # A VPS baixa as imagens sem se identificar: isso só funciona se os dois pacotes estiverem
+          # públicos no GitHub. O resultado fica escrito na saída, para o tutorial de instalação.
+          docker logout ghcr.io > /dev/null 2>&1 || true
+          for imagem in "ghcr.io/${GITHUB_REPOSITORY,,}" "ghcr.io/${GITHUB_REPOSITORY,,}-banco"; do
+            if docker manifest inspect "$imagem:latest" > /dev/null 2>&1; then
+              echo "sem login, a imagem $imagem É baixada: o pacote está público" | tee -a saida/10-imagem.txt
+            else
+              echo "sem login, a imagem $imagem NÃO é baixada: o pacote está privado" | tee -a saida/10-imagem.txt
+            fi
+          done
       # As sessões do Claude não conseguem baixar os registros do GitHub Actions.
       # Esta etapa publica o fim de cada registro, as fotos das telas e o
       # package-lock.json no ramo "ci-saida", que é sobrescrito a cada execução.

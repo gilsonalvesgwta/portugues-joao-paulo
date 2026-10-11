@@ -72,6 +72,59 @@ test('depois de 8 senhas erradas, aquele e-mail espera: nem a senha certa entra;
   await pagina.context().close();
 });
 
+test('toda resposta leva os cabeçalhos de segurança', async () => {
+  const pagina = await novaPagina(navegador);
+  const resposta = await pagina.goto(`${base}/entrar`);
+  const cabecalhos = resposta.headers();
+  assert.equal(cabecalhos['x-frame-options'], 'DENY', 'a plataforma não abre dentro de outra página');
+  assert.equal(cabecalhos['x-content-type-options'], 'nosniff');
+  assert.equal(cabecalhos['referrer-policy'], 'strict-origin-when-cross-origin');
+  assert.match(cabecalhos['content-security-policy'], /frame-ancestors 'none'/);
+  assert.match(cabecalhos['content-security-policy'], /form-action 'self'/);
+  assert.match(cabecalhos['permissions-policy'], /camera=\(\)/);
+  assert.match(cabecalhos['strict-transport-security'], /max-age=\d+/);
+  assert.equal(cabecalhos['x-powered-by'], undefined, 'não anuncia com o que foi feita');
+  await pagina.context().close();
+});
+
+test('a sessão fica em cookie que os programas da página não leem', async () => {
+  const pagina = await novaPagina(navegador);
+  await entrar(pagina, aluna.email, senha);
+  await pagina.waitForURL('**/inicio');
+  const cookies = (await pagina.context().cookies()).filter((cookie) => cookie.name.startsWith('sb-'));
+  assert.ok(cookies.length > 0, 'a sessão está em cookie');
+  for (const cookie of cookies) {
+    assert.equal(cookie.httpOnly, true, `${cookie.name} é só do servidor`);
+    assert.equal(cookie.sameSite, 'Lax', cookie.name);
+  }
+  assert.equal(await pagina.evaluate(() => document.cookie.includes('sb-')), false, 'a página não enxerga a sessão');
+  // E a sessão continua valendo nas telas seguintes.
+  await pagina.goto(`${base}/cuenta`);
+  assert.equal(caminho(pagina), '/cuenta');
+  await pagina.context().close();
+});
+
+test('a raiz leva cada um para o seu lugar, e endereço que não existe tem tela própria', async () => {
+  const dela = await novaPagina(navegador);
+  await entrar(dela, aluna.email, senha);
+  await dela.waitForURL('**/inicio');
+  await dela.goto(`${base}/`);
+  assert.equal(caminho(dela), '/inicio', 'aluna');
+  const resposta = await dela.goto(`${base}/esta-pagina-nao-existe`);
+  assert.equal(resposta.status(), 404);
+  await dela.getByRole('heading', { name: 'No encontramos esa página' }).waitFor();
+  await dela.getByRole('link', { name: 'Volver al inicio' }).click();
+  await dela.waitForURL('**/inicio');
+  await dela.context().close();
+
+  const dele = await novaPagina(navegador);
+  await entrar(dele, professor.email, senha);
+  await dele.waitForURL('**/admin');
+  await dele.goto(`${base}/`);
+  assert.equal(caminho(dele), '/admin', 'professor');
+  await dele.context().close();
+});
+
 test('a senha nunca aparece no endereço da página', async () => {
   const pagina = await novaPagina(navegador);
   const enderecos = [];

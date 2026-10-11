@@ -1,6 +1,10 @@
 import { redirect } from 'next/navigation';
+import { ehEquipe } from '@/lib/papeis';
+import { pessoaLogada } from '@/lib/supabase/servidor';
 
-// A raiz ainda não tem conteúdo próprio: leva para a tela de acesso.
-export default function Raiz(): never {
-  redirect('/entrar');
+// A raiz não tem conteúdo próprio: leva cada um para o seu lugar.
+export default async function Raiz(): Promise<never> {
+  const pessoa = await pessoaLogada();
+  if (!pessoa) redirect('/entrar');
+  redirect(ehEquipe(pessoa.papel) ? '/admin' : '/inicio');
 }
