@@ -238,7 +238,8 @@ export default async function PaginaInicio({ searchParams }: Props) {
           tabIndex={-1}
           className="relative order-first flex aspect-video items-center justify-center overflow-hidden rounded-[14px] border border-white/15 bg-verde-profundo text-fundo no-underline md:order-none md:flex-[1_1_280px] md:rounded-[18px]"
         >
-          {video ? <img src={miniaturaDoYoutube(video)} alt="" loading="lazy" className="absolute inset-0 block size-full object-cover" /> : null}
+          {/* Como fundo, e não como imagem: se o YouTube não entregar a miniatura, fica o fundo escuro, sem ícone de imagem quebrada. */}
+          {video ? <span className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${miniaturaDoYoutube(video)}")` }} /> : null}
           {video ? <span className="absolute inset-0 bg-linear-to-t from-noite/80 via-noite/20 to-noite/10" /> : null}
           <span className="relative flex size-[60px] items-center justify-center rounded-full bg-fundo text-verde lg:size-[68px]">
             <IconoReproducir tamano={26} />
@@ -287,6 +288,9 @@ export default async function PaginaInicio({ searchParams }: Props) {
                   <li key={item.id}>
                     <Link
                       href={ehAula ? `/clase/${aula.id}` : `/quiz/${item.quizId}`}
+                    // O nome lido em voz alta é a frase inteira, com o estado no fim: os pedaços do cartão,
+                    // lidos um a um, sairiam com pausas no meio ("clase 1 : título").
+                    aria-label={`${ehAula ? t.verClase : t.hacerQuiz} ${aula.numero}: ${aula.titulo_es}${duracao ? `, ${duracao}` : ''} (${feito ? t.hecho : t.pendiente})`}
                       className={`flex min-h-16 items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-texto no-underline transition-colors sm:gap-3.5 ${
                         proximo ? 'border-verde bg-verde-suave' : 'border-borda bg-cartao hover:border-verde'
                       }`}

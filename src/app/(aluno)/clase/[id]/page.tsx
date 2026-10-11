@@ -326,7 +326,7 @@ export default async function PaginaDaClase({ params, searchParams }: Props) {
       </div>
 
       {aula.blocos.length > 0 ? (
-        <Apuntes numero={aula.numero} tituloDaAula={aula.titulo_es} blocos={aula.blocos} className="order-6 min-w-0 lg:order-none lg:col-start-1 lg:row-start-5" />
+        <Apuntes numero={aula.numero} tituloDaAula={aula.titulo_es} blocos={aula.blocos} className="order-6 min-w-0 lg:order-none lg:col-start-1 lg:row-start-5 lg:self-start" />
       ) : null}
     </div>
   );
