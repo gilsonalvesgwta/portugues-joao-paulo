@@ -91,7 +91,7 @@ export function emailBienvenida(d: { nombre: string; enlace: string; compra?: bo
       'Para entrar por primera vez, crea tu contraseña con el botón de abajo.',
     ],
     { rotulo: 'Crear mi contraseña', url: d.enlace },
-    'El enlace funciona una sola vez. Si caduca, pide uno nuevo en la pantalla de acceso, en «¿Primer acceso?».',
+    'El enlace funciona una sola vez y caduca en 24 horas. Si caduca, pide uno nuevo en la pantalla de acceso, en «¿Primer acceso?».',
   );
 }
 
@@ -112,7 +112,7 @@ export function emailRestablecer(d: { nombre: string; enlace: string }): Email {
     d.nombre,
     ['Recibimos una solicitud para cambiar tu contraseña.'],
     { rotulo: 'Crear una contraseña nueva', url: d.enlace },
-    'El enlace caduca en 1 hora. Si no pediste el cambio, ignora este mensaje: tu contraseña sigue igual.',
+    'El enlace funciona una sola vez y caduca en 24 horas. Si no pediste el cambio, ignora este mensaje: tu contraseña sigue igual.',
   );
 }
 

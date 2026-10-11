@@ -23,3 +23,8 @@ site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = ["http://localhost:3000"]
 # Ninguém se cadastra sozinho: a conta nasce da compra na Greenn ou da administração.
 enable_signup = false
+
+# O link de criar ou trocar a senha vale 24 horas, o mesmo que na produção
+# (GOTRUE_MAILER_OTP_EXP em deploy/portainer-stack.yml) e o que o e-mail diz ao aluno.
+[auth.email]
+otp_expiry = 86400

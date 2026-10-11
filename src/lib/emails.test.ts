@@ -43,6 +43,12 @@ test('compra de quem já tem senha: aviso de acesso ativo, com o botão de entra
   assert.equal(e.texto.includes('token'), false);
 });
 
+test('os dois e-mails com link de senha dizem a validade que o servidor de login aplica (24 horas)', () => {
+  for (const e of [emailBienvenida({ nombre: 'Ana', enlace: 'https://app.example.com/x' }), emailRestablecer({ nombre: 'Ana', enlace: 'https://app.example.com/x' })]) {
+    assert.ok(e.texto.includes('funciona una sola vez y caduca en 24 horas'), e.asunto);
+  }
+});
+
 test('sem nome, a saudação fica neutra', () => {
   assert.ok(emailRestablecer({ nombre: '  ', enlace: 'https://app.example.com/r' }).texto.startsWith('Hola:'));
 });
