@@ -142,6 +142,14 @@ jobs:
             echo "arquivos da imagem com alguma chave dentro: $ACHADOS"
             test "$ACHADOS" = "0"
             test "$(docker run --rm --entrypoint whoami plataforma:teste)" = "node"
+            # As folhas de estilo da imagem e as da compilação local, lado a lado: a aparência da
+            # VPS é a da imagem, e as fotos das telas são feitas na compilação local.
+            docker run --rm --entrypoint sh plataforma:teste -c 'find /app/.next/static -name "*.css" | sort | xargs cat' > saida/css-da-imagem.css
+            find .next/static -name "*.css" | sort | xargs cat > saida/css-local.css
+            echo "folhas de estilo na imagem: $(docker run --rm --entrypoint sh plataforma:teste -c 'find /app/.next/static -name "*.css" | wc -l') arquivo(s), $(wc -c < saida/css-da-imagem.css) bytes"
+            echo "folhas de estilo na compilação local: $(find .next/static -name '*.css' | wc -l) arquivo(s), $(wc -c < saida/css-local.css) bytes"
+            echo "fundo verde na imagem: $(grep -o '\.bg-verde{[^}]*}' saida/css-da-imagem.css | sort -u | tr '\n' ' ')"
+            echo "fundo verde na compilação local: $(grep -o '\.bg-verde{[^}]*}' saida/css-local.css | sort -u | tr '\n' ' ')"
           } 2>&1 | tee saida/10-imagem.txt
       # Segredos só deste teste, sorteados a cada execução. Ficam escondidos nos registros
       # e não entram em nenhum arquivo publicado.
