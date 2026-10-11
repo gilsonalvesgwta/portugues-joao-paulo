@@ -25,6 +25,10 @@ begin
   perform teste.espera_erro($q$select salvar_quiz(teste.tid(20), 'facil', 70, 'publicado', '[]'::jsonb)$q$,
     'sem_permissao', 'aluno não grava quiz');
   perform teste.confere((select count(*) from resumo_dos_quizzes()) = 0, 'aluno não recebe o resumo dos quizzes');
+  perform teste.espera_erro($q$select salvar_trilha(teste.tid(1), '[]'::jsonb)$q$, 'sem_permissao', 'aluno não grava a trilha');
+  perform teste.confere(jsonb_array_length(ler_trilha(teste.tid(1))) = 1 and jsonb_array_length(ler_trilha(teste.tid(1)) -> 0 -> 'itens') = 3,
+    'aluno lê a trilha do seu curso: 1 dia com 3 itens');
+  perform teste.confere(ler_trilha(teste.tid(3)) = '[]'::jsonb, 'aluno não lê a trilha de curso em rascunho');
   update perfis set nome = 'Aluno Um', fuso = 'America/Bogota' where id = teste.uid(1);
   perform teste.confere((select nome from perfis where id = teste.uid(1)) = 'Aluno Um', 'aluno altera nome e fuso');
   perform teste.espera_erro($q$update perfis set fuso = 'Lugar/Inexistente' where id = teste.uid(1)$q$,
@@ -82,6 +86,49 @@ begin
     'aula_inexistente', 'quiz de aula que não existe é recusado');
   perform teste.confere((select perguntas from resumo_dos_quizzes() where aula_id = teste.tid(21)) = 1
     and (select count(*) from resumo_dos_quizzes()) = 2, 'o resumo conta as perguntas de cada quiz');
+
+  -- Trilha: o dia 1 tinha aula (51), quiz (52) e tarefa (53); o aluno 1 já marcou a tarefa.
+  perform salvar_trilha(teste.tid(1), jsonb_build_array(
+    jsonb_build_object('itens', jsonb_build_array(
+      jsonb_build_object('id', teste.tid(51), 'tipo', 'aula', 'alvo', teste.tid(20), 'obrigatorio', true))),
+    jsonb_build_object('itens', jsonb_build_array(
+      jsonb_build_object('id', teste.tid(53), 'tipo', 'tarefa', 'alvo', teste.tid(40), 'obrigatorio', false),
+      jsonb_build_object('id', teste.tid(52), 'tipo', 'quiz', 'alvo', teste.tid(30), 'obrigatorio', true),
+      jsonb_build_object('id', null, 'tipo', 'aula', 'alvo', teste.tid(21), 'obrigatorio', true)))));
+  perform teste.confere((select count(*) from dias_trilha where curso_id = teste.tid(1)) = 2, 'a trilha passa a ter 2 dias');
+  perform teste.confere((select d.numero from itens_dia i join dias_trilha d on d.id = i.dia_id where i.id = teste.tid(53)) = 2
+    and (select ordem from itens_dia where id = teste.tid(53)) = 1 and not (select obrigatorio from itens_dia where id = teste.tid(53)),
+    'o item que já existia é movido para o dia e a posição novos');
+  perform teste.confere((select count(*) from itens_concluidos where item_dia_id = teste.tid(53)) = 1,
+    'reorganizar a trilha não apaga o que o aluno já marcou');
+  perform teste.confere((select count(*) from itens_dia i join dias_trilha d on d.id = i.dia_id where d.curso_id = teste.tid(1)) = 4,
+    'o item novo entra na trilha');
+  perform teste.confere(jsonb_path_query_array(ler_trilha(teste.tid(1)), '$[*].itens[*].tipo') = '["aula", "tarefa", "quiz", "aula"]'::jsonb,
+    'a leitura devolve os dias e os itens na ordem');
+
+  perform teste.espera_erro(format($q$select salvar_trilha(teste.tid(1), jsonb_build_array(jsonb_build_object('itens', jsonb_build_array(
+    jsonb_build_object('id', null, 'tipo', 'aula', 'alvo', %L::uuid, 'obrigatorio', true)))))$q$, teste.tid(22)),
+    'item_de_outro_curso', 'aula de outro curso não entra na trilha');
+  perform teste.espera_erro(format($q$select salvar_trilha(teste.tid(1), jsonb_build_array(jsonb_build_object('itens', jsonb_build_array(
+    jsonb_build_object('id', null, 'tipo', 'aula', 'alvo', %1$L::uuid, 'obrigatorio', true),
+    jsonb_build_object('id', null, 'tipo', 'aula', 'alvo', %1$L::uuid, 'obrigatorio', true)))))$q$, teste.tid(20)),
+    'itens_dia_aula_unica', 'a mesma aula não entra duas vezes');
+  perform teste.espera_erro(format($q$select salvar_trilha(teste.tid(1), jsonb_build_array(jsonb_build_object('itens', jsonb_build_array(
+    jsonb_build_object('id', gen_random_uuid(), 'tipo', 'aula', 'alvo', %L::uuid, 'obrigatorio', true)))))$q$, teste.tid(20)),
+    'item_inexistente', 'item com identificador inventado é recusado');
+  perform teste.confere((select count(*) from itens_dia i join dias_trilha d on d.id = i.dia_id where d.curso_id = teste.tid(1)) = 4
+    and (select count(*) from itens_concluidos where item_dia_id = teste.tid(53)) = 1,
+    'quando a gravação falha, a trilha anterior continua inteira');
+
+  perform salvar_trilha(teste.tid(1), jsonb_build_array(
+    jsonb_build_object('itens', jsonb_build_array(
+      jsonb_build_object('id', teste.tid(51), 'tipo', 'aula', 'alvo', teste.tid(20), 'obrigatorio', true),
+      jsonb_build_object('id', teste.tid(52), 'tipo', 'quiz', 'alvo', teste.tid(30), 'obrigatorio', true)))));
+  perform teste.confere((select count(*) from dias_trilha where curso_id = teste.tid(1)) = 1
+    and (select count(*) from itens_dia i join dias_trilha d on d.id = i.dia_id where d.curso_id = teste.tid(1)) = 2,
+    'o que saiu da trilha é apagado, e o dia que sobrou também');
+  perform teste.confere((select count(*) from itens_concluidos where item_dia_id = teste.tid(53)) = 0,
+    'a marcação de um item que saiu da trilha vai embora com ele');
   insert into aulas (modulo_id, numero, titulo_pt, titulo_es) values (teste.tid(10), 3, 'Aula 3', 'Clase 3');
   perform teste.confere((select count(*) from aulas) = 4, 'professor cria aula');
   perform teste.confere((select count(*) from eventos_pagamento) = 0 and (select count(*) from ofertas) = 0, 'professor não vê pagamentos nem ofertas');

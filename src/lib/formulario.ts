@@ -1,6 +1,7 @@
 import type { Bloco } from './anotacoes';
 import type { Erros } from './conteudo';
 import type { QuizNoEditor } from './quiz-editor';
+import type { DiaDaTrilha } from './trilha-editor';
 
 // O que uma ação de formulário devolve quando há erro: a mensagem de cada campo e o que a
 // pessoa tinha digitado, para a tela não perder nada. "vez" muda a cada resposta, e a tela
@@ -32,3 +33,14 @@ export type EstadoDoQuiz = {
 };
 
 export const QUIZ_INICIAL: EstadoDoQuiz = { vez: 0, situacao: 'inicial', erros: {}, quiz: null, publicado: false };
+
+// Resposta da gravação da trilha por dia. Ao salvar, "dias" devolve a trilha como ficou gravada,
+// já com o identificador de cada item.
+export type EstadoDaTrilha = {
+  vez: number;
+  situacao: 'inicial' | 'salvo' | 'erro';
+  erro: string | null;
+  dias: DiaDaTrilha[] | null;
+};
+
+export const TRILHA_INICIAL: EstadoDaTrilha = { vez: 0, situacao: 'inicial', erro: null, dias: null };

@@ -14,6 +14,11 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
   restaurado: { tipo: 'ok', texto: 'Restaurado como rascunho.' },
   modulo_restaurado: { tipo: 'ok', texto: 'Módulo restaurado.' },
   tarefa_salva: { tipo: 'ok', texto: 'Tarefa salva.' },
+  aula_na_trilha: {
+    tipo: 'erro',
+    texto: 'Esta aula (ou o quiz dela) está na trilha por dia. Tire da trilha antes de mover para a lixeira.',
+  },
+  tarefa_na_trilha: { tipo: 'erro', texto: 'Esta tarefa está na trilha por dia. Tire da trilha antes de mover para a lixeira.' },
   tarefa_restaurada: { tipo: 'ok', texto: 'Tarefa restaurada.' },
   restaurar_curso_da_tarefa: { tipo: 'erro', texto: 'O curso desta tarefa está na lixeira. Restaure o curso antes.' },
   curso_com_modulos: {
