@@ -243,6 +243,56 @@ jobs:
             docker service logs portuguesjp_portuguesjp_banco 2>&1 | sed -E 's/^[^|]*\| //' | tail -n 6
             test -n "$DENOVO"
           } 2>&1 | tee -a saida/11-stack.txt
+      # Uma atualização que muda o banco acontece com o serviço de dados no ar há horas. Ele só
+      # reconhece a coluna nova se receber o aviso do banco, e a rede interna do Docker Swarm derruba
+      # em silêncio uma ligação parada há 15 minutos. Aqui esse prazo é encurtado para 90 segundos, a
+      # ligação de escuta fica parada por mais do que isso e só então a coluna é criada.
+      - name: Atualização com o sistema no ar
+        run: |
+          {
+            echo "== o serviço de dados reconhece uma coluna criada depois de a ligação de escuta ficar parada =="
+            sql() { docker exec "$(docker ps -q --filter name=portuguesjp_db | head -n 1)" psql -X -q -h 127.0.0.1 -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -Atc "$1"; }
+            CHAVE=$(SEGREDO="$STACK_SEGREDO_JWT" node -e '
+              const { createHmac } = require("node:crypto");
+              const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+              const corpo = b64({ alg: "HS256", typ: "JWT" }) + "." + b64({ role: "service_role", iss: "teste", exp: Math.floor(Date.now() / 1000) + 3600 });
+              console.log(corpo + "." + createHmac("sha256", process.env.SEGREDO).update(corpo).digest("base64url"));
+            ')
+            # Grava em uma coluna de perfis, em uma linha que não existe: 400 se o serviço não conhece a coluna;
+            # se conhece, 204 (ou 404, conforme a versão, por não haver linha).
+            grava() { curl -s -o /dev/null -w '%{http_code}' -X PATCH "http://127.0.0.1:3001/perfis?id=eq.00000000-0000-0000-0000-000000000000" -H "apikey: $CHAVE" -H "Authorization: Bearer $CHAVE" -H 'content-type: application/json' -d "{\"$1\": null}"; }
+            conhece() { case "$(grava "$1")" in 200|204|404) return 0 ;; *) return 1 ;; esac; }
+            echo "coluna que já existe: $(grava fuso_confirmado_em) (esperado 204) · coluna que não existe: $(grava coluna_de_teste) (esperado 400)"
+            conhece fuso_confirmado_em
+            test "$(grava coluna_de_teste)" = "400"
+
+            sudo apt-get install -y -qq ipvsadm > /dev/null 2>&1 || echo "AVISO: não consegui instalar o ipvsadm"
+            PROCESSO=$(docker inspect -f '{{.State.Pid}}' "$(docker ps -q --filter name=portuguesjp_portuguesjp_rest | head -n 1)")
+            sudo nsenter -t "$PROCESSO" -n ipvsadm --set 90 30 30
+            echo "prazo das ligações paradas na rede do serviço de dados: $(sudo nsenter -t "$PROCESSO" -n ipvsadm -l --timeout | tail -n 1)"
+            # A ligação de escuta é refeita já com o prazo curto: o banco encerra a atual e o serviço liga de novo.
+            ENCERRADAS=$(sql "select count(*) from (select pg_terminate_backend(pid) from pg_stat_activity where query ilike 'listen%') t")
+            echo "ligações de escuta encerradas: $ENCERRADAS"
+            test "$ENCERRADAS" -ge 1
+            for i in $(seq 1 30); do
+              if [ "$(sql "select count(*) from pg_stat_activity where query ilike 'listen%'")" -ge 1 ]; then break; fi
+              sleep 2
+            done
+            ABERTAS=$(sql "select count(*) from pg_stat_activity where query ilike 'listen%'")
+            echo "ligações de escuta abertas de novo: $ABERTAS"
+            test "$ABERTAS" -ge 1
+            echo "esperando 130 segundos com a ligação parada..."
+            sleep 130
+            sql "alter table public.perfis add column coluna_de_teste text; notify pgrst, 'reload schema'"
+            RECONHECEU=""
+            for i in $(seq 1 20); do
+              if conhece coluna_de_teste; then RECONHECEU="sim"; break; fi
+              sleep 2
+            done
+            echo "coluna criada com o sistema no ar: $(grava coluna_de_teste) (esperado 204)"
+            sql "alter table public.perfis drop column coluna_de_teste; notify pgrst, 'reload schema'"
+            test -n "$RECONHECEU"
+          } 2>&1 | tee saida/15-atualizacao-no-ar.txt
       # A cópia de segurança só vale se a restauração funciona: os dois roteiros da VPS são
       # rodados de verdade aqui, e depois da restauração o login é testado de novo.
       - name: Cópia de segurança e restauração na stack

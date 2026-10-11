@@ -309,15 +309,23 @@ da OpenAI.
 Quando houver versão nova:
 
 1. Faça uma cópia de segurança (`sh /root/portuguesjp/copia-de-seguranca.sh`).
-2. No Portainer, em **Stacks → portuguesjp → Editor**, clique em **Update the stack** com a opção **Re-pull image
-   and redeploy** ligada. (Se o arquivo da stack tiver mudado, cole a versão nova antes.)
+2. No Portainer, em **Stacks → portuguesjp → Editor**, cole a versão nova do
+   [arquivo da stack](https://raw.githubusercontent.com/gilsonalvesgwta/portugues-joao-paulo/main/deploy/portainer-stack.yml)
+   por cima da atual e clique em **Update the stack** (com **Re-pull image and redeploy** ligada, se a opção
+   aparecer). As variáveis continuam as mesmas.
 3. O serviço `portuguesjp_banco` roda de novo e aplica sozinho as atualizações do banco. Confira no registro dele a
    linha `BANCO PRONTO`.
+
+Se, logo depois de uma atualização, alguma tela disser que não conseguiu guardar ou salvar, o serviço de dados
+ficou com o desenho antigo das tabelas. Rode na VPS `docker service update --force portuguesjp_portuguesjp_rest` e
+tente de novo. Isso aconteceu uma vez, na atualização que criou a confirmação do fuso; a causa foi corrigida no
+arquivo da stack e passou a ser testada.
 
 ## Se algo não funcionar
 
 | O que acontece | O que olhar |
 | --- | --- |
+| Logo depois de atualizar, uma tela diz que não conseguiu guardar ou salvar | O serviço de dados está com o desenho antigo das tabelas: rode `docker service update --force portuguesjp_portuguesjp_rest` na VPS |
 | Serviço não sobe e o registro fala em `pull access denied` ou `No such image` | As imagens ficaram privadas: veja o passo 1 |
 | O endereço não abre, ou abre sem cadeado | O registro no Cloudflare (passo 2) e se o domínio em `DOMINIO` está escrito igual. O certificado leva um ou dois minutos |
 | "Bad Gateway" ou "404 page not found" do Traefik | O aplicativo ainda está subindo: espere um minuto e veja se `portuguesjp_app` está 1/1 |

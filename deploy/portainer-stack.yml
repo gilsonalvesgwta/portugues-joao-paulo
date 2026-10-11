@@ -193,7 +193,11 @@ services:
       - rede_interna ## O nome verdadeiro da rede vem da variável REDE_INTERNA
 
     environment:
-      - PGRST_DB_URI=postgres://authenticator:${SENHA_DO_BANCO}@portuguesjp_db:5432/postgres
+      ## Os "keepalives" mantêm viva a ligação pela qual este serviço escuta os avisos do banco. Sem
+      ## eles, a rede interna do Docker Swarm derruba em silêncio uma ligação parada há 15 minutos:
+      ## o aviso de "banco atualizado" não chega, e o serviço continua com o desenho antigo das
+      ## tabelas depois de uma atualização (não reconhece coluna nova).
+      - PGRST_DB_URI=postgres://authenticator:${SENHA_DO_BANCO}@portuguesjp_db:5432/postgres?keepalives=1&keepalives_idle=60&keepalives_interval=10&keepalives_count=3
       - PGRST_DB_SCHEMAS=public
       - PGRST_DB_ANON_ROLE=anon
       - PGRST_DB_MAX_ROWS=1000
