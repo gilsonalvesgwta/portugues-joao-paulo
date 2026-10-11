@@ -30,7 +30,7 @@ export function FormularioDaAula({ aula, grupos, previa = null }: Props) {
   const erros = estado.erros;
 
   return (
-    <form action={acao} noValidate className="flex flex-col gap-6">
+    <form action={acao} noValidate data-vez={estado.vez} className="flex flex-col gap-6">
       {erros.geral || erros.situacao ? (
         <p role="alert" className="rounded-xl border border-perigo bg-cartao px-4 py-3 text-[15px] font-semibold text-perigo">
           {erros.geral ?? erros.situacao}

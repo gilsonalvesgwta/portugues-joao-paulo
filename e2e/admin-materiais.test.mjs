@@ -69,8 +69,17 @@ test('link ruim é recusado com o que foi digitado mantido; link sem https:// é
   await pagina.getByRole('link', { name: 'Adicionar material' }).click();
   await pagina.waitForURL(`**/admin/aulas/${aulaId}/materiais/novo`);
 
+  // O formulário marca em "data-vez" quantas respostas do servidor já recebeu. Esperar por ela
+  // garante que cada conferência olha a resposta daquele envio, e não a do envio anterior.
+  let respostas = 0;
+  const salvarComErro = async () => {
+    await pagina.getByRole('button', { name: 'Salvar material' }).click();
+    respostas += 1;
+    await pagina.locator(`form[data-vez="${respostas}"]`).waitFor();
+  };
+
   await campo('Título em português').fill(lista.pt);
-  await pagina.getByRole('button', { name: 'Salvar material' }).click();
+  await salvarComErro();
   await pagina.getByText('Escreva o título em espanhol.').waitFor();
   await pagina.getByText('Cole o link do material.').waitFor();
   assert.equal(await campo('Título em português').inputValue(), lista.pt);
@@ -78,9 +87,10 @@ test('link ruim é recusado com o que foi digitado mantido; link sem https:// é
   await campo('Título em espanhol').fill(lista.es);
   for (const ruim of ['http://exemplo.com/lista.pdf', 'javascript:alert(1)', 'meu arquivo.pdf']) {
     await campo('Link do material').fill(ruim);
-    await pagina.getByRole('button', { name: 'Salvar material' }).click();
+    await salvarComErro();
     await pagina.getByText('Cole um link que comece com https://, sem espaços.').waitFor();
     assert.equal(await campo('Link do material').inputValue(), ruim, 'o link digitado continua no campo');
+    assert.equal(await campo('Título em espanhol').inputValue(), lista.es);
   }
   assert.deepEqual(await noBanco(), [], 'nada foi gravado');
 
