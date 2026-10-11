@@ -81,6 +81,17 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
     tipo: 'erro',
     texto: 'Esse endereço já recebeu 3 e-mails de acesso nos últimos 10 minutos. Espere um pouco antes de mandar outro.',
   },
+  oferta_salva: { tipo: 'ok', texto: 'Oferta salva.' },
+  oferta_sem_curso: { tipo: 'erro', texto: 'Para criar uma oferta, primeiro crie o curso que ela libera.' },
+  aviso_liberou: { tipo: 'ok', texto: 'Aviso processado: o acesso foi liberado.' },
+  aviso_processado: { tipo: 'ok', texto: 'Aviso processado.' },
+  aviso_ja_processado: { tipo: 'ok', texto: 'Esse aviso já tinha sido processado.' },
+  aviso_dispensado: { tipo: 'ok', texto: 'Aviso dispensado. Ele continua guardado, fora da lista de pendentes.' },
+  aviso_sem_oferta: {
+    tipo: 'erro',
+    texto: 'O produto deste aviso ainda não tem oferta ativa. Cadastre a oferta com o código do produto e processe de novo.',
+  },
+  aviso_falhou: { tipo: 'erro', texto: 'Não foi possível processar o aviso. Ele continua pendente, com o motivo ao lado.' },
   link_falhou: { tipo: 'erro', texto: 'O e-mail não saiu. Confira o envio de e-mail no Painel, com o botão “Enviar e-mail de teste”.' },
 };
 

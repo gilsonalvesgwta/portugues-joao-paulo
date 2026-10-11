@@ -25,3 +25,10 @@ $$;
 
 grant usage on schema auth to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;
+
+-- O Supabase entrega tabelas, funções e sequências novas do esquema public já liberadas para
+-- anon, authenticated e service_role. O ambiente de teste faz igual: assim, se uma migração
+-- esquecer de fechar uma tabela ou uma função, os testes das regras acusam.
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;

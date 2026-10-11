@@ -43,7 +43,9 @@ begin
   insert into itens_concluidos (aluno_id, item_dia_id) values (teste.uid(1), teste.tid(53));
   perform teste.confere((select count(*) from itens_concluidos) = 1, 'aluno marca a tarefa do dia');
   perform teste.espera_erro($q$select registrar_evento_pagamento('{"type":"sale"}'::jsonb)$q$,
-    'permission denied', 'aluno não chama as funções de pagamento');
+    'permission denied', 'aluno não grava aviso de pagamento');
+  perform teste.espera_erro($q$select aplicar_evento_pagamento(1, teste.uid(1))$q$,
+    'permission denied', 'aluno não aplica aviso de pagamento (não libera acesso para si)');
 end $$;
 
 -- ============ 2. Sem matrícula (12) e com acesso vencido (11) ============
@@ -352,6 +354,93 @@ begin
   update matriculas set situacao = 'encerrada' where aluno_id = teste.uid(12) and curso_id = teste.tid(3);
   perform teste.confere((select pessoa_id is null and depois ->> 'situacao' = 'encerrada' from registro_alteracoes
                          where tabela = 'matriculas' order by id desc limit 1), 'mudança feita pelo servidor entra no histórico sem pessoa');
+end $$;
+reset role;
+
+-- ============ 10. Nada fica liberado por esquecimento ============
+-- O ambiente de teste, como o Supabase, libera para quem está logado toda função e toda tabela
+-- nova. Estas listas são tudo o que as migrações deixam aberto; qualquer coisa a mais é falha.
+do $$
+declare
+  v_abertas text[];
+begin
+  select coalesce(array_agg(p.proname::text order by p.proname), '{}') into v_abertas
+  from pg_proc p
+  where p.pronamespace = 'public'::regnamespace and has_function_privilege('authenticated', p.oid, 'execute');
+  perform teste.confere(v_abertas = array['agenda_turmas', 'aluno_ve_aula', 'aluno_ve_curso', 'avaliar_aula', 'cancelar_reserva',
+      'config_int', 'definir_papel', 'eh_admin', 'eh_equipe', 'ler_trilha', 'lista_de_pessoas', 'pode_conversacao', 'reservar_turma',
+      'resumo_dos_quizzes', 'salvar_quiz', 'salvar_trilha'],
+    'quem está logado só chama as funções da lista: ' || array_to_string(v_abertas, ', '));
+
+  select coalesce(array_agg(p.proname::text order by p.proname), '{}') into v_abertas
+  from pg_proc p
+  where p.pronamespace = 'public'::regnamespace and has_function_privilege('anon', p.oid, 'execute');
+  perform teste.confere(v_abertas = '{}', 'visitante sem login não chama nenhuma função: ' || array_to_string(v_abertas, ', '));
+
+  select coalesce(array_agg(c.relname::text order by c.relname), '{}') into v_abertas
+  from pg_class c
+  where c.relnamespace = 'public'::regnamespace and c.relkind in ('r', 'v', 'm', 'S')
+    and (has_table_privilege('anon', c.oid, 'select') or has_table_privilege('anon', c.oid, 'insert')
+         or has_table_privilege('anon', c.oid, 'update') or has_table_privilege('anon', c.oid, 'delete'));
+  perform teste.confere(v_abertas = '{}', 'visitante sem login não lê nem grava nenhuma tabela: ' || array_to_string(v_abertas, ', '));
+
+  select coalesce(array_agg(c.relname::text order by c.relname), '{}') into v_abertas
+  from pg_class c
+  where c.relnamespace = 'public'::regnamespace and c.relkind = 'r' and not c.relrowsecurity;
+  perform teste.confere(v_abertas = '{}', 'toda tabela tem regras de acesso por linha ligadas: ' || array_to_string(v_abertas, ', '));
+
+  -- Uma função criada depois desta migração não nasce liberada pelo nome para quem está logado.
+  -- (Sobra o padrão geral do Postgres, "todos", que cada migração tira das funções que cria.)
+  create function public.teste_de_funcao_nova() returns integer language sql as 'select 1';
+  perform teste.confere(
+    (select coalesce(proacl::text, '') not like '%authenticated=%' and coalesce(proacl::text, '') not like '%anon=%'
+     from pg_proc where oid = 'public.teste_de_funcao_nova()'::regprocedure),
+    'função nova não nasce liberada pelo nome para visitante nem para quem está logado');
+  drop function public.teste_de_funcao_nova();
+end $$;
+
+-- ============ 11. Pagamento: renovação da assinatura e compra de quem já tem acesso ============
+update public.matriculas set expira_em = now() + interval '10 days' where aluno_id = teste.uid(3);
+select set_config('request.jwt.claims', '', false);
+set role service_role;
+do $$
+declare
+  v_contrato jsonb := jsonb_build_object('type', 'contract', 'event', 'contractUpdated', 'currentStatus', 'paid',
+    'product', jsonb_build_object('id', 5002, 'type', 'SUBSCRIPTION'),
+    'currentSale', jsonb_build_object('id', 9001),
+    'contract', jsonb_build_object('id', 889, 'current_period_end', (now() + interval '30 days')::text));
+  v_mes2 jsonb;
+  v_venda jsonb := '{"type":"sale","event":"saleUpdated","currentStatus":"paid","product":{"id":5001,"type":"TRANSACTION"},"sale":{"id":781}}';
+  v_id bigint; v_novo boolean;
+begin
+  select evento_id into v_id from registrar_evento_pagamento(v_contrato);
+  perform aplicar_evento_pagamento(v_id, teste.uid(4));
+  perform teste.confere((select expira_em between now() + interval '29 days' and now() + interval '31 days' from matriculas where aluno_id = teste.uid(4)),
+    'primeira cobrança da assinatura: acesso até o fim do primeiro mês');
+  perform teste.confere(not (select novo from registrar_evento_pagamento(v_contrato)), 'a mesma cobrança repetida não é gravada de novo');
+
+  v_mes2 := jsonb_set(jsonb_set(v_contrato, '{currentSale,id}', '9002'), '{contract,current_period_end}', to_jsonb((now() + interval '60 days')::text));
+  select evento_id, novo into v_id, v_novo from registrar_evento_pagamento(v_mes2);
+  perform teste.confere(v_novo, 'a cobrança do mês seguinte, com o mesmo contrato e o mesmo status, é um aviso novo');
+  perform teste.confere(aplicar_evento_pagamento(v_id, teste.uid(4)) = 'acesso_liberado', 'a renovação é aplicada');
+  perform teste.confere((select expira_em between now() + interval '59 days' and now() + interval '61 days' from matriculas where aluno_id = teste.uid(4)),
+    'a renovação estende o acesso até o fim do novo período');
+  perform teste.confere((select pessoa_id is null and depois ->> 'origem' = 'greenn' from registro_alteracoes
+                         where tabela = 'matriculas' and depois ->> 'aluno_id' = teste.uid(4)::text order by id desc limit 1),
+    'a mudança vinda do pagamento entra no histórico sem pessoa');
+
+  select evento_id into v_id from registrar_evento_pagamento(v_venda);
+  perform aplicar_evento_pagamento(v_id, teste.uid(3));
+  perform teste.confere((select expira_em between now() + interval '374 days' and now() + interval '376 days' from matriculas where aluno_id = teste.uid(3)),
+    'quem compra de novo com 10 dias sobrando fica com 375: os dias somam');
+  select evento_id into v_id from registrar_evento_pagamento(jsonb_set(v_venda, '{sale,id}', '782'));
+  perform aplicar_evento_pagamento(v_id, teste.uid(2));
+  perform teste.confere((select situacao = 'ativa' and expira_em is null from matriculas where aluno_id = teste.uid(2)),
+    'a compra não encurta um acesso que estava sem prazo');
+  select evento_id into v_id from registrar_evento_pagamento(jsonb_set(v_venda, '{sale,id}', '783'));
+  perform aplicar_evento_pagamento(v_id, teste.uid(11));
+  perform teste.confere((select expira_em between now() + interval '364 days' and now() + interval '366 days' from matriculas where aluno_id = teste.uid(11)),
+    'com o acesso vencido, os dias contam a partir de hoje');
 end $$;
 reset role;
 

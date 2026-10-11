@@ -95,6 +95,17 @@ export function emailBienvenida(d: { nombre: string; enlace: string; compra?: bo
   );
 }
 
+// Compra de quem já tem conta e senha: não há senha a criar, só o aviso de que o acesso voltou.
+export function emailAccesoActivo(d: { nombre: string; enlace: string }): Email {
+  return montar(
+    'Tu acceso al curso está activo',
+    d.nombre,
+    ['Tu compra está confirmada y tu acceso al curso ya está activo.', 'Entra con tu correo electrónico y tu contraseña de siempre.'],
+    { rotulo: 'Entrar a mis clases', url: d.enlace },
+    'Si no recuerdas tu contraseña, puedes crear una nueva desde la pantalla de acceso.',
+  );
+}
+
 export function emailRestablecer(d: { nombre: string; enlace: string }): Email {
   return montar(
     'Restablece tu contraseña',
