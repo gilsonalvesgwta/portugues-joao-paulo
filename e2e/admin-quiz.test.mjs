@@ -82,6 +82,7 @@ test('aula sem quiz: a tela diz isso, e publicar sem perguntas é recusado', asy
 
 test('monta as três perguntas, a prévia não entrega a resposta, e o rascunho confere com o banco', async () => {
   await adicionar('Múltipla escolha');
+  assert.equal(await pagina.locator('main [role="alert"]').count(), 0, 'o aviso da tentativa anterior some quando o professor mexe no quiz');
   const multipla = pergunta(1, 'Múltipla escolha');
   await multipla.getByLabel('Pergunta', { exact: true }).fill('¿Cómo se dice "gracias"?');
   await multipla.getByLabel('Opção 1', { exact: true }).fill('por favor');

@@ -275,6 +275,8 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
   const [blocos, setBlocos] = useState<Bloco[]>(iniciais);
   const [sujo, setSujo] = useState(false);
   const [recemCriado, setRecemCriado] = useState<string | null>(null);
+  // Resposta do servidor cujo aviso geral já ficou para trás, porque o professor mexeu nos blocos depois dela.
+  const [avisoVencido, setAvisoVencido] = useState(-1);
   const [estado, acao, enviando] = useActionState(salvarAnotacoes, ANOTACOES_INICIAL);
 
   // Depois de salvar, a tela passa a mostrar exatamente o que ficou gravado.
@@ -291,6 +293,7 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
   const mudar = (proximos: Bloco[]) => {
     setBlocos(proximos);
     setSujo(true);
+    setAvisoVencido(estado.vez);
   };
   const temCapa = blocos.some((bloco) => bloco.tipo === 'capa');
   const adicionar = (tipo: TipoDeBloco) => {
@@ -307,7 +310,8 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
   const erros: Record<string, string> = {};
   if (estado.situacao === 'erro') {
     for (const [chave, mensagem] of Object.entries(estado.erros)) {
-      if (chave === 'geral' || blocos.some((bloco) => bloco.id === chave)) erros[chave] = mensagem;
+      const vale = chave === 'geral' ? avisoVencido !== estado.vez : blocos.some((bloco) => bloco.id === chave);
+      if (vale) erros[chave] = mensagem;
     }
   }
   const comErro = Object.keys(erros).length > 0;

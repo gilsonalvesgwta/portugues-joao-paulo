@@ -220,6 +220,8 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
   const [quiz, setQuiz] = useState<QuizNoEditor>(inicial);
   const [sujo, setSujo] = useState(false);
   const [recemCriada, setRecemCriada] = useState<string | null>(null);
+  // Resposta do servidor cujo aviso geral já ficou para trás, porque o professor mexeu no quiz depois dela.
+  const [avisoVencido, setAvisoVencido] = useState(-1);
   const [estado, acao, enviando] = useActionState(salvarQuiz, { ...QUIZ_INICIAL, publicado: publicadoNoInicio });
 
   // Depois de salvar, a tela passa a mostrar exatamente o que ficou gravado.
@@ -236,6 +238,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
   const mudar = (proximo: QuizNoEditor) => {
     setQuiz(proximo);
     setSujo(true);
+    setAvisoVencido(estado.vez);
   };
   const comPerguntas = (perguntas: PerguntaNoEditor[]) => mudar({ ...quiz, perguntas });
   const adicionar = (tipo: TipoNoEditor) => {
@@ -252,7 +255,8 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
   const erros: Record<string, string> = {};
   if (estado.situacao === 'erro') {
     for (const [chave, mensagem] of Object.entries(estado.erros)) {
-      if (chave === 'geral' || quiz.perguntas.some((pergunta) => pergunta.id === chave)) erros[chave] = mensagem;
+      const vale = chave === 'geral' ? avisoVencido !== estado.vez : quiz.perguntas.some((pergunta) => pergunta.id === chave);
+      if (vale) erros[chave] = mensagem;
     }
   }
   const comErro = Object.keys(erros).length > 0;
