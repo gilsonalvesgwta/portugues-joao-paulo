@@ -8,11 +8,11 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
-| `supabase/tests/` | Testes do banco: 118 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos | 123 testes passando |
+| `supabase/tests/` | Testes do banco: 127 verificações de regra e 2 testes de disputa simultânea | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas | 130 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` ainda é tela de espera |
-| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira e alunos (cadastro, matrícula, bloqueio, validade, papel) | Funcionando |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 79 testes passando nos dois |
+| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) e pagamentos (ofertas e avisos da Greenn) | Funcionando |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 93 testes passando nos dois |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -35,8 +35,8 @@ Depois, com o aplicativo no ar, `npm run e2e` roda os testes de ponta a ponta.
 
 ## Como o aluno entra
 
-1. A conta nasce sem senha: o administrador cadastra a pessoa em `/admin/alunos` (a matrícula automática pela
-   compra na Greenn entra na próxima etapa). Ninguém se cadastra sozinho.
+1. A conta nasce sem senha, de dois jeitos: pela compra na Greenn (automático) ou pelo cadastro feito pelo
+   administrador em `/admin/alunos`. Ninguém se cadastra sozinho.
 2. Em `/primer-acceso` (ou `/recuperar`), a pessoa informa o e-mail. A tela responde o mesmo exista ou não a
    conta. No máximo 3 links por e-mail a cada 10 minutos.
 3. O link do e-mail abre uma tela com um botão. Só o clique gasta o link, que vale uma vez.
@@ -83,6 +83,25 @@ Em `/admin/alunos`, que só o administrador abre (o professor cuida do conteúdo
 - **Link de acesso**: reenvia o e-mail para criar ou trocar a senha, no máximo 3 por endereço a cada 10 minutos.
   A ficha mostra a última entrada da pessoa e os últimos envios.
 - Toda mudança em matrícula, papel e e-mail fica gravada em `registro_alteracoes`, com quem fez.
+
+## Como a compra na Greenn vira matrícula
+
+A Greenn chama `https://DOMINIO/api/greenn/SEGREDO` a cada mudança de uma venda ou de uma assinatura. O segredo
+(variável `GREENN_WEBHOOK_SEGREDO`, 24 letras e números ou mais) faz parte do endereço; sem ele, a resposta é a
+de uma página que não existe.
+
+- **Oferta**: em `/admin/pagamentos`, o administrador liga o código do produto na Greenn ao curso, com os dias
+  de acesso (em branco, sem prazo) e a conversação.
+- **Venda paga**: cria a conta (se não existir), faz a matrícula e manda o e-mail. Quem nunca entrou recebe o link
+  para criar a senha; quem já tem senha recebe só o aviso com o botão de entrar.
+- **Comprar de novo** com o acesso em dia soma os dias; a compra nunca encurta um acesso sem prazo.
+- **Reembolso ou estorno**: encerra o acesso na hora.
+- **Assinatura**: cada cobrança paga estende o acesso até o fim do período pago. Cancelada ou sem pagamento, o
+  acesso vai até o fim do período já pago.
+- **Aviso repetido** não é aplicado duas vezes. **Carrinho abandonado** não é guardado.
+- **Produto sem oferta** (ou com a oferta desativada): o aviso fica pendente, sem criar conta. Depois de cadastrar
+  a oferta, o administrador manda processar de novo; ou dispensa o aviso.
+- Do aviso da Greenn, documento, endereço e telefone do comprador são descartados antes de guardar.
 
 ## Saída dos testes no GitHub
 
@@ -137,8 +156,9 @@ O passo a passo da instalação ainda será escrito.
 - O envio de e-mail por SMTP (`EMAIL_DRIVER=smtp`) foi testado contra uma caixa de teste, sem senha e sem
   cifra. Usuário, senha e cifra da caixa de verdade (Hostinger) só são conferidos na instalação, pelo botão
   "Enviar e-mail de teste" do painel. Com `EMAIL_DRIVER=arquivo`, os e-mails são gravados em `EMAIL_PASTA`.
-- As funções `registrar_evento_pagamento` e `aplicar_evento_pagamento` seguem a documentação pública do
-  webhook da Greenn. Os campos serão conferidos com eventos reais (compra-teste nacional e internacional)
-  antes de ir para produção.
+- O recebimento dos avisos da Greenn segue a documentação pública do webhook, que não descreve assinatura, senha
+  nem repetição de envio. Tudo foi testado com avisos simulados nesse formato. Antes de vender, falta uma
+  compra de teste de verdade (nacional e internacional) para conferir os campos e como a Greenn se comporta
+  quando a plataforma responde com erro.
 - A tabela `perguntas` não tem regra de leitura para o aluno porque guarda o gabarito. O servidor entrega as
   perguntas sem a resposta e faz a correção.

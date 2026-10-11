@@ -18,6 +18,9 @@
 #   ADMIN_SENHA_INICIAL  senha do primeiro acesso do administrador (8 ou mais)
 #   SMTP_USER            endereço completo da caixa de e-mail da Hostinger
 #   SMTP_PASS            senha dessa caixa
+#   SEGREDO_DA_GREENN    segredo novo, só letras e números, 24 ou mais. Faz parte do endereço que a
+#                        Greenn chama (https://DOMINIO/api/greenn/SEGREDO). Em branco, a plataforma
+#                        não aceita avisos de compra e as matrículas são só as manuais
 #
 # Situação: testada no GitHub em Docker Swarm (sem o Traefik). Ainda não instalada na VPS.
 
@@ -52,6 +55,9 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_REMETENTE=${SMTP_USER}
       - EMAIL_NOME_REMETENTE=Português com João Paulo
+
+      ## Avisos de compra da Greenn (o segredo faz parte do endereço chamado por ela)
+      - GREENN_WEBHOOK_SEGREDO=${SEGREDO_DA_GREENN}
 
     deploy:
       mode: replicated

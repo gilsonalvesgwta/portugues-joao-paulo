@@ -104,6 +104,7 @@ jobs:
             echo "CAIXA_DE_TESTE_SMTP=54325"
             echo "ADMIN_EMAIL=dono@exemplo.test"
             echo "ADMIN_SENHA_INICIAL=senha-inicial-de-teste"
+            echo "GREENN_WEBHOOK_SEGREDO=segredo-so-do-teste-local-0123456789"
           } >> "$GITHUB_ENV"
       - name: Compilar
         run: npm run build 2>&1 | tee saida/2-compilar.txt
@@ -142,13 +143,16 @@ jobs:
           SENHA="$(openssl rand -hex 20)"
           SEGREDO="$(openssl rand -hex 32)"
           INICIAL="$(openssl rand -hex 8)"
+          GREENN="$(openssl rand -hex 20)"
           echo "::add-mask::$SENHA"
           echo "::add-mask::$SEGREDO"
           echo "::add-mask::$INICIAL"
+          echo "::add-mask::$GREENN"
           {
             echo "STACK_SENHA_DO_BANCO=$SENHA"
             echo "STACK_SEGREDO_JWT=$SEGREDO"
             echo "STACK_ADMIN_SENHA=$INICIAL"
+            echo "STACK_SEGREDO_DA_GREENN=$GREENN"
             echo "STACK_PASTA_DA_CAIXA=$GITHUB_WORKSPACE/caixa-da-stack"
           } >> "$GITHUB_ENV"
       - name: Subir a stack da VPS em Docker Swarm
@@ -162,6 +166,7 @@ jobs:
             export ADMIN_EMAIL=dono@exemplo.test
             export ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA"
             export SMTP_USER=aulas@exemplo.test SMTP_PASS=nao-usada-no-teste
+            export SEGREDO_DA_GREENN="$STACK_SEGREDO_DA_GREENN"
             export PASTA_DA_CAIXA="$STACK_PASTA_DA_CAIXA"
             mkdir -p "$PASTA_DA_CAIXA" && chmod 777 "$PASTA_DA_CAIXA"
             docker stack deploy --resolve-image never -c deploy/portainer-stack.yml -c deploy/teste-github.yml portuguesjp 2>&1 | grep -v -i "image .* could not be accessed" || true
@@ -202,6 +207,7 @@ jobs:
             SUPABASE_JWT_SECRET="$STACK_SEGREDO_JWT" \
             ADMIN_EMAIL=dono@exemplo.test ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA" \
             EMAIL_PASTA="$STACK_PASTA_DA_CAIXA" \
+            GREENN_WEBHOOK_SEGREDO="$STACK_SEGREDO_DA_GREENN" \
             npm run e2e 2>&1 | tee saida/12-ponta-a-ponta-na-stack.txt
           # Uma atualização roda o preparo do banco de novo: ele não pode reaplicar o que já fez.
           {
@@ -228,7 +234,7 @@ jobs:
               for servico in app auth rest db banco; do
                 echo
                 echo "== registro de portuguesjp_$servico =="
-                docker service logs "portuguesjp_portuguesjp_$servico" 2>&1 | sed -E 's/^[^|]*\| //' | grep -v -i -E "password|secret|jwt|postgres://|$STACK_SENHA_DO_BANCO|$STACK_SEGREDO_JWT" | tail -n 12 | cut -c1-400
+                docker service logs "portuguesjp_portuguesjp_$servico" 2>&1 | sed -E 's/^[^|]*\| //' | grep -v -i -E "password|secret|jwt|postgres://|$STACK_SENHA_DO_BANCO|$STACK_SEGREDO_JWT|$STACK_SEGREDO_DA_GREENN" | tail -n 12 | cut -c1-400
               done
             } >> saida/11-stack.txt 2>&1
           fi

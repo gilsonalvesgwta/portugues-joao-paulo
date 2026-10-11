@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// Só entram no menu as partes que já funcionam. As próximas (conversação, pagamentos e
-// configurações) aparecem aqui conforme forem construídas. "soAdmin": o professor não vê.
+// Só entram no menu as partes que já funcionam. As próximas (conversação e configurações)
+// aparecem aqui conforme forem construídas. "soAdmin": o professor não vê.
 const ITENS = [
   { href: '/admin', rotulo: 'Painel', prefixos: [] as string[], soAdmin: false },
   { href: '/admin/cursos', rotulo: 'Cursos e módulos', prefixos: ['/admin/cursos', '/admin/modulos'], soAdmin: false },
@@ -12,6 +12,7 @@ const ITENS = [
   { href: '/admin/tarefas', rotulo: 'Tarefas', prefixos: ['/admin/tarefas'], soAdmin: false },
   { href: '/admin/trilha', rotulo: 'Trilha por dia', prefixos: ['/admin/trilha'], soAdmin: false },
   { href: '/admin/alunos', rotulo: 'Alunos', prefixos: ['/admin/alunos'], soAdmin: true },
+  { href: '/admin/pagamentos', rotulo: 'Pagamentos', prefixos: ['/admin/pagamentos'], soAdmin: true },
   { href: '/admin/lixeira', rotulo: 'Lixeira', prefixos: ['/admin/lixeira'], soAdmin: false },
 ];
 

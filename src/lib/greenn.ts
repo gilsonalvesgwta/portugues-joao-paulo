@@ -128,3 +128,70 @@ export function segredoConfere(recebido: string, esperado: string): boolean {
   }
   return diferenca === 0;
 }
+
+// ---------------------------------------------------------------------------
+// O que fica guardado e como aparece na administração
+// ---------------------------------------------------------------------------
+
+// O aviso da Greenn traz documento, endereço e telefone do comprador. A plataforma não usa
+// nada disso, então esses campos saem antes de o aviso ser guardado. O resto fica como veio.
+const CAMPOS_QUE_NAO_FICAM = new Set([
+  'cpf_cnpj', 'document', 'street', 'number', 'complement', 'neighborhood', 'zipcode', 'city', 'uf', 'cellphone', 'phone',
+]);
+const PROFUNDIDADE_MAX = 8;
+
+export function semDadosSensiveis(valor: unknown, nivel = 0): unknown {
+  if (valor === null || typeof valor !== 'object') return valor;
+  if (nivel >= PROFUNDIDADE_MAX) return null;
+  if (Array.isArray(valor)) return valor.map((item) => semDadosSensiveis(item, nivel + 1));
+  const limpo: Record<string, unknown> = {};
+  for (const [chave, item] of Object.entries(valor)) {
+    if (!CAMPOS_QUE_NAO_FICAM.has(chave)) limpo[chave] = semDadosSensiveis(item, nivel + 1);
+  }
+  return limpo;
+}
+
+const NOME_DO_AVISO: Record<string, string> = {
+  'sale:paid': 'Venda paga',
+  'sale:refunded': 'Venda reembolsada',
+  'sale:chargedback': 'Venda estornada pelo cartão',
+  'sale:refused': 'Pagamento recusado',
+  'sale:waiting_payment': 'Aguardando pagamento',
+  'contract:paid': 'Assinatura paga',
+  'contract:trialing': 'Assinatura em período de teste',
+  'contract:pending_payment': 'Assinatura aguardando pagamento',
+  'contract:unpaid': 'Assinatura sem pagamento',
+  'contract:canceled': 'Assinatura cancelada',
+};
+
+export function nomeDoAviso(tipo: string, status: string | null): string {
+  if (tipo === 'lead') return 'Carrinho abandonado';
+  return NOME_DO_AVISO[`${tipo}:${status ?? ''}`] ?? `${tipo}${status ? ` (${status})` : ''}`;
+}
+
+// Como o aviso ficou depois de recebido. "pendente" é o que a administração precisa olhar:
+// o aviso está guardado e pode ser processado de novo depois de corrigir a causa.
+export type SituacaoDoAviso = { pendente: boolean; texto: string };
+
+const MOTIVO_PENDENTE: Record<string, string> = {
+  oferta_desconhecida: 'Produto sem oferta cadastrada (ou com a oferta desativada)',
+  conta_nao_criada: 'Não foi possível criar a conta da pessoa',
+  falha_ao_aplicar: 'Não foi possível gravar a matrícula',
+  corpo_invalido: 'Aviso em formato inesperado',
+  tipo_desconhecido: 'Tipo de aviso desconhecido',
+  email_invalido: 'O e-mail do comprador não é um endereço válido',
+  produto_ausente: 'O aviso veio sem o produto',
+  cliente_ausente: 'O aviso veio sem o comprador',
+  venda_ausente: 'O aviso veio sem o número da venda',
+  contrato_ausente: 'O aviso veio sem o número da assinatura',
+};
+
+export function situacaoDoAviso(aviso: { processado_em: string | null; erro: string | null }): SituacaoDoAviso {
+  if (aviso.processado_em !== null) {
+    if (aviso.erro === 'aluno_desconhecido') return { pendente: false, texto: 'Processado: não havia conta com esse e-mail' };
+    if (aviso.erro === 'dispensado') return { pendente: false, texto: 'Dispensado pela administração' };
+    return { pendente: false, texto: 'Processado' };
+  }
+  if (aviso.erro === null) return { pendente: true, texto: 'Recebido, ainda não processado' };
+  return { pendente: true, texto: MOTIVO_PENDENTE[aviso.erro] ?? `Não processado (${aviso.erro})` };
+}

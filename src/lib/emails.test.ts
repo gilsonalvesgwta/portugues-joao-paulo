@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  emailBienvenida, emailClaseCancelada, emailRecordatorio, emailReservaCancelada, emailReservaConfirmada,
+  emailAccesoActivo, emailBienvenida, emailClaseCancelada, emailRecordatorio, emailReservaCancelada, emailReservaConfirmada,
   emailRestablecer, escaparHtml, fechaYHora,
 } from './emails.ts';
 
@@ -33,6 +33,14 @@ test('boas-vindas leva o link de criar senha nas duas versões', () => {
   assert.equal(e.texto.includes('compra'), false, 'sem compra, o e-mail não fala em compra');
   const comprou = emailBienvenida({ nombre: 'Lucía', enlace: 'https://app.example.com/crear', compra: true });
   assert.ok(comprou.texto.includes('Tu compra está confirmada y tu acceso ya está activo.'));
+});
+
+test('compra de quem já tem senha: aviso de acesso ativo, com o botão de entrar e sem link de senha', () => {
+  const e = emailAccesoActivo({ nombre: 'Diego', enlace: 'https://app.example.com/entrar' });
+  assert.equal(e.asunto, 'Tu acceso al curso está activo');
+  assert.ok(e.texto.includes('Entrar a mis clases: https://app.example.com/entrar'));
+  assert.ok(e.html.includes('href="https://app.example.com/entrar"'));
+  assert.equal(e.texto.includes('token'), false);
 });
 
 test('sem nome, a saudação fica neutra', () => {

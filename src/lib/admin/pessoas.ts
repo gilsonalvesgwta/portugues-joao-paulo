@@ -68,7 +68,7 @@ export async function carregarFicha(id: string): Promise<Ficha | null> {
     supabase
       .from('notificacoes')
       .select('id, agendada_para, enviada_em, erro')
-      .eq('tipo', 'enlace_acceso')
+      .in('tipo', ['enlace_acceso', 'compra_confirmada'])
       .eq('aluno_id', id)
       .order('agendada_para', { ascending: false })
       .limit(3),

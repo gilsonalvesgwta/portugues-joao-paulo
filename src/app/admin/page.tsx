@@ -77,8 +77,7 @@ export default async function PaginaPainel({ searchParams }: Props) {
       <Cartao>
         <h2 className="text-lg font-bold">Ainda em construção</h2>
         <p className="mt-2 text-[15px] leading-normal text-apoio">
-          A área do aluno, a matrícula automática pela Greenn, a conversação e as configurações entram nas
-          próximas etapas.
+          A área do aluno, a conversação e as configurações entram nas próximas etapas.
         </p>
       </Cartao>
     </>

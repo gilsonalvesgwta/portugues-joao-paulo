@@ -355,4 +355,49 @@ begin
 end $$;
 reset role;
 
+-- ============ 10. Pagamento: renovação da assinatura e compra de quem já tem acesso ============
+update public.matriculas set expira_em = now() + interval '10 days' where aluno_id = teste.uid(3);
+select set_config('request.jwt.claims', '', false);
+set role service_role;
+do $$
+declare
+  v_contrato jsonb := jsonb_build_object('type', 'contract', 'event', 'contractUpdated', 'currentStatus', 'paid',
+    'product', jsonb_build_object('id', 5002, 'type', 'SUBSCRIPTION'),
+    'currentSale', jsonb_build_object('id', 9001),
+    'contract', jsonb_build_object('id', 889, 'current_period_end', (now() + interval '30 days')::text));
+  v_mes2 jsonb;
+  v_venda jsonb := '{"type":"sale","event":"saleUpdated","currentStatus":"paid","product":{"id":5001,"type":"TRANSACTION"},"sale":{"id":781}}';
+  v_id bigint; v_novo boolean;
+begin
+  select evento_id into v_id from registrar_evento_pagamento(v_contrato);
+  perform aplicar_evento_pagamento(v_id, teste.uid(4));
+  perform teste.confere((select expira_em between now() + interval '29 days' and now() + interval '31 days' from matriculas where aluno_id = teste.uid(4)),
+    'primeira cobrança da assinatura: acesso até o fim do primeiro mês');
+  perform teste.confere(not (select novo from registrar_evento_pagamento(v_contrato)), 'a mesma cobrança repetida não é gravada de novo');
+
+  v_mes2 := jsonb_set(jsonb_set(v_contrato, '{currentSale,id}', '9002'), '{contract,current_period_end}', to_jsonb((now() + interval '60 days')::text));
+  select evento_id, novo into v_id, v_novo from registrar_evento_pagamento(v_mes2);
+  perform teste.confere(v_novo, 'a cobrança do mês seguinte, com o mesmo contrato e o mesmo status, é um aviso novo');
+  perform teste.confere(aplicar_evento_pagamento(v_id, teste.uid(4)) = 'acesso_liberado', 'a renovação é aplicada');
+  perform teste.confere((select expira_em between now() + interval '59 days' and now() + interval '61 days' from matriculas where aluno_id = teste.uid(4)),
+    'a renovação estende o acesso até o fim do novo período');
+  perform teste.confere((select pessoa_id is null and depois ->> 'origem' = 'greenn' from registro_alteracoes
+                         where tabela = 'matriculas' and depois ->> 'aluno_id' = teste.uid(4)::text order by id desc limit 1),
+    'a mudança vinda do pagamento entra no histórico sem pessoa');
+
+  select evento_id into v_id from registrar_evento_pagamento(v_venda);
+  perform aplicar_evento_pagamento(v_id, teste.uid(3));
+  perform teste.confere((select expira_em between now() + interval '374 days' and now() + interval '376 days' from matriculas where aluno_id = teste.uid(3)),
+    'quem compra de novo com 10 dias sobrando fica com 375: os dias somam');
+  select evento_id into v_id from registrar_evento_pagamento(jsonb_set(v_venda, '{sale,id}', '782'));
+  perform aplicar_evento_pagamento(v_id, teste.uid(2));
+  perform teste.confere((select situacao = 'ativa' and expira_em is null from matriculas where aluno_id = teste.uid(2)),
+    'a compra não encurta um acesso que estava sem prazo');
+  select evento_id into v_id from registrar_evento_pagamento(jsonb_set(v_venda, '{sale,id}', '783'));
+  perform aplicar_evento_pagamento(v_id, teste.uid(11));
+  perform teste.confere((select expira_em between now() + interval '364 days' and now() + interval '366 days' from matriculas where aluno_id = teste.uid(11)),
+    'com o acesso vencido, os dias contam a partir de hoje');
+end $$;
+reset role;
+
 \echo 'REGRAS: todos os testes passaram'
