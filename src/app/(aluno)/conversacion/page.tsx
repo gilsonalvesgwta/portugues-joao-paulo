@@ -203,7 +203,7 @@ export default async function PaginaConversacion({ searchParams }: Props) {
                       atual ? 'border-verde bg-verde-suave text-verde' : 'border-borda bg-cartao text-texto hover:bg-fundo'
                     }`}
                   >
-                    <span className="text-[13px] font-bold">{(dia.ehHoje ? t.hoy : DIAS_CORTOS[dia.diaDaSemana]).toLocaleLowerCase('es')}</span>
+                    <span className="text-[13px] font-bold">{(dia.ehHoje ? t.hoy : (DIAS_CORTOS[dia.diaDaSemana] ?? '')).toLocaleLowerCase('es')}</span>
                     <span className="font-titulo text-2xl font-bold leading-none">{dia.diaDoMes}</span>
                     <span className="text-xs leading-tight text-apoio">{total === 0 ? t.sinClases : `${dia.turmasComVaga} ${t.conPlazas}`}</span>
                   </Link>

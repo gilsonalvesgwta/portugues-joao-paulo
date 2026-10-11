@@ -161,7 +161,6 @@ export default async function PaginaInicio({ searchParams }: Props) {
   const outros = cursos.filter((item) => item.id !== curso.curso.id);
   const mensagem = avisoDe(aviso);
   const comPapo = configDoPapo() !== null;
-  const mostrarEnVivo = enVivo !== null && enVivo.limite > 0;
 
   // Para onde o botão do cartão do curso leva: a aula ou o quiz que falta.
   const aulaDoDestino = destino ? (destino.tipo === 'aula' ? aulaPorId.get(destino.id) : aulaDoQuiz.get(destino.id)) : undefined;
@@ -360,7 +359,7 @@ export default async function PaginaInicio({ searchParams }: Props) {
     </Tarjeta>
   ) : null;
 
-  const tarjetaEnVivo = mostrarEnVivo ? <TarjetaEnVivo enVivo={enVivo} className="order-3 lg:order-none" /> : null;
+  const tarjetaEnVivo = enVivo !== null && enVivo.limite > 0 ? <TarjetaEnVivo enVivo={enVivo} className="order-3 lg:order-none" /> : null;
 
   const tarjetaDelPapo = comPapo ? (
     <Tarjeta fondo="papel" rotulo="papo" className="order-4 flex flex-col gap-3.5 lg:order-none lg:gap-4">
