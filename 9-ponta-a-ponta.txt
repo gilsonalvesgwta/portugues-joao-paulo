@@ -1,0 +1,300 @@
+  duration_ms: 2201.674421
+  type: 'test'
+  ...
+# Subtest: curso: campo vazio mostra o erro sem perder o que foi digitado; depois salva como rascunho
+ok 17 - curso: campo vazio mostra o erro sem perder o que foi digitado; depois salva como rascunho
+  ---
+  duration_ms: 4643.917068
+  type: 'test'
+  ...
+# Subtest: módulos: entram no fim da lista e trocam de lugar
+ok 18 - módulos: entram no fim da lista e trocam de lugar
+  ---
+  duration_ms: 4432.590521
+  type: 'test'
+  ...
+# Subtest: aula: não publica sem vídeo, salva como rascunho e depois publica com vídeo
+ok 19 - aula: não publica sem vídeo, salva como rascunho e depois publica com vídeo
+  ---
+  duration_ms: 4863.694574
+  type: 'test'
+  ...
+# Subtest: aula: número repetido no curso é recusado, mesmo em outro módulo
+ok 20 - aula: número repetido no curso é recusado, mesmo em outro módulo
+  ---
+  duration_ms: 2361.288814
+  type: 'test'
+  ...
+# Subtest: lista de aulas: filtra por módulo, situação e busca sem acento
+ok 21 - lista de aulas: filtra por módulo, situação e busca sem acento
+  ---
+  duration_ms: 4204.453012
+  type: 'test'
+  ...
+# Subtest: no celular, as telas da administração cabem na largura
+ok 22 - no celular, as telas da administração cabem na largura
+  ---
+  duration_ms: 8079.3378
+  type: 'test'
+  ...
+# Subtest: aluna não abre as telas da administração e não grava conteúdo pelo banco
+ok 23 - aluna não abre as telas da administração e não grava conteúdo pelo banco
+  ---
+  duration_ms: 5066.846803
+  type: 'test'
+  ...
+# Subtest: aluna matriculada só vê a aula publicada, e só depois de o curso ser publicado
+ok 24 - aluna matriculada só vê a aula publicada, e só depois de o curso ser publicado
+  ---
+  duration_ms: 2013.972004
+  type: 'test'
+  ...
+# Subtest: lixeira: módulo com aula não vai; a aula vai, some para a aluna e volta como rascunho
+ok 25 - lixeira: módulo com aula não vai; a aula vai, some para a aluna e volta como rascunho
+  ---
+  duration_ms: 10178.980341
+  type: 'test'
+  ...
+# Subtest: lixeira: curso só vai depois dos módulos, e módulo não volta antes do curso
+ok 26 - lixeira: curso só vai depois dos módulos, e módulo não volta antes do curso
+  ---
+  duration_ms: 12210.01831
+  type: 'test'
+  ...
+# Subtest: o painel manda um e-mail de teste para quem está logado
+ok 27 - o painel manda um e-mail de teste para quem está logado
+  ---
+  duration_ms: 2631.749318
+  type: 'test'
+  ...
+# Subtest: link ruim é recusado com o que foi digitado mantido; link sem https:// é completado
+ok 28 - link ruim é recusado com o que foi digitado mantido; link sem https:// é completado
+  ---
+  duration_ms: 7777.929143
+  type: 'test'
+  ...
+# Subtest: o link abre em outra aba, sem levar dados da plataforma
+ok 29 - o link abre em outra aba, sem levar dados da plataforma
+  ---
+  duration_ms: 36.028115
+  type: 'test'
+  ...
+# Subtest: segundo material entra no fim; subir, descer e editar funcionam
+ok 30 - segundo material entra no fim; subir, descer e editar funcionam
+  ---
+  duration_ms: 2604.025077
+  type: 'test'
+  ...
+# Subtest: aluna matriculada lê os materiais da aula publicada e não grava; em rascunho, deixa de ler
+ok 31 - aluna matriculada lê os materiais da aula publicada e não grava; em rascunho, deixa de ler
+  ---
+  duration_ms: 1612.085158
+  type: 'test'
+  ...
+# Subtest: o banco recusa link que não seja https, mesmo vindo por fora da tela
+ok 32 - o banco recusa link que não seja https, mesmo vindo por fora da tela
+  ---
+  duration_ms: 47.473124
+  type: 'test'
+  ...
+# Subtest: apagar pede confirmação: recusando, fica; aceitando, some
+ok 33 - apagar pede confirmação: recusando, fica; aceitando, some
+  ---
+  duration_ms: 2086.762481
+  type: 'test'
+  ...
+# Subtest: aula sem quiz: a tela diz isso, e publicar sem perguntas é recusado
+ok 34 - aula sem quiz: a tela diz isso, e publicar sem perguntas é recusado
+  ---
+  duration_ms: 5393.619603
+  type: 'test'
+  ...
+# Subtest: monta as três perguntas, a prévia não entrega a resposta, e o rascunho confere com o banco
+ok 35 - monta as três perguntas, a prévia não entrega a resposta, e o rascunho confere com o banco
+  ---
+  duration_ms: 1645.447481
+  type: 'test'
+  ...
+# Subtest: pergunta incompleta não salva nada e é apontada; removida, o quiz é publicado
+ok 36 - pergunta incompleta não salva nada e é apontada; removida, o quiz é publicado
+  ---
+  duration_ms: 653.092148
+  type: 'test'
+  ...
+# Subtest: reabre com o que foi salvo; remover uma opção leva a marcação junto; reordena
+ok 37 - reabre com o que foi salvo; remover uma opção leva a marcação junto; reordena
+  ---
+  duration_ms: 1485.307955
+  type: 'test'
+  ...
+# Subtest: a tela da aula e a lista mostram o quiz; com alteração sem salvar, sair pede confirmação
+ok 38 - a tela da aula e a lista mostram o quiz; com alteração sem salvar, sair pede confirmação
+  ---
+  duration_ms: 1146.042289
+  type: 'test'
+  ...
+# Subtest: no celular, o editor de quiz cabe na largura
+ok 39 - no celular, o editor de quiz cabe na largura
+  ---
+  duration_ms: 3601.697385
+  type: 'test'
+  ...
+# Subtest: aluna matriculada vê que o quiz existe, mas nunca lê as perguntas nem grava
+ok 40 - aluna matriculada vê que o quiz existe, mas nunca lê as perguntas nem grava
+  ---
+  duration_ms: 2587.487595
+  type: 'test'
+  ...
+# Subtest: campos em branco e link ruim são apontados sem perder o que foi digitado; depois a tarefa é criada
+ok 41 - campos em branco e link ruim são apontados sem perder o que foi digitado; depois a tarefa é criada
+  ---
+  duration_ms: 4851.680503
+  type: 'test'
+  ...
+# Subtest: a tela da aula mostra a tarefa ligada e cria outra já ligada a ela
+ok 42 - a tela da aula mostra a tarefa ligada e cria outra já ligada a ela
+  ---
+  duration_ms: 1227.651534
+  type: 'test'
+  ...
+# Subtest: editar: tirar a aula e o link; a tarefa passa a valer para o curso todo
+ok 43 - editar: tirar a aula e o link; a tarefa passa a valer para o curso todo
+  ---
+  duration_ms: 3040.114983
+  type: 'test'
+  ...
+# Subtest: aluna matriculada lê a tarefa e não grava
+ok 44 - aluna matriculada lê a tarefa e não grava
+  ---
+  duration_ms: 2749.604167
+  type: 'test'
+  ...
+# Subtest: o banco recusa link de tarefa que não seja https
+ok 45 - o banco recusa link de tarefa que não seja https
+  ---
+  duration_ms: 15.078467
+  type: 'test'
+  ...
+# Subtest: lixeira: a tarefa some da lista e da aluna, e volta ao restaurar
+ok 46 - lixeira: a tarefa some da lista e da aluna, e volta ao restaurar
+  ---
+  duration_ms: 4990.728501
+  type: 'test'
+  ...
+# Subtest: curso sem trilha: tudo aparece como fora da trilha; montar sozinho cria um dia por aula
+ok 47 - curso sem trilha: tudo aparece como fora da trilha; montar sozinho cria um dia por aula
+  ---
+  duration_ms: 4658.379704
+  type: 'test'
+  ...
+# Subtest: encaixa a tarefa solta, marca como opcional, reordena itens e dias
+ok 48 - encaixa a tarefa solta, marca como opcional, reordena itens e dias
+  ---
+  duration_ms: 833.380259
+  type: 'test'
+  ...
+# Subtest: reabre como foi salva; o que a aluna já marcou sobrevive quando o item muda de dia
+ok 49 - reabre como foi salva; o que a aluna já marcou sobrevive quando o item muda de dia
+  ---
+  duration_ms: 3013.000554
+  type: 'test'
+  ...
+# Subtest: remover um dia devolve os itens para fora da trilha; dia vazio não é gravado
+ok 50 - remover um dia devolve os itens para fora da trilha; dia vazio não é gravado
+  ---
+  duration_ms: 992.624137
+  type: 'test'
+  ...
+# Subtest: com alteração sem salvar, sair pede confirmação
+ok 51 - com alteração sem salvar, sair pede confirmação
+  ---
+  duration_ms: 1322.930641
+  type: 'test'
+  ...
+# Subtest: aula e tarefa que estão na trilha não vão para a lixeira
+ok 52 - aula e tarefa que estão na trilha não vão para a lixeira
+  ---
+  duration_ms: 6712.729436
+  type: 'test'
+  ...
+# Subtest: no celular, o editor da trilha cabe na largura
+ok 53 - no celular, o editor da trilha cabe na largura
+  ---
+  duration_ms: 3677.086839
+  type: 'test'
+  ...
+# Subtest: aluna matriculada lê a trilha do curso e não grava
+ok 54 - aluna matriculada lê a trilha do curso e não grava
+  ---
+  duration_ms: 1276.218175
+  type: 'test'
+  ...
+# Subtest: o e-mail de boas-vindas chega com remetente, assunto com acento, texto e HTML
+ok 55 - o e-mail de boas-vindas chega com remetente, assunto com acento, texto e HTML
+  ---
+  duration_ms: 156.720904
+  type: 'test'
+  ...
+# Subtest: só aceita um destinatário: quebra de linha, vírgula e nome com <> são recusados sem enviar
+ok 56 - só aceita um destinatário: quebra de linha, vírgula e nome com <> são recusados sem enviar
+  ---
+  duration_ms: 9.625894
+  type: 'test'
+  ...
+# Subtest: servidor fora do ar vira falha de conexão, sem travar
+ok 57 - servidor fora do ar vira falha de conexão, sem travar
+  ---
+  duration_ms: 4.344492
+  type: 'test'
+  ...
+# Subtest: configuração incompleta é recusada antes de tentar enviar
+ok 58 - configuração incompleta é recusada antes de tentar enviar
+  ---
+  duration_ms: 0.487957
+  type: 'test'
+  ...
+# Subtest: e-mail sem conta recebe a mesma resposta na tela, e nenhum e-mail sai
+ok 59 - e-mail sem conta recebe a mesma resposta na tela, e nenhum e-mail sai
+  ---
+  duration_ms: 2060.189894
+  type: 'test'
+  ...
+# Subtest: primeiro acesso: recebe o link, cria a senha, entra e a senha vale no login
+ok 60 - primeiro acesso: recebe o link, cria a senha, entra e a senha vale no login
+  ---
+  duration_ms: 5265.370658
+  type: 'test'
+  ...
+# Subtest: nova senha: abrir o link sem clicar não o gasta; a senha antiga deixa de valer
+ok 61 - nova senha: abrir o link sem clicar não o gasta; a senha antiga deixa de valer
+  ---
+  duration_ms: 2016.808648
+  type: 'test'
+  ...
+# Subtest: link inventado é recusado
+ok 62 - link inventado é recusado
+  ---
+  duration_ms: 348.679291
+  type: 'test'
+  ...
+# Subtest: no máximo 3 links por e-mail em 10 minutos, sem mudar a resposta na tela
+ok 63 - no máximo 3 links por e-mail em 10 minutos, sem mudar a resposta na tela
+  ---
+  duration_ms: 1096.657227
+  type: 'test'
+  ...
+# Subtest: o histórico de envios não guarda o link
+ok 64 - o histórico de envios não guarda o link
+  ---
+  duration_ms: 5.457594
+  type: 'test'
+  ...
+1..64
+# tests 64
+# suites 0
+# pass 64
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63520.717225

@@ -1,0 +1,66 @@
+#12 12.87 ├ ƒ /admin/tarefas/[id]
+#12 12.87 ├ ƒ /admin/tarefas/nova
+#12 12.87 ├ ƒ /admin/trilha
+#12 12.87 ├ ƒ /api/saude
+#12 12.87 ├ ƒ /auth/confirmar
+#12 12.87 ├ ƒ /entrar
+#12 12.87 ├ ○ /icon.png
+#12 12.87 ├ ƒ /inicio
+#12 12.87 ├ ƒ /nueva-contrasena
+#12 12.87 ├ ƒ /primer-acceso
+#12 12.87 └ ƒ /recuperar
+#12 12.87 
+#12 12.87 
+#12 12.87 ƒ Proxy (Middleware)
+#12 12.87 
+#12 12.87 ○  (Static)   prerendered as static content
+#12 12.87 ƒ  (Dynamic)  server-rendered on demand
+#12 12.87 
+#12 12.90 npm notice
+#12 12.90 npm notice New major version of npm available! 10.9.9 -> 12.2.0
+#12 12.90 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#12 12.90 npm notice To update run: npm install -g npm@12.2.0
+#12 12.90 npm notice
+#12 DONE 13.0s
+
+#13 [final 3/5] COPY --from=compilacao --chown=node:node /app/.next/standalone ./
+#13 DONE 0.3s
+
+#14 [final 4/5] COPY --from=compilacao --chown=node:node /app/.next/static ./.next/static
+#14 DONE 0.0s
+
+#15 [final 5/5] COPY --from=compilacao --chown=node:node /app/public ./public
+#15 DONE 0.0s
+
+#16 exporting to image
+#16 exporting layers
+#16 exporting layers 0.7s done
+#16 writing image sha256:7c432a43acc8acd7e14770d58dd47b8c3ab7def8bd991d2cd167d995e779f63a done
+#16 naming to docker.io/library/plataforma:teste done
+#16 DONE 0.7s
+#5 extracting sha256:4f83103187f5071faa169421b645c61c3af7d26736a1f3ff642149ed331f3a16
+#5 extracting sha256:4f83103187f5071faa169421b645c61c3af7d26736a1f3ff642149ed331f3a16 done
+#5 extracting sha256:c020dab2e853a1e12bc537a5b301ee782502fe28723aee0b1346276424339ab5 done
+#5 extracting sha256:0976f43b012c956621e70902cca8f8a2223c94980a6733d6dfe36e7fe802945d done
+#5 extracting sha256:6ba2251a51aed8dd9cdd345c22fae2a46a8af753e0984aed556f4b8cd29d3194 done
+#5 extracting sha256:277e2289225fef095500117c9dca8339a7ad5017dde78526847420330a7ca10b done
+#5 DONE 3.1s
+
+#6 [2/3] COPY supabase/migrations /migracoes
+#6 DONE 0.0s
+
+#7 [3/3] COPY deploy/banco/aplicar.sh /aplicar.sh
+#7 DONE 0.0s
+
+#8 exporting to image
+#8 exporting layers
+#8 exporting layers 0.9s done
+#8 writing image sha256:acfc7880d8485d1a80be6e2ff89bc2e1de639f8c6509571b0ac44bd97fa0d64f done
+#8 naming to docker.io/library/banco:teste done
+#8 DONE 0.9s
+usuário dentro da imagem do aplicativo: node
+tamanho da imagem do aplicativo: 296537604 bytes
+tamanho da imagem do banco: 292145971 bytes
+arquivos da imagem com alguma chave dentro: 0
+imagem publicada: ghcr.io/gilsonalvesgwta/portugues-joao-paulo:latest e ghcr.io/gilsonalvesgwta/portugues-joao-paulo:ecd933087b9d
+imagem publicada: ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco:latest e ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco:ecd933087b9d

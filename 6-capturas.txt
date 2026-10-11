@@ -1,0 +1,10 @@
+
+> capturas
+> node scripts/capturas.mjs
+
+ok - /entrar em computador
+ok - /primer-acceso em computador
+ok - /recuperar em computador
+ok - /entrar em celular
+ok - /primer-acceso em celular
+ok - /recuperar em celular

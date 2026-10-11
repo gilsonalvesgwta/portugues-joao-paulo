@@ -1,0 +1,14 @@
+
+> start
+> npm run preparar:servidor && HOSTNAME=0.0.0.0 node .next/standalone/server.js
+
+
+> preparar:servidor
+> mkdir -p .next/standalone/public .next/standalone/.next/static && cp -r public/. .next/standalone/public/ && cp -r .next/static/. .next/standalone/.next/static/
+
+▲ Next.js 16.4.0
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+✓ Ready in 0ms
+✓ Running next.config took 3ms
+Primeiro administrador criado a partir de ADMIN_EMAIL.

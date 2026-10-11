@@ -1,0 +1,67 @@
+
+> build
+> next build
+
+▲ Next.js 16.4.0 (Turbopack)
+✓ Running next.config.mjs took 18ms
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.4s
+  Running TypeScript ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next/dev/types/**/*.ts'
+
+  Finished TypeScript in 5.1s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/20) ...
+  Generating static pages using 3 workers (5/20) 
+  Generating static pages using 3 workers (10/20) 
+  Generating static pages using 3 workers (15/20) 
+✓ Generating static pages using 3 workers (20/20) in 305ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/aulas
+├ ƒ /admin/aulas/[id]
+├ ƒ /admin/aulas/[id]/anotacoes
+├ ƒ /admin/aulas/[id]/materiais/novo
+├ ƒ /admin/aulas/[id]/quiz
+├ ƒ /admin/aulas/nova
+├ ƒ /admin/cursos
+├ ƒ /admin/cursos/[id]
+├ ƒ /admin/cursos/novo
+├ ƒ /admin/lixeira
+├ ƒ /admin/materiais/[id]
+├ ƒ /admin/modulos/[id]
+├ ƒ /admin/modulos/novo
+├ ƒ /admin/tarefas
+├ ƒ /admin/tarefas/[id]
+├ ƒ /admin/tarefas/nova
+├ ƒ /admin/trilha
+├ ƒ /api/saude
+├ ƒ /auth/confirmar
+├ ƒ /entrar
+├ ○ /icon.png
+├ ƒ /inicio
+├ ƒ /nueva-contrasena
+├ ƒ /primer-acceso
+└ ƒ /recuperar
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

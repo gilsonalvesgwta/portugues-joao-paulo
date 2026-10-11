@@ -1,0 +1,107 @@
+Since --detach=false was not specified, tasks will be created in the background.
+In a future release, --detach=false will become the default.
+Creating service portuguesjp_portuguesjp_app
+Creating service portuguesjp_portuguesjp_auth
+Creating service portuguesjp_portuguesjp_banco
+Creating service portuguesjp_portuguesjp_db
+Creating service portuguesjp_portuguesjp_rest
+esperando o preparo do banco...
+Esperando o banco em portuguesjp_db:5432...
+Definindo a senha dos usuários internos...
+Esperando as tabelas de login...
+aplicando: 0001_esquema_inicial.sql
+aplicando: 0002_materiais_por_link.sql
+aplicando: 0003_salvar_quiz.sql
+aplicando: 0004_tarefas_por_link.sql
+aplicando: 0005_trilha_por_dia.sql
+BANCO PRONTO (5 migração(ões) aplicada(s) agora).
+esperando o aplicativo, o login e os dados...
+respostas: aplicativo 200, login 200, dados 200
+sinal de vida: {"ok":true}
+serviço portuguesjp_portuguesjp_app: 1/1
+serviço portuguesjp_portuguesjp_auth: 1/1
+serviço portuguesjp_portuguesjp_banco: 0/1
+serviço portuguesjp_portuguesjp_db: 1/1
+serviço portuguesjp_portuguesjp_rest: 1/1
+
+== preparo do banco pela segunda vez (como em uma atualização) ==
+já aplicada: 0001_esquema_inicial.sql
+já aplicada: 0002_materiais_por_link.sql
+já aplicada: 0003_salvar_quiz.sql
+já aplicada: 0004_tarefas_por_link.sql
+já aplicada: 0005_trilha_por_dia.sql
+BANCO PRONTO (0 migração(ões) aplicada(s) agora).
+
+== memória e saúde de cada contêiner, depois dos testes ==
+portuguesjp_portuguesjp_rest: 27MiB / 256MiB
+portuguesjp_portuguesjp_auth: 21.52MiB / 256MiB
+portuguesjp_portuguesjp_db: 81.67MiB / 1GiB
+portuguesjp_portuguesjp_app: 108.4MiB / 768MiB
+portuguesjp_portuguesjp_rest: Up About a minute
+portuguesjp_portuguesjp_auth: Up About a minute
+portuguesjp_portuguesjp_db: Up About a minute (healthy)
+portuguesjp_portuguesjp_app: Up 3 minutes (healthy)
+
+== registro de portuguesjp_app ==
+▲ Next.js 16.4.0
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+✓ Ready in 0ms
+✓ Running next.config took 1.6ms
+Primeiro administrador criado a partir de ADMIN_EMAIL.
+
+== registro de portuguesjp_auth ==
+{"component":"api","duration":87880936,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.12","request_id":"81702a11-3220-4f30-a208-01026a3b2142","status":200,"time":"2026-10-11T01:34:27Z"}
+{"auth_audit_event":{"action":"login","actor_id":"58e6c0fe-2a78-4c85-a801-c00e83faa8be","actor_username":"esquecida-c9ccce7d8a@exemplo.test","actor_via_sso":false,"audit_log_id":"54e40f80-f074-4752-8f84-7f2c79bad912","created_at":"2026-10-11T01:34:28.26132145Z","ip_address":"","log_type":"account","request_id":"3a246772-fda6-4213-bcb0-74c23c2699c3","traits":{"provider":"email"},"user_agent":"node"
+{"component":"api","duration":63631980,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.12","request_id":"175740c6-cb36-4ee1-8b79-aa062d7cbd37","status":200,"time":"2026-10-11T01:34:28Z"}
+{"component":"api","duration":39934736,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.12","request_id":"f12bc294-2d85-493f-bfe7-c4eff07b0def","status":200,"time":"2026-10-11T01:34:28Z"}
+{"component":"api","error":"One-time token not found","level":"info","method":"POST","msg":"403: Email link is invalid or has expired","path":"/verify","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.12","request_id":"18563e9b-b936-44b2-8de9-2d1d4e8e4f77","time":"2026-10-11T01:34:28Z"}
+{"component":"api","duration":10045953,"error_code":"otp_expired","level":"info","method":"POST","msg":"request completed","path":"/verify","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.12","request_id":"18563e9b-b936-44b2-8de9-2d1d4e8e4f77","status":403,"time":"2026-10-11T01:34:28Z"}
+{"auth_audit_event":{"action":"user_recovery_requested","actor_id":"9bb3d28c-1fa6-4cd8-bb46-dc99c0e6240e","actor_username":"insistente-200d2e479b@exemplo.test","actor_via_sso":false,"audit_log_id":"27c8242e-6315-45be-a969-53e375ba7dff","created_at":"2026-10-11T01:34:29.071597574Z","ip_address":"","log_type":"user","request_id":"0c4a8f77-f07c-46fb-b5a0-00fc9f22088e","user_agent":"node"},"level":"in
+{"auth_event":{"action":"user_recovery_requested","actor_id":"9bb3d28c-1fa6-4cd8-bb46-dc99c0e6240e","actor_username":"insistente-200d2e479b@exemplo.test","actor_via_sso":false,"log_type":"user"},"component":"api","duration":37517604,"level":"info","method":"POST","msg":"request completed","path":"/admin/generate_link","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.12","request_i
+{"auth_audit_event":{"action":"user_recovery_requested","actor_id":"9bb3d28c-1fa6-4cd8-bb46-dc99c0e6240e","actor_username":"insistente-200d2e479b@exemplo.test","actor_via_sso":false,"audit_log_id":"46a7efca-258f-4195-a480-b09d24667530","created_at":"2026-10-11T01:34:29.302732775Z","ip_address":"","log_type":"user","request_id":"946da0bd-9b81-4487-8008-4ff58ae419ab","user_agent":"node"},"level":"in
+{"auth_event":{"action":"user_recovery_requested","actor_id":"9bb3d28c-1fa6-4cd8-bb46-dc99c0e6240e","actor_username":"insistente-200d2e479b@exemplo.test","actor_via_sso":false,"log_type":"user"},"component":"api","duration":38025436,"level":"info","method":"POST","msg":"request completed","path":"/admin/generate_link","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.12","request_i
+{"auth_audit_event":{"action":"user_recovery_requested","actor_id":"9bb3d28c-1fa6-4cd8-bb46-dc99c0e6240e","actor_username":"insistente-200d2e479b@exemplo.test","actor_via_sso":false,"audit_log_id":"31818459-d436-4545-9f1b-793ef57ac375","created_at":"2026-10-11T01:34:29.520235412Z","ip_address":"","log_type":"user","request_id":"9e561ded-5373-4e82-b90b-827c9ce1be7f","user_agent":"node"},"level":"in
+{"auth_event":{"action":"user_recovery_requested","actor_id":"9bb3d28c-1fa6-4cd8-bb46-dc99c0e6240e","actor_username":"insistente-200d2e479b@exemplo.test","actor_via_sso":false,"log_type":"user"},"component":"api","duration":38506692,"level":"info","method":"POST","msg":"request completed","path":"/admin/generate_link","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.12","request_i
+
+== registro de portuguesjp_rest ==
+10.0.1.12 - service_role [11/Oct/2026:01:32:37 +0000] "GET /perfis?select=id&papel=eq.admin&limit=1 HTTP/1.1" 503 119 "" "node"
+10.0.1.12 - service_role [11/Oct/2026:01:32:37 +0000] "GET /perfis?select=id&papel=eq.admin&limit=1 HTTP/1.1" 503 119 "" "node"
+10.0.1.12 - service_role [11/Oct/2026:01:32:37 +0000] "GET /perfis?select=id&papel=eq.admin&limit=1 HTTP/1.1" 503 119 "" "node"
+10.0.1.12 - service_role [11/Oct/2026:01:32:37 +0000] "GET /perfis?select=id&papel=eq.admin&limit=1 HTTP/1.1" 503 119 "" "node"
+10.0.1.12 - service_role [11/Oct/2026:01:32:40 +0000] "GET /perfis?select=id&papel=eq.admin&limit=1 HTTP/1.1" 503 119 "" "node"
+10.0.1.12 - service_role [11/Oct/2026:01:32:40 +0000] "GET /perfis?select=id&papel=eq.admin&limit=1 HTTP/1.1" 503 119 "" "node"
+10.0.1.12 - service_role [11/Oct/2026:01:32:40 +0000] "GET /perfis?select=id&papel=eq.admin&limit=1 HTTP/1.1" 503 119 "" "node"
+10.0.1.12 - service_role [11/Oct/2026:01:32:40 +0000] "GET /perfis?select=id&papel=eq.admin&limit=1 HTTP/1.1" 503 119 "" "node"
+11/Oct/2026:01:32:42 +0000: Failed listening for database notifications on the "pgrst" channel. ExitFailure 1
+11/Oct/2026:01:32:42 +0000: Retrying listening for database notifications in 16 seconds...
+11/Oct/2026:01:32:42 +0000: Attempting to reconnect to the database in 32 seconds...
+postgrest: thread killed
+
+== registro de portuguesjp_db ==
+10.0.1.12 2026-10-11 01:34:00.287 UTC [393] authenticator@postgres STATEMENT:  WITH pgrst_source AS (INSERT INTO "public"."tarefas"("curso_id", "instrucao_es", "link", "titulo_es") SELECT "pgrst_body"."curso_id", "pgrst_body"."instrucao_es", "pgrst_body"."link", "pgrst_body"."titulo_es" FROM (SELECT $1 AS json_data) pgrst_payload, LATERAL (SELECT "curso_id", "instrucao_es", "link", "titulo_es" FRO
+10.0.1.12 2026-10-11 01:34:00.304 UTC [395] authenticator@postgres ERROR:  new row for relation "tarefas" violates check constraint "tarefas_link_https"
+10.0.1.12 2026-10-11 01:34:00.304 UTC [395] authenticator@postgres DETAIL:  Failing row contains (5365a58d-d3dc-4c6e-8b35-f109b85a8348, b688b999-c7d9-4317-bde9-97b50d01be5a, null, X, x, http://exemplo.com/a, null).
+10.0.1.12 2026-10-11 01:34:00.304 UTC [395] authenticator@postgres STATEMENT:  WITH pgrst_source AS (INSERT INTO "public"."tarefas"("curso_id", "instrucao_es", "link", "titulo_es") SELECT "pgrst_body"."curso_id", "pgrst_body"."instrucao_es", "pgrst_body"."link", "pgrst_body"."titulo_es" FROM (SELECT $1 AS json_data) pgrst_payload, LATERAL (SELECT "curso_id", "instrucao_es", "link", "titulo_es" FRO
+10.0.1.12 2026-10-11 01:34:20.611 UTC [394] authenticator@postgres ERROR:  sem_permissao
+10.0.1.12 2026-10-11 01:34:20.611 UTC [394] authenticator@postgres CONTEXT:  PL/pgSQL function salvar_trilha(uuid,jsonb) line 12 at RAISE
+10.0.1.12 2026-10-11 01:34:20.611 UTC [394] authenticator@postgres STATEMENT:  WITH pgrst_source AS (SELECT pgrst_call.pgrst_scalar FROM (SELECT $1 AS json_data) pgrst_payload, LATERAL (SELECT "p_curso", "p_dias" FROM json_to_record(pgrst_payload.json_data) AS _("p_curso" uuid, "p_dias" jsonb) LIMIT 1) pgrst_body , LATERAL (SELECT "public"."salvar_trilha"("p_curso" := pgrst_body."p_curso", "p_dias
+10.0.1.12 2026-10-11 01:34:30.877 UTC [15135] postgres@postgres LOG:  statement: create schema if not exists controle;
+10.0.1.12 2026-10-11 01:34:30.878 UTC [15135] postgres@postgres LOG:  statement: create table if not exists controle.migracoes (
+	  nome        text primary key,
+	  aplicada_em timestamptz not null default now()
+	);
+
+== registro de portuguesjp_banco ==
+BANCO PRONTO (5 migração(ões) aplicada(s) agora).
+Esperando o banco em portuguesjp_db:5432...
+Definindo a senha dos usuários internos...
+Esperando as tabelas de login...
+NOTICE:  schema "controle" already exists, skipping
+NOTICE:  relation "migracoes" already exists, skipping
+já aplicada: 0001_esquema_inicial.sql
+já aplicada: 0002_materiais_por_link.sql
+já aplicada: 0003_salvar_quiz.sql
+já aplicada: 0004_tarefas_por_link.sql
+já aplicada: 0005_trilha_por_dia.sql
+BANCO PRONTO (0 migração(ões) aplicada(s) agora).
