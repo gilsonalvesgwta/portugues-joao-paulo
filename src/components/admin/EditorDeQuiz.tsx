@@ -417,9 +417,6 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
                 </button>
               ))}
             </div>
-            <p className="text-[13px] leading-normal text-apoio">
-              As perguntas com áudio (parear áudio e ditado) entram quando a forma de gerar o áudio estiver definida.
-            </p>
           </section>
         </fieldset>
       </form>

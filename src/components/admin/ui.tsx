@@ -92,7 +92,9 @@ export function LinkBotao({
   );
 }
 
-type PropsDoCampo = { id: string; rotulo: string; erro?: string; ajuda?: string };
+// "nome" é o nome com que o campo é enviado. Em geral é o próprio id; só precisa ser dito quando
+// a mesma tela tem dois formulários com o mesmo campo (os ids não podem se repetir).
+type PropsDoCampo = { id: string; nome?: string; rotulo: string; erro?: string; ajuda?: string };
 
 function Moldura({ id, rotulo, erro, ajuda, children }: PropsDoCampo & { children: ReactNode }) {
   return (
@@ -123,6 +125,7 @@ function descricao(id: string, erro?: string, ajuda?: string): string | undefine
 // Campo de texto com rótulo, ajuda e erro. O "name" é o próprio id.
 export function Entrada({
   id,
+  nome,
   rotulo,
   erro,
   ajuda,
@@ -134,7 +137,7 @@ export function Entrada({
         type="text"
         {...resto}
         id={id}
-        name={id}
+        name={nome ?? id}
         aria-invalid={erro ? true : undefined}
         aria-describedby={descricao(id, erro, ajuda)}
         className={classeDaEntrada}
@@ -145,6 +148,7 @@ export function Entrada({
 
 export function Selecao({
   id,
+  nome,
   rotulo,
   erro,
   ajuda,
@@ -156,7 +160,7 @@ export function Selecao({
       <select
         {...resto}
         id={id}
-        name={id}
+        name={nome ?? id}
         aria-invalid={erro ? true : undefined}
         aria-describedby={descricao(id, erro, ajuda)}
         className={classeDaEntrada}
@@ -186,6 +190,36 @@ export function AreaDeTexto({
         className="box-border min-h-32 w-full min-w-0 rounded-[10px] border border-borda-campo bg-cartao px-3 py-2.5 text-[15px] leading-normal text-texto placeholder:text-apoio aria-[invalid=true]:border-perigo"
       />
     </Moldura>
+  );
+}
+
+// Caixa de marcar com rótulo e ajuda. Marcada, envia "on"; desmarcada, não envia nada.
+export function Caixa({
+  id,
+  nome,
+  rotulo,
+  ajuda,
+  ...resto
+}: { id: string; nome?: string; rotulo: string; ajuda?: string } & Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'name' | 'type'>) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <label htmlFor={id} className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px] font-semibold">
+        <input
+          {...resto}
+          type="checkbox"
+          id={id}
+          name={nome ?? id}
+          aria-describedby={ajuda ? `${id}-ajuda` : undefined}
+          className="size-5 shrink-0 cursor-pointer accent-verde"
+        />
+        {rotulo}
+      </label>
+      {ajuda ? (
+        <p id={`${id}-ajuda`} className="text-[13px] leading-normal text-apoio">
+          {ajuda}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
