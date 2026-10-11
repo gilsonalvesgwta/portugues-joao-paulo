@@ -285,7 +285,8 @@ test('turma que já aconteceu: o professor marca presença e vê a avaliação; 
 
   const presenca = async () => (await admin.from('reservas').select('presente').eq('id', reservaId).single()).data.presente;
   await pagina.getByRole('button', { name: `Marcar ${aluna.nome} como presente` }).click();
-  await pagina.getByText('Presente', { exact: true }).first().waitFor();
+  await pagina.waitForURL(`**/admin/conversacao/turmas/${passada}?aviso=presenca_salva`);
+  assert.equal(await textoDoAviso(pagina, 'status'), 'Presença salva.');
   assert.equal(await presenca(), true);
   assert.equal(await pagina.getByRole('button', { name: `Marcar ${aluna.nome} como presente` }).count(), 0);
   await pagina.getByRole('button', { name: `Marcar ${aluna.nome} como faltou` }).click();
