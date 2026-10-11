@@ -165,6 +165,10 @@ jobs:
       - name: Subir a stack da VPS em Docker Swarm
         run: |
           {
+            # A stack sobe sem a chave do Papo, como uma instalação que não a tem. É preciso tirar a
+            # chave de teste deste terminal: o Docker preenche variável em branco da stack com a de
+            # mesmo nome que achar aqui.
+            unset ANTHROPIC_API_KEY PAPO_API_URL PAPO_DE_TESTE_PORTA
             docker swarm init --advertise-addr 127.0.0.1 > /dev/null
             docker network create --driver overlay --attachable Wtatechor3Net > /dev/null
             export DOMINIO=plataforma.exemplo.test
