@@ -13,7 +13,7 @@ Tempo estimado: 40 a 60 minutos na primeira vez.
 | --- | --- |
 | Acesso ao **Portainer** da VPS | Criar a stack |
 | Acesso ao **Cloudflare** (domínio `wtatech.com.br`) | Criar o endereço `portuguescomjoaopaulo.wtatech.com.br` |
-| Acesso ao **GitHub** com a conta dona do repositório | Deixar as imagens públicas (passo 1) |
+| Acesso ao **GitHub** com a conta dona do repositório | Só se as imagens deixarem de estar públicas (passo 1) |
 | Uma **caixa de e-mail na Hostinger** só para a plataforma (endereço e senha) | Enviar o link de acesso e os avisos aos alunos |
 | Um lugar seguro para guardar senhas (gerenciador de senhas) | As senhas criadas no passo 3 |
 
@@ -52,10 +52,16 @@ sem tocar no resto:
 Para não arriscar nada nos outros projetos, a alternativa é instalar em uma VPS nova: veja
 [Instalar em uma VPS nova, zerada](#instalar-em-uma-vps-nova-zerada), no fim deste roteiro.
 
-## Passo 1 — Deixar as imagens públicas no GitHub
+## Passo 1 — Conferir que as imagens estão públicas no GitHub
 
 A VPS baixa duas imagens do GitHub: a do aplicativo e a do preparo do banco. Elas não têm nenhuma senha dentro
-(isso é conferido a cada mudança), mas o GitHub cria os pacotes como privados.
+(isso é conferido a cada mudança).
+
+**Hoje as duas já estão públicas**: a cada mudança no ramo principal, o fluxo de testes tenta baixá-las sem se
+identificar e escreve o resultado no arquivo `10-imagem.txt` do ramo `ci-saida` ("o pacote está público"). Não há
+nada a fazer neste passo, a não ser que alguém mude a visibilidade.
+
+Se um dia aparecer "o pacote está privado" (ou, na instalação, um erro de `pull access denied`):
 
 1. Entre em github.com com a conta **gilsonalvesgwta**.
 2. Clique na foto, no canto de cima à direita, e em **Your profile**. Abra a aba **Packages**.
@@ -64,11 +70,8 @@ A VPS baixa duas imagens do GitHub: a do aplicativo e a do preparo do banco. Ela
    escrevendo o nome do pacote.
 5. Repita para o pacote **portugues-joao-paulo-banco**.
 
-Como conferir: na saída dos testes do ramo principal (arquivo `10-imagem.txt` do ramo `ci-saida`) aparece, para
-cada imagem, "o pacote está público" ou "o pacote está privado".
-
-Se preferir manter os pacotes privados, cadastre o registro no Portainer (**Registries → Add registry → Custom
-registry**, endereço `ghcr.io`, usuário do GitHub e um token com permissão `read:packages`) antes do passo 4.
+Para manter os pacotes privados, cadastre o registro no Portainer (**Registries → Add registry → Custom registry**,
+endereço `ghcr.io`, usuário do GitHub e um token com permissão `read:packages`) antes do passo 4.
 
 ## Passo 2 — Criar o endereço no Cloudflare
 
@@ -274,7 +277,7 @@ Quando houver versão nova:
 
 | O que acontece | O que olhar |
 | --- | --- |
-| Serviço não sobe e o registro fala em `pull access denied` ou `No such image` | As imagens estão privadas: refaça o passo 1 |
+| Serviço não sobe e o registro fala em `pull access denied` ou `No such image` | As imagens ficaram privadas: veja o passo 1 |
 | O endereço não abre, ou abre sem cadeado | O registro no Cloudflare (passo 2) e se o domínio em `DOMINIO` está escrito igual. O certificado leva um ou dois minutos |
 | "Bad Gateway" ou "404 page not found" do Traefik | O aplicativo ainda está subindo: espere um minuto e veja se `portuguesjp_app` está 1/1 |
 | `portuguesjp_auth` ou `portuguesjp_rest` reiniciando por mais de cinco minutos | O registro de `portuguesjp_banco`: ele precisa terminar com `BANCO PRONTO`. Confira se `SENHA_DO_BANCO` tem só letras e números |
@@ -298,7 +301,7 @@ e instalar o Traefik e o Portainer com o mesmo instalador da VPS atual
 plataforma é idêntica.
 
 **A — Contratar a VPS.** Ubuntu 20.04 ou Debian 11, limpo, sem nada instalado (é o que o instalador pede). Pelo
-menos 4 GB de memória e 2 vCPU, o mínimo do instalador; a plataforma sozinha usou cerca de 250 MB nos testes, com o
+menos 4 GB de memória e 2 vCPU, o mínimo do instalador; a plataforma sozinha usou cerca de 300 MB nos testes, com o
 banco quase vazio. Anote o IP e a senha de root. As portas 80 e 443 precisam estar abertas no firewall do provedor.
 
 **B — Criar dois endereços no Cloudflare**, do tipo `A`, apontando para o IP da VPS nova, com **DNS only**: um para
