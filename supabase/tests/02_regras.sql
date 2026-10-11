@@ -368,8 +368,9 @@ begin
   from pg_proc p
   where p.pronamespace = 'public'::regnamespace and has_function_privilege('authenticated', p.oid, 'execute');
   perform teste.confere(v_abertas = array['agenda_turmas', 'aluno_ve_aula', 'aluno_ve_curso', 'avaliar_aula', 'cancelar_reserva',
-      'config_int', 'curso_do_aluno', 'definir_papel', 'eh_admin', 'eh_equipe', 'ler_trilha', 'lista_de_pessoas', 'meu_progresso',
-      'pode_conversacao', 'reservar_turma', 'resumo_dos_quizzes', 'salvar_quiz', 'salvar_trilha'],
+      'cancelar_turma', 'config_int', 'curso_do_aluno', 'definir_papel', 'eh_admin', 'eh_equipe', 'ler_trilha', 'lista_de_pessoas',
+      'lista_de_turmas', 'meu_progresso', 'minhas_reservas', 'pode_conversacao', 'reservar_turma', 'resumo_dos_quizzes', 'salvar_quiz',
+      'salvar_trilha', 'turma_da_equipe'],
     'quem está logado só chama as funções da lista: ' || array_to_string(v_abertas, ', '));
 
   select coalesce(array_agg(p.proname::text order by p.proname), '{}') into v_abertas
@@ -507,5 +508,88 @@ begin
   perform teste.confere(meu_progresso(teste.tid(1)) = '{"aulas": [], "quizzes": [], "itens": []}'::jsonb, 'a equipe não recebe o progresso dos alunos por aqui');
 end $$;
 reset role;
+
+-- ============ 13. Conversação: link da sala, lista da equipe, cancelar turma e reservas do aluno ============
+set role authenticated;
+select teste.entrar(1);
+do $$
+declare
+  v_minhas jsonb := minhas_reservas();
+begin
+  perform teste.confere((select count(*) from turmas) > 0, 'aluno com conversação lê as turmas');
+  perform teste.espera_erro($q$select meet_url from turmas limit 1$q$, 'permission denied', 'aluno não lê o link da sala direto na tabela');
+  perform teste.espera_erro($q$select * from turmas limit 1$q$, 'permission denied', 'nem pedindo todas as colunas');
+  perform teste.confere(jsonb_array_length(v_minhas) = 1 and v_minhas -> 0 ->> 'turma_id' = teste.tid(101)::text
+                        and v_minhas -> 0 ->> 'meet_url' = 'https://meet.google.com/abc-defg-hij' and (v_minhas -> 0 ->> 'nota')::integer = 5,
+    'aluno recebe a própria reserva com o link da sala e a nota que deu');
+  perform teste.espera_erro($q$select lista_de_turmas('proximas', 50, 0)$q$, 'sem_permissao', 'aluno não lista as turmas da equipe');
+  perform teste.espera_erro($q$select turma_da_equipe(teste.tid(101))$q$, 'sem_permissao', 'aluno não vê os inscritos de uma turma');
+  perform teste.espera_erro($q$select cancelar_turma(teste.tid(105))$q$, 'sem_permissao', 'aluno não cancela turma');
+  update reservas set presente = true where aluno_id = teste.uid(1);
+  perform teste.confere(not found, 'aluno não marca a própria presença');
+end $$;
+select teste.entrar(6);
+do $$
+begin
+  perform teste.confere(minhas_reservas() = '[]'::jsonb, 'quem não reservou não recebe reserva (nem link) de ninguém');
+end $$;
+select teste.entrar(901);
+do $$
+declare
+  v_lista jsonb := lista_de_turmas('proximas', 50, 0);
+  v_turma jsonb := turma_da_equipe(teste.tid(101));
+  v_avisar jsonb;
+begin
+  perform teste.confere((v_lista ->> 'total')::integer = jsonb_array_length(v_lista -> 'turmas') and (v_lista ->> 'total')::integer >= 8
+                        and (v_lista -> 'turmas' -> 0 ->> 'inicio')::timestamptz <= (v_lista -> 'turmas' -> 1 ->> 'inicio')::timestamptz,
+    'professor lista as próximas turmas, da mais próxima para a mais distante');
+  perform teste.confere(not (v_lista -> 'turmas') @> jsonb_build_array(jsonb_build_object('id', teste.tid(101))),
+    'a turma que já aconteceu não está entre as próximas');
+  perform teste.confere((lista_de_turmas('passadas', 50, 0) -> 'turmas') @> jsonb_build_array(jsonb_build_object('id', teste.tid(101), 'reservas', 1)),
+    'e está entre as passadas, com o número de inscritos');
+  perform teste.confere(v_turma -> 'turma' ->> 'meet_url' = 'https://meet.google.com/abc-defg-hij'
+                        and jsonb_array_length(v_turma -> 'reservas') = 1 and v_turma -> 'reservas' -> 0 ->> 'email' = 'pessoa1@exemplo.test'
+                        and (v_turma -> 'reservas' -> 0 ->> 'nota')::integer = 5,
+    'professor vê a turma com o link, quem reservou e a avaliação');
+  perform teste.confere(turma_da_equipe(gen_random_uuid()) is null, 'turma inexistente não devolve nada');
+
+  update reservas set presente = true where turma_id = teste.tid(101) and aluno_id = teste.uid(1);
+  perform teste.confere((turma_da_equipe(teste.tid(101)) -> 'reservas' -> 0 ->> 'presente')::boolean, 'professor marca a presença');
+  perform teste.espera_erro($q$select cancelar_turma(teste.tid(101))$q$, 'turma_ja_aconteceu', 'turma que já aconteceu não é cancelada');
+
+  -- O aluno 2 tem duas reservas na semana que vem (104 e 105, o limite dele).
+  v_avisar := cancelar_turma(teste.tid(105));
+  perform teste.confere(jsonb_array_length(v_avisar) = 1 and v_avisar -> 0 ->> 'email' = 'pessoa2@exemplo.test' and v_avisar -> 0 ? 'fuso',
+    'cancelar a turma devolve quem estava inscrito, para avisar');
+  perform teste.confere((select situacao from turmas where id = teste.tid(105)) = 'cancelada'
+                        and (select situacao from reservas where turma_id = teste.tid(105) and aluno_id = teste.uid(2)) = 'cancelada',
+    'a turma e as reservas dela ficam canceladas');
+  perform teste.confere(cancelar_turma(teste.tid(105)) = '[]'::jsonb, 'cancelar de novo não avisa ninguém outra vez');
+
+  perform teste.espera_erro($q$insert into turmas (tema_id, inicio) values (teste.tid(70), now() + interval '2 days')$q$,
+    'turmas_aberta_com_link', 'turma aberta sem o link da sala é recusada');
+  perform teste.espera_erro($q$insert into turmas (tema_id, inicio, meet_url) values (teste.tid(70), now() + interval '2 days', 'http://meet.google.com/x')$q$,
+    'turmas_meet_https', 'link da sala que não é https é recusado');
+  perform teste.espera_erro($q$update temas_conversacao set material = 'javascript:alert(1)' where id = teste.tid(70)$q$,
+    'temas_material_https', 'material do tema que não é https é recusado');
+end $$;
+select teste.entrar(2);
+do $$
+begin
+  perform teste.confere(not (minhas_reservas() @> jsonb_build_array(jsonb_build_object('turma_id', teste.tid(105)))),
+    'a reserva da turma cancelada some das reservas do aluno');
+  perform teste.espera_erro($q$select reservar_turma(teste.tid(105))$q$, 'turma_fechada', 'turma cancelada não aceita reserva');
+  perform teste.confere(not exists (select 1 from agenda_turmas() where turma_id = teste.tid(105)), 'e sai da agenda');
+end $$;
+reset role;
+do $$
+begin
+  insert into public.notificacoes (tipo, canal, destinatario, dados) values ('recordatorio_1h', 'email', 'a@exemplo.test', '{"reserva_id": "r1"}');
+  insert into public.notificacoes (tipo, canal, destinatario, dados) values ('recordatorio_24h', 'email', 'a@exemplo.test', '{"reserva_id": "r1"}');
+  insert into public.notificacoes (tipo, canal, destinatario, dados) values ('enlace_acceso', 'email', 'a@exemplo.test', '{"reserva_id": "r1"}');
+  insert into public.notificacoes (tipo, canal, destinatario, dados) values ('enlace_acceso', 'email', 'a@exemplo.test', '{"reserva_id": "r1"}');
+  perform teste.espera_erro($q$insert into public.notificacoes (tipo, canal, destinatario, dados) values ('recordatorio_1h', 'email', 'a@exemplo.test', '{"reserva_id": "r1"}')$q$,
+    'notificacoes_lembrete_unico', 'o mesmo lembrete não é registrado duas vezes para a mesma reserva');
+end $$;
 
 \echo 'REGRAS: todos os testes passaram'
