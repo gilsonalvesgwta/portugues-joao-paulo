@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { enviarEmailDeTeste } from '@/app/admin/acoes';
-import { AvisoDaPagina, Botao, Cartao, LinkBotao, TituloDaPagina } from '@/components/admin/ui';
+import { enviarEmailDeTeste, salvarLimiteDoPapo } from '@/app/admin/acoes';
+import { AvisoDaPagina, Botao, Cartao, Entrada, Etiqueta, LinkBotao, TituloDaPagina } from '@/components/admin/ui';
 import { avisoDe } from '@/lib/admin/avisos';
 import { ativos, carregarConteudo } from '@/lib/admin/dados';
+import { usoDoPapo } from '@/lib/admin/papo';
+import { configDoPapo } from '@/lib/papo';
 import { pessoaLogada } from '@/lib/supabase/servidor';
 
 export const metadata: Metadata = { title: 'Painel' };
@@ -32,6 +34,8 @@ export default async function PaginaPainel({ searchParams }: Props) {
   const modulos = ativos(conteudo.modulos);
   const aulas = ativos(conteudo.aulas);
   const publicadas = aulas.filter((aula) => aula.situacao === 'publicado').length;
+  const papoLigado = configDoPapo() !== null;
+  const papo = await usoDoPapo();
 
   return (
     <>
@@ -88,10 +92,39 @@ export default async function PaginaPainel({ searchParams }: Props) {
       </Cartao>
 
       <Cartao>
-        <h2 className="text-lg font-bold">Ainda em construção</h2>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h2 id="papo" className="scroll-mt-6 text-lg font-bold">
+            Papo, o tutor com inteligência artificial
+          </h2>
+          <Etiqueta tom={papoLigado ? 'verde' : 'aviso'}>{papoLigado ? 'Ligado' : 'Desligado'}</Etiqueta>
+        </div>
         <p className="mt-2 text-[15px] leading-normal text-apoio">
-          A conversação, o tutor de dúvidas e as configurações entram nas próximas etapas.
+          {papoLigado
+            ? 'O aluno com curso ativo conversa por escrito com o tutor, em “Papo”. Cada mensagem é respondida pelo serviço da Anthropic e tem um custo na conta de vocês lá.'
+            : 'O Papo aparece para o aluno quando a instalação tem a chave da Anthropic (variável ANTHROPIC_API_KEY, na stack). Sem a chave, o resto da plataforma funciona normalmente.'}
         </p>
+        <p className="mt-2 text-[15px] leading-normal text-apoio">
+          Nos últimos 7 dias: {papo.mensagens === 1 ? '1 mensagem' : `${papo.mensagens} mensagens`}, de{' '}
+          {papo.pessoas === 1 ? '1 pessoa' : `${papo.pessoas} pessoas`}.
+        </p>
+        {pessoa.papel === 'admin' ? (
+          <form action={salvarLimiteDoPapo} className="mt-4 flex flex-wrap items-end gap-3">
+            <div className="w-full sm:w-64">
+              <Entrada
+                key={papo.limite}
+                id="papo_mensagens_por_dia"
+                rotulo="Mensagens por pessoa, por dia"
+                ajuda="De 0 a 500. Com 0, ninguém envia."
+                defaultValue={String(papo.limite)}
+                inputMode="numeric"
+                maxLength={3}
+              />
+            </div>
+            <Botao variante="secundario">Salvar limite</Botao>
+          </form>
+        ) : (
+          <p className="mt-2 text-[15px] leading-normal text-apoio">Limite: {papo.limite} mensagens por pessoa, por dia.</p>
+        )}
       </Cartao>
     </>
   );
