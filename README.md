@@ -8,11 +8,11 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | Pasta | Conteúdo | Situação |
 | --- | --- | --- |
 | `supabase/migrations/` | Banco de dados: 29 tabelas, regras de acesso por linha, reserva de turmas, eventos de pagamento | Testado em Postgres 16 local e no Supabase local |
-| `supabase/tests/` | Testes do banco: 86 verificações de regra e 2 testes de disputa simultânea | Passando |
-| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia | 115 testes passando |
+| `supabase/tests/` | Testes do banco: 118 verificações de regra e 2 testes de disputa simultânea | Passando |
+| `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos | 123 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Acesso funcionando; `/inicio` ainda é tela de espera |
-| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, e lixeira | Funcionando. Faltam as perguntas de quiz com áudio |
-| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 64 testes passando nos dois |
+| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira e alunos (cadastro, matrícula, bloqueio, validade, papel) | Funcionando |
+| `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 79 testes passando nos dois |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
 
@@ -35,8 +35,8 @@ Depois, com o aplicativo no ar, `npm run e2e` roda os testes de ponta a ponta.
 
 ## Como o aluno entra
 
-1. A conta nasce sem senha (pela compra, na fase de pagamento, ou criada pela administração). Ninguém se
-   cadastra sozinho.
+1. A conta nasce sem senha: o administrador cadastra a pessoa em `/admin/alunos` (a matrícula automática pela
+   compra na Greenn entra na próxima etapa). Ninguém se cadastra sozinho.
 2. Em `/primer-acceso` (ou `/recuperar`), a pessoa informa o e-mail. A tela responde o mesmo exista ou não a
    conta. No máximo 3 links por e-mail a cada 10 minutos.
 3. O link do e-mail abre uma tela com um botão. Só o clique gasta o link, que vale uma vez.
@@ -61,12 +61,28 @@ Em `/admin`, o curso é dividido em módulos e cada módulo reúne aulas.
   Têm título e instrução em espanhol e um link opcional, só `https://`. Vão para a lixeira e podem ser restauradas.
 - O quiz da aula tem, por enquanto, três tipos de pergunta: múltipla escolha, completar a frase e ordenar a
   frase. É gravado de uma vez dentro do banco (função `salvar_quiz`): ou entra inteiro, ou nada muda. O aluno
-  nunca lê a tabela de perguntas, que guarda o gabarito. As perguntas com áudio esperam a definição do áudio.
+  nunca lê a tabela de perguntas, que guarda o gabarito. Não há perguntas com áudio nesta primeira versão.
 - As anotações da aula (o resumo que o aluno lê junto com o vídeo) são montadas em blocos: capa, seção numerada,
   texto, pares de exemplo, cartões de termo, certo e errado, nota do professor, vocabulário e tabela-resumo.
   O texto do professor é sempre texto: nunca vira HTML. O único destaque é `**negrito**`.
 - "Apagar" é mover para a lixeira: o item some para o aluno, pode ser restaurado e volta como rascunho.
   Curso só vai para a lixeira sem módulos; módulo, só sem aulas.
+
+## Como o administrador cuida dos alunos
+
+Em `/admin/alunos`, que só o administrador abre (o professor cuida do conteúdo e não vê alunos nem matrículas):
+
+- **Novo aluno**: nome e e-mail. A conta nasce sem senha; a pessoa recebe um e-mail em espanhol com o link para
+  criar a senha. No mesmo passo dá para matricular em um curso.
+- **Matrícula**: uma por pessoa e por curso. Tem validade opcional ("Acesso até", que vale até o fim daquele dia
+  no horário de Brasília), aulas de conversação incluídas ou não, e reservas por semana. O primeiro dia da trilha
+  conta a partir da matrícula.
+- **Bloquear e liberar o acesso** não mexe na validade. Matrícula ativa com a validade vencida não dá acesso.
+- **Cadastro**: corrigir o nome e trocar o e-mail (a pessoa passa a entrar com o e-mail novo, com a mesma senha).
+- **Papel**: aluno, professor ou administrador. Ninguém muda o próprio papel, então sempre sobra um administrador.
+- **Link de acesso**: reenvia o e-mail para criar ou trocar a senha, no máximo 3 por endereço a cada 10 minutos.
+  A ficha mostra a última entrada da pessoa e os últimos envios.
+- Toda mudança em matrícula, papel e e-mail fica gravada em `registro_alteracoes`, com quem fez.
 
 ## Saída dos testes no GitHub
 

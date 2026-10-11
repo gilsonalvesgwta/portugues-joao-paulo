@@ -26,7 +26,7 @@ export default async function LayoutDaAdministracao({ children }: { children: Re
             <span className="text-xs font-semibold tracking-[0.1em]">ADMINISTRAÇÃO</span>
           </span>
         </Link>
-        <MenuAdmin />
+        <MenuAdmin admin={pessoa.papel === 'admin'} />
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-verde-link px-1.5 pt-4 lg:mt-auto">
           <span className="min-w-0 break-words text-sm text-fundo">{pessoa.nome || pessoa.email}</span>
           <form action={sair}>

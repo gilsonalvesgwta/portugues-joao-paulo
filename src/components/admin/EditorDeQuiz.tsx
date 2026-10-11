@@ -319,9 +319,13 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
               <label htmlFor="dificuldade" className="text-sm font-semibold">
                 Dificuldade
               </label>
+              {/* Sem "value": depois de cada resposta do servidor o React devolve os campos ao valor
+                  padrão, e um campo de escolha controlado voltaria sozinho à primeira opção. A chave
+                  remonta o campo com o valor atual como padrão. */}
               <select
+                key={estado.vez}
                 id="dificuldade"
-                value={quiz.dificuldade}
+                defaultValue={quiz.dificuldade}
                 onChange={(e) => mudar({ ...quiz, dificuldade: e.target.value as Dificuldade })}
                 className={classeDaEntrada}
               >
@@ -417,9 +421,6 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
                 </button>
               ))}
             </div>
-            <p className="text-[13px] leading-normal text-apoio">
-              As perguntas com áudio (parear áudio e ditado) entram quando a forma de gerar o áudio estiver definida.
-            </p>
           </section>
         </fieldset>
       </form>

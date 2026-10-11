@@ -119,6 +119,7 @@ test('monta as três perguntas, a prévia não entrega a resposta, e o rascunho 
 
   await salvar('Salvar como rascunho');
   await situacao('Quiz salvo como rascunho.');
+  assert.equal(await pagina.getByLabel('Dificuldade').inputValue(), 'medio', 'a dificuldade escolhida continua na tela depois de salvar');
   assert.deepEqual(await noBanco(), {
     dificuldade: 'medio',
     nota_minima: 80,

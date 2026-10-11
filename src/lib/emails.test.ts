@@ -29,6 +29,10 @@ test('boas-vindas leva o link de criar senha nas duas versões', () => {
   assert.ok(e.texto.includes('https://app.example.com/crear?token=abc&x=1'));
   assert.ok(e.html.includes('href="https://app.example.com/crear?token=abc&amp;x=1"'));
   assert.ok(e.html.includes('Crear mi contraseña'));
+  assert.ok(e.texto.includes('Tu cuenta en la plataforma ya está lista.'));
+  assert.equal(e.texto.includes('compra'), false, 'sem compra, o e-mail não fala em compra');
+  const comprou = emailBienvenida({ nombre: 'Lucía', enlace: 'https://app.example.com/crear', compra: true });
+  assert.ok(comprou.texto.includes('Tu compra está confirmada y tu acceso ya está activo.'));
 });
 
 test('sem nome, a saudação fica neutra', () => {

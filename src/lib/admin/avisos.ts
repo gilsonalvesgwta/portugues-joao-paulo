@@ -52,6 +52,36 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
     texto: 'O servidor de e-mail recusou a mensagem. Confira se o remetente é o mesmo endereço da caixa de e-mail.',
   },
   email_falhou: { tipo: 'erro', texto: 'O e-mail de teste não foi enviado. O motivo está no registro do servidor.' },
+  so_administrador: { tipo: 'erro', texto: 'Essa parte é só para o administrador.' },
+  pessoa_criada: { tipo: 'ok', texto: 'Pessoa cadastrada. Nenhum e-mail foi enviado: quando quiser, use o botão “Enviar link de acesso”.' },
+  criada_link_enviado: { tipo: 'ok', texto: 'Pessoa cadastrada. O e-mail com o link para criar a senha foi enviado.' },
+  criada_link_falhou: {
+    tipo: 'erro',
+    texto: 'A pessoa foi cadastrada, mas o e-mail de acesso não saiu. Confira o envio de e-mail no Painel e mande de novo por aqui.',
+  },
+  criada_link_limite: {
+    tipo: 'erro',
+    texto: 'A pessoa foi cadastrada, mas o e-mail de acesso não saiu: esse endereço já recebeu links demais há pouco. Mande de novo daqui a 10 minutos.',
+  },
+  criada_sem_matricula: { tipo: 'erro', texto: 'A pessoa foi cadastrada, mas a matrícula não foi gravada. Matricule por esta tela.' },
+  nome_salvo: { tipo: 'ok', texto: 'Nome salvo.' },
+  email_corrigido: { tipo: 'ok', texto: 'E-mail trocado. A pessoa passa a entrar com o e-mail novo; a senha continua a mesma.' },
+  papel_salvo: { tipo: 'ok', texto: 'Papel salvo.' },
+  proprio_papel: { tipo: 'erro', texto: 'Você não pode mudar o próprio papel. Peça a outro administrador.' },
+  matricula_criada: { tipo: 'ok', texto: 'Matrícula feita.' },
+  matricula_salva: { tipo: 'ok', texto: 'Matrícula salva.' },
+  acesso_bloqueado: { tipo: 'ok', texto: 'Acesso bloqueado. A pessoa deixa de ver o curso até você liberar de novo.' },
+  acesso_liberado: { tipo: 'ok', texto: 'Acesso liberado.' },
+  acesso_liberado_vencido: {
+    tipo: 'erro',
+    texto: 'O bloqueio foi retirado, mas a validade desta matrícula já passou. Mude a data em “Acesso até” para a pessoa voltar a entrar.',
+  },
+  link_enviado: { tipo: 'ok', texto: 'E-mail enviado com o link para criar ou trocar a senha.' },
+  link_limite: {
+    tipo: 'erro',
+    texto: 'Esse endereço já recebeu 3 e-mails de acesso nos últimos 10 minutos. Espere um pouco antes de mandar outro.',
+  },
+  link_falhou: { tipo: 'erro', texto: 'O e-mail não saiu. Confira o envio de e-mail no Painel, com o botão “Enviar e-mail de teste”.' },
 };
 
 export function avisoDe(codigo: string | string[] | undefined): AvisoDaAcao | null {

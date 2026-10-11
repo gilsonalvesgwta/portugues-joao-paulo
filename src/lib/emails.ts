@@ -80,11 +80,16 @@ function montar(asunto: string, nombre: string, parrafos: string[], boton?: Boto
   return { asunto, texto, html };
 }
 
-export function emailBienvenida(d: { nombre: string; enlace: string }): Email {
+// "compra": o e-mail sai logo depois do pagamento. Sem isso, a conta foi criada pela administração
+// ou a própria pessoa pediu o link de primeiro acesso.
+export function emailBienvenida(d: { nombre: string; enlace: string; compra?: boolean }): Email {
   return montar(
     'Tu acceso al curso de portugués',
     d.nombre,
-    ['Tu compra está confirmada y tu acceso ya está activo.', 'Para entrar por primera vez, crea tu contraseña con el botón de abajo.'],
+    [
+      d.compra ? 'Tu compra está confirmada y tu acceso ya está activo.' : 'Tu cuenta en la plataforma ya está lista.',
+      'Para entrar por primera vez, crea tu contraseña con el botón de abajo.',
+    ],
     { rotulo: 'Crear mi contraseña', url: d.enlace },
     'El enlace funciona una sola vez. Si caduca, pide uno nuevo en la pantalla de acceso, en «¿Primer acceso?».',
   );

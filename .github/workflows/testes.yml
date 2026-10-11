@@ -261,6 +261,10 @@ jobs:
           if [ -d capturas ]; then cp -r capturas saida/; fi
           for arquivo in saida/*.txt; do
             if [ -f "$arquivo" ]; then
+              # O fim do registro pode não alcançar o teste que falhou: as falhas vão à parte.
+              if grep -q -E '^\s*not ok' "$arquivo"; then
+                grep -A 40 -E '^\s*not ok' "$arquivo" | head -n 600 > "${arquivo%.txt}.falhas"
+              fi
               tail -n 300 "$arquivo" > "$arquivo.fim"
               mv "$arquivo.fim" "$arquivo"
             fi

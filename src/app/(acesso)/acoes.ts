@@ -1,19 +1,13 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { enviarEmail } from '@/lib/correio';
-import { emailBienvenida, emailRestablecer } from '@/lib/emails';
-import { motivoDaFalha } from '@/lib/smtp';
+import { enviarLinkDeSenha } from '@/lib/link-de-acesso';
 import { ehEquipe } from '@/lib/papeis';
-import { clienteDeServico } from '@/lib/supabase/servico';
 import { clienteDoServidor } from '@/lib/supabase/servidor';
 
 // Ações dos formulários de acesso. Os formulários enviam por aqui (POST), então a
 // senha nunca aparece no endereço da página. Erros voltam como ?error=codigo e a
 // tela mostra a mensagem correspondente em espanhol.
-
-const LIMITE_DE_LINKS = 3; // por e-mail
-const JANELA_DE_LINKS_MIN = 10;
 
 function texto(dados: FormData, campo: string): string {
   const valor = dados.get(campo);
@@ -45,61 +39,12 @@ export async function sair(): Promise<void> {
   redirect('/entrar');
 }
 
-// Envia o link de uso único para criar a senha. A resposta na tela é sempre a mesma,
-// exista ou não uma conta com aquele e-mail, e há um limite de envios por e-mail para
-// que ninguém use o formulário para encher a caixa de outra pessoa.
-async function enviarLinkDeSenha(correo: string, motivo: 'primeiro_acesso' | 'nova_senha'): Promise<void> {
-  const servico = clienteDeServico();
-
-  const desde = new Date(Date.now() - JANELA_DE_LINKS_MIN * 60_000).toISOString();
-  const { count } = await servico
-    .from('notificacoes')
-    .select('id', { count: 'exact', head: true })
-    .eq('tipo', 'enlace_acceso')
-    .eq('destinatario', correo)
-    .gte('agendada_para', desde);
-  if ((count ?? 0) >= LIMITE_DE_LINKS) return;
-
-  // Só gera link para quem já tem conta (criada pela compra ou pela administração).
-  const { data, error } = await servico.auth.admin.generateLink({ type: 'recovery', email: correo });
-  const tokenHash = data?.properties?.hashed_token;
-  if (error || !data?.user || !tokenHash) return;
-
-  const site = process.env.SITE_URL;
-  if (!site) throw new Error('Falta SITE_URL. Veja o arquivo .env.example.');
-  const enlace = `${site}/auth/confirmar?token_hash=${encodeURIComponent(tokenHash)}`;
-
-  const { data: perfil } = await servico.from('perfis').select('nome').eq('id', data.user.id).maybeSingle();
-  const nombre = typeof perfil?.nome === 'string' ? perfil.nome : '';
-  const email = motivo === 'primeiro_acesso' ? emailBienvenida({ nombre, enlace }) : emailRestablecer({ nombre, enlace });
-
-  // Se o envio falhar, a tela responde igual (para não revelar que a conta existe) e a falha
-  // fica no registro do servidor e no histórico, onde a administração enxerga.
-  let falha: string | null = null;
-  try {
-    await enviarEmail(correo, email);
-  } catch (erro) {
-    falha = motivoDaFalha(erro);
-    console.error(`Falha ao enviar o link de acesso (${falha}):`, erro instanceof Error ? erro.message : erro);
-  }
-  // Registro do envio, sem o link: serve ao limite acima e ao histórico da administração.
-  const { error: erroDoRegistro } = await servico.from('notificacoes').insert({
-    tipo: 'enlace_acceso',
-    canal: 'email',
-    aluno_id: data.user.id,
-    destinatario: correo,
-    dados: { motivo },
-    enviada_em: falha === null ? new Date().toISOString() : null,
-    erro: falha,
-  });
-  // Sem o registro o limite de envios deixa de contar: precisa aparecer no registro do servidor.
-  if (erroDoRegistro) console.error('Não foi possível registrar o envio do link de acesso:', erroDoRegistro.message);
-}
-
 function correoValido(correo: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
 }
 
+// As duas ações abaixo respondem sempre igual, exista ou não uma conta com aquele e-mail e
+// tenha o envio dado certo ou não: a tela não revela quem tem conta.
 export async function pedirPrimeiroAcesso(dados: FormData): Promise<void> {
   const correo = texto(dados, 'correo').trim().toLowerCase();
   if (!correoValido(correo)) redirect('/primer-acceso?error=correo');

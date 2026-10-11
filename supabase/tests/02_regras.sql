@@ -259,4 +259,100 @@ begin
 end $$;
 reset role;
 
+-- ============ 9. Alunos e matrícula pela administração ============
+set role authenticated;
+select teste.entrar(1);
+do $$
+begin
+  perform teste.espera_erro($q$insert into matriculas (aluno_id, curso_id, origem) values (teste.uid(1), teste.tid(3), 'manual')$q$,
+    'row-level security', 'aluno não se matricula sozinho');
+  update matriculas set expira_em = null, inclui_conversacao = false where aluno_id = teste.uid(1);
+  perform teste.confere((select inclui_conversacao from matriculas where aluno_id = teste.uid(1)), 'aluno não altera a própria matrícula');
+  perform teste.espera_erro($q$select lista_de_pessoas('', 'alunos', 50, 0)$q$, 'sem_permissao', 'aluno não lista as pessoas');
+  perform teste.espera_erro($q$select definir_papel(teste.uid(1), 'admin')$q$, 'sem_permissao', 'aluno não muda papel pela função');
+  perform teste.confere((select count(*) from registro_alteracoes) = 0, 'aluno não lê o histórico');
+end $$;
+select teste.entrar(901);
+do $$
+begin
+  perform teste.espera_erro($q$insert into matriculas (aluno_id, curso_id, origem) values (teste.uid(12), teste.tid(3), 'manual')$q$,
+    'row-level security', 'professor não matricula');
+  perform teste.espera_erro($q$select lista_de_pessoas('', 'alunos', 50, 0)$q$, 'sem_permissao', 'professor não lista as pessoas');
+  perform teste.espera_erro($q$select definir_papel(teste.uid(12), 'professor')$q$, 'sem_permissao', 'professor não muda papel');
+  update perfis set nome = 'Trocado' where id = teste.uid(12);
+  perform teste.confere((select nome from perfis where id = teste.uid(12)) <> 'Trocado', 'professor não altera o cadastro de outra pessoa');
+end $$;
+select teste.entrar(900);
+do $$
+declare
+  v_id uuid;
+  v_lista jsonb;
+begin
+  insert into matriculas (aluno_id, curso_id, origem, expira_em, inclui_conversacao, reservas_por_semana)
+  values (teste.uid(12), teste.tid(3), 'manual', now() + interval '30 days', false, 0)
+  returning id into v_id;
+  perform teste.confere(v_id is not null, 'administrador matricula um aluno');
+  perform teste.confere((select pessoa_id = teste.uid(900) and antes is null and depois ->> 'origem' = 'manual'
+                         from registro_alteracoes where tabela = 'matriculas' and registro = v_id::text),
+    'a matrícula nova entra no histórico com quem fez');
+
+  update matriculas set situacao = 'suspensa' where id = v_id;
+  perform teste.confere((select count(*) from registro_alteracoes where registro = v_id::text) = 2 and
+                        (select antes ->> 'situacao' = 'ativa' and depois ->> 'situacao' = 'suspensa'
+                         from registro_alteracoes where registro = v_id::text order by id desc limit 1),
+    'suspender entra no histórico com o antes e o depois');
+  update matriculas set situacao = 'suspensa' where id = v_id;
+  perform teste.confere((select count(*) from registro_alteracoes where registro = v_id::text) = 2, 'gravar o mesmo conteúdo não entra no histórico');
+  perform teste.espera_erro(format($q$delete from matriculas where id = %L$q$, v_id), 'permission denied', 'nem o administrador apaga matrícula');
+  perform teste.espera_erro($q$insert into matriculas (aluno_id, curso_id, origem) values (teste.uid(12), teste.tid(3), 'manual')$q$,
+    'duplicate key', 'não existem duas matrículas da mesma pessoa no mesmo curso');
+
+  update perfis set nome = 'Pessoa Doze' where id = teste.uid(12);
+  perform teste.confere((select nome from perfis where id = teste.uid(12)) = 'Pessoa Doze', 'administrador corrige o nome de outra pessoa');
+  perform teste.espera_erro($q$update perfis set papel = 'professor' where id = teste.uid(12)$q$,
+    'permission denied', 'nem o administrador muda papel direto na tabela');
+  perform teste.espera_erro($q$update perfis set email = 'outro@exemplo.test' where id = teste.uid(12)$q$,
+    'permission denied', 'nem o administrador muda e-mail direto na tabela');
+
+  perform teste.espera_erro($q$select definir_papel(teste.uid(900), 'aluno')$q$, 'proprio_papel', 'administrador não muda o próprio papel');
+  perform teste.espera_erro($q$select definir_papel(teste.uid(12), 'dono')$q$, 'papel_invalido', 'papel desconhecido é recusado');
+  perform teste.espera_erro($q$select definir_papel(teste.uid(999), 'professor')$q$, 'pessoa_inexistente', 'pessoa inexistente é recusada');
+  perform definir_papel(teste.uid(10), 'professor');
+  perform teste.confere((select papel from perfis where id = teste.uid(10)) = 'professor', 'administrador torna uma pessoa professora');
+  perform teste.confere((select pessoa_id = teste.uid(900) and antes ->> 'papel' = 'aluno' and depois ->> 'papel' = 'professor'
+                         from registro_alteracoes where tabela = 'perfis' and registro = teste.uid(10)::text),
+    'a mudança de papel entra no histórico');
+
+  v_lista := lista_de_pessoas('', 'equipe', 50, 0);
+  perform teste.confere((v_lista ->> 'total')::integer = 3, 'lista da equipe: administrador e dois professores');
+  v_lista := lista_de_pessoas('', 'alunos', 5, 0);
+  perform teste.confere((v_lista ->> 'total')::integer = 23 and jsonb_array_length(v_lista -> 'pessoas') = 5, 'lista de alunos: total de 23, página de 5');
+  perform teste.confere((lista_de_pessoas('', 'alunos', 5, 20) -> 'pessoas') @> (lista_de_pessoas('', 'alunos', 100, 22) -> 'pessoas')
+                        and jsonb_array_length(lista_de_pessoas('', 'alunos', 5, 20) -> 'pessoas') = 3, 'a última página traz o resto');
+  perform teste.confere((lista_de_pessoas('', 'sem_acesso', 50, 0) -> 'pessoas' -> 0 ->> 'email') = 'pessoa11@exemplo.test'
+                        and (lista_de_pessoas('', 'sem_acesso', 50, 0) ->> 'total')::integer = 1, 'sem acesso: só quem está com a matrícula vencida');
+  perform teste.confere((lista_de_pessoas('', 'com_acesso', 50, 0) ->> 'total')::integer = 22, 'com acesso: os outros 22 alunos');
+  v_lista := lista_de_pessoas('  PESSOA12@  ', 'alunos', 50, 0);
+  perform teste.confere((v_lista ->> 'total')::integer = 1 and (v_lista -> 'pessoas' -> 0 ->> 'matriculas')::integer = 2
+                        and (v_lista -> 'pessoas' -> 0 -> 'cursos_com_acesso') = '["Português do Brasil"]'::jsonb,
+    'busca por e-mail sem ligar para maiúsculas; a matrícula suspensa não conta como acesso');
+  perform teste.confere((lista_de_pessoas('%', 'alunos', 50, 0) ->> 'total')::integer = 0 and
+                        (lista_de_pessoas('pessoa_', 'alunos', 50, 0) ->> 'total')::integer = 0, 'os sinais % e _ valem como texto na busca');
+end $$;
+reset role;
+update auth.users set email = 'doze.corrigido@exemplo.test' where id = teste.uid(12);
+do $$
+begin
+  perform teste.confere((select email from public.perfis where id = teste.uid(12)) = 'doze.corrigido@exemplo.test', 'e-mail corrigido no login aparece no perfil');
+end $$;
+select set_config('request.jwt.claims', '', false); -- o servidor não age em nome de ninguém
+set role service_role;
+do $$
+begin
+  update matriculas set situacao = 'encerrada' where aluno_id = teste.uid(12) and curso_id = teste.tid(3);
+  perform teste.confere((select pessoa_id is null and depois ->> 'situacao' = 'encerrada' from registro_alteracoes
+                         where tabela = 'matriculas' order by id desc limit 1), 'mudança feita pelo servidor entra no histórico sem pessoa');
+end $$;
+reset role;
+
 \echo 'REGRAS: todos os testes passaram'
