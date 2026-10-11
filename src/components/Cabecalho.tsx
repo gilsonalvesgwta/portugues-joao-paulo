@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { sair } from '@/app/(acesso)/acoes';
 
 type Props = {
@@ -6,10 +7,12 @@ type Props = {
   rotuloDaArea?: string;
   nome: string;
   rotuloSair: string;
+  // As seções da área (Curso, Conversación...), quando houver.
+  menu?: ReactNode;
 };
 
 // Faixa do topo das áreas internas: marca, nome de quem está logado e botão de sair.
-export function CabecalhoInterno({ inicio, rotuloDaArea, nome, rotuloSair }: Props) {
+export function CabecalhoInterno({ inicio, rotuloDaArea, nome, rotuloSair, menu }: Props) {
   return (
     <header className="border-b border-linha bg-cartao px-4 py-3 sm:px-6">
       <div className="mx-auto flex max-w-[1160px] flex-wrap items-center justify-between gap-x-6 gap-y-3">
@@ -24,6 +27,7 @@ export function CabecalhoInterno({ inicio, rotuloDaArea, nome, rotuloSair }: Pro
             ) : null}
           </span>
         </Link>
+        {menu}
         <div className="flex items-center gap-3">
           <span className="text-[15px] text-apoio">{nome}</span>
           <form action={sair}>

@@ -592,4 +592,82 @@ begin
     'notificacoes_lembrete_unico', 'o mesmo lembrete não é registrado duas vezes para a mesma reserva');
 end $$;
 
+-- ============ 14. Lembretes das aulas ao vivo (servidor) ============
+reset role;
+select set_config('request.jwt.claims', '', false);
+insert into public.turmas (id, tema_id, inicio, vagas, meet_url, situacao) values
+  (teste.tid(120), teste.tid(70), now() + interval '50 minutes', 10, 'https://meet.google.com/lembrete-1h',  'aberta'),
+  (teste.tid(121), teste.tid(70), now() + interval '20 hours',   10, 'https://meet.google.com/lembrete-24h', 'aberta'),
+  (teste.tid(122), teste.tid(70), now() + interval '3 hours',    10, 'https://meet.google.com/lembrete-nao', 'aberta'),
+  (teste.tid(123), teste.tid(70), now() + interval '3 minutes',  10, 'https://meet.google.com/lembrete-nao', 'aberta'),
+  (teste.tid(124), teste.tid(70), now() + interval '50 minutes', 10, 'https://meet.google.com/lembrete-nao', 'cancelada');
+insert into public.reservas (id, turma_id, aluno_id, criada_em, situacao) values
+  (teste.tid(130), teste.tid(120), teste.uid(5), now() - interval '1 day',      'confirmada'), -- falta menos de 1 hora: lembrete de 1 hora
+  (teste.tid(131), teste.tid(120), teste.uid(6), now() - interval '30 minutes', 'confirmada'), -- reservou em cima da hora
+  (teste.tid(132), teste.tid(120), teste.uid(7), now() - interval '1 day',      'cancelada'),  -- desistiu
+  (teste.tid(133), teste.tid(121), teste.uid(5), now() - interval '2 days',     'confirmada'), -- faltam 20 horas: lembrete de 24 horas
+  (teste.tid(134), teste.tid(121), teste.uid(6), now() - interval '1 hour',     'confirmada'), -- reservou a menos de 25 horas da aula
+  (teste.tid(135), teste.tid(122), teste.uid(5), now() - interval '2 days',     'confirmada'), -- faltam 3 horas: nenhum lembrete agora
+  (teste.tid(136), teste.tid(123), teste.uid(5), now() - interval '2 days',     'confirmada'), -- faltam 3 minutos: tarde demais
+  (teste.tid(137), teste.tid(124), teste.uid(5), now() - interval '2 days',     'confirmada'); -- turma cancelada
+create function teste.lembretes_daqui(p_todos jsonb) returns jsonb language sql as $$
+  select coalesce(jsonb_agg(x order by x ->> 'tipo'), '[]'::jsonb)
+  from jsonb_array_elements(p_todos) x
+  where (x ->> 'reserva_id')::uuid in (select teste.tid(n) from generate_series(130, 137) n);
+$$;
+grant execute on function teste.lembretes_daqui(jsonb) to service_role;
+
+set role service_role;
+do $$
+declare
+  v_meus jsonb := teste.lembretes_daqui(separar_lembretes(200));
+  v_1h   uuid;
+  v_24h  uuid;
+begin
+  perform teste.confere(jsonb_array_length(v_meus) = 2
+                        and v_meus -> 0 ->> 'tipo' = 'recordatorio_1h'  and (v_meus -> 0 ->> 'reserva_id')::uuid = teste.tid(130)
+                        and v_meus -> 1 ->> 'tipo' = 'recordatorio_24h' and (v_meus -> 1 ->> 'reserva_id')::uuid = teste.tid(133),
+    'saem só os dois lembretes que estão na hora (não: reserva recente, cancelada, turma cancelada, fora dos horários)');
+  perform teste.confere(v_meus -> 0 ->> 'email' = (select email from perfis where id = teste.uid(5))
+                        and v_meus -> 0 ->> 'meet_url' = 'https://meet.google.com/lembrete-1h'
+                        and v_meus -> 0 ->> 'tema' = (select titulo_es from temas_conversacao where id = teste.tid(70))
+                        and v_meus -> 0 ? 'fuso' and v_meus -> 0 ? 'nome' and v_meus -> 0 ? 'inicio',
+    'cada lembrete vem com o que o e-mail precisa: destinatário, tema, horário, fuso e link da sala');
+  v_1h  := (v_meus -> 0 ->> 'id')::uuid;
+  v_24h := (v_meus -> 1 ->> 'id')::uuid;
+  perform teste.confere((select count(*) from notificacoes where id in (v_1h, v_24h) and enviada_em is null and aluno_id = teste.uid(5)) = 2,
+    'os dois ficam registrados como ainda não enviados');
+  perform teste.confere(teste.lembretes_daqui(separar_lembretes(200)) = '[]'::jsonb, 'pedir de novo não devolve os mesmos lembretes');
+
+  perform concluir_lembrete(v_1h);
+  perform teste.confere((select enviada_em is not null and erro is null from notificacoes where id = v_1h), 'lembrete enviado fica com a hora do envio');
+  perform concluir_lembrete(v_24h, 'a caixa de e-mail não respondeu');
+  perform teste.confere((select enviada_em is null and erro = 'a caixa de e-mail não respondeu' from notificacoes where id = v_24h),
+    'lembrete que falhou fica com o motivo');
+  perform teste.confere(teste.lembretes_daqui(separar_lembretes(200)) = '[]'::jsonb, 'a falha não é repetida na mesma hora');
+
+  update notificacoes set agendada_para = now() - interval '11 minutes' where id in (v_1h, v_24h);
+  v_meus := teste.lembretes_daqui(separar_lembretes(200));
+  perform teste.confere(jsonb_array_length(v_meus) = 1 and (v_meus -> 0 ->> 'id')::uuid = v_24h,
+    'passados 10 minutos, só o lembrete que falhou é tentado de novo');
+  perform teste.confere((select (dados ->> 'tentativas')::integer from notificacoes where id = v_24h) = 2, 'a nova tentativa é contada');
+
+  update notificacoes set agendada_para = now() - interval '11 minutes', dados = dados || '{"tentativas": 5}'::jsonb where id = v_24h;
+  perform teste.confere(teste.lembretes_daqui(separar_lembretes(200)) = '[]'::jsonb, 'depois de 5 tentativas o lembrete não é mais tentado');
+
+  update notificacoes set dados = dados || '{"tentativas": 2}'::jsonb where id = v_24h;
+  update reservas set situacao = 'cancelada', cancelada_em = now() where id = teste.tid(133);
+  perform teste.confere(teste.lembretes_daqui(separar_lembretes(200)) = '[]'::jsonb, 'reserva cancelada não recebe nova tentativa');
+  perform teste.confere(jsonb_array_length(separar_lembretes(1)) <= 1, 'o limite pedido é respeitado');
+end $$;
+reset role;
+select teste.entrar(900);
+set role authenticated;
+do $$
+begin
+  perform teste.espera_erro($q$select separar_lembretes(10)$q$, 'permission denied', 'nem o administrador logado chama a separação de lembretes');
+  perform teste.espera_erro($q$select concluir_lembrete(gen_random_uuid())$q$, 'permission denied', 'nem marca lembrete como enviado');
+end $$;
+reset role;
+
 \echo 'REGRAS: todos os testes passaram'

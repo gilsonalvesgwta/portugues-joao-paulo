@@ -118,12 +118,18 @@ export function emailRestablecer(d: { nombre: string; enlace: string }): Email {
 
 type DatosDeClase = { nombre: string; tema: string; inicio: string; fuso: string; meetUrl: string };
 
+// "2 horas", "1 hora" o "90 minutos": el plazo en palabras, a partir de los minutos.
+export function plazo(minutos: number): string {
+  if (minutos > 0 && minutos % 60 === 0) return plural(minutos / 60, 'hora', 'horas');
+  return plural(minutos, 'minuto', 'minutos');
+}
+
 function plural(n: number, uno: string, varios: string): string {
   return n === 1 ? `1 ${uno}` : `${n} ${varios}`;
 }
 
 export function emailReservaConfirmada(
-  d: DatosDeClase & { duracionMin: number; cancelarHastaHoras: number; material?: string },
+  d: DatosDeClase & { duracionMin: number; cancelarHastaMin: number; material?: string },
 ): Email {
   return montar(
     `Reserva confirmada: ${d.tema}`,
@@ -135,7 +141,7 @@ export function emailReservaConfirmada(
       ...(d.material ? [`Material de la clase: ${enlaceSeguro(d.material)}`] : []),
     ],
     { rotulo: 'Entrar a la clase', url: d.meetUrl },
-    `Puedes cancelar desde la plataforma hasta ${plural(d.cancelarHastaHoras, 'hora', 'horas')} antes del inicio.`,
+    `Puedes cancelar desde la plataforma hasta ${plazo(d.cancelarHastaMin)} antes del inicio.`,
   );
 }
 
