@@ -28,6 +28,7 @@ export default async function PaginaPainel({ searchParams }: Props) {
   const pessoa = await pessoaLogada();
   if (!pessoa) redirect('/entrar');
   const { aviso } = await searchParams;
+  const doEmail = typeof aviso === 'string' && aviso.startsWith('email_');
 
   const conteudo = await carregarConteudo();
   const cursos = ativos(conteudo.cursos);
@@ -42,7 +43,8 @@ export default async function PaginaPainel({ searchParams }: Props) {
       <TituloDaPagina titulo="Painel" texto={`Você entrou como ${NOME_DO_PAPEL[pessoa.papel] ?? pessoa.papel}.`}>
         <LinkBotao href="/admin/aulas/nova">Nova aula</LinkBotao>
       </TituloDaPagina>
-      <AvisoDaPagina aviso={avisoDe(aviso)} />
+      {/* A resposta do e-mail de teste aparece no quadro do e-mail, ao lado do botão. */}
+      {doEmail ? null : <AvisoDaPagina aviso={avisoDe(aviso)} />}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Numero valor={cursos.length} rotulo={cursos.length === 1 ? 'curso' : 'cursos'} href="/admin/cursos" />
@@ -81,7 +83,14 @@ export default async function PaginaPainel({ searchParams }: Props) {
       </Cartao>
 
       <Cartao>
-        <h2 className="text-lg font-bold">Envio de e-mail</h2>
+        <h2 id="email" className="scroll-mt-6 text-lg font-bold">
+          Envio de e-mail
+        </h2>
+        {doEmail ? (
+          <div className="mt-3">
+            <AvisoDaPagina aviso={avisoDe(aviso)} />
+          </div>
+        ) : null}
         <form action={enviarEmailDeTeste} className="mt-2 flex flex-col items-start gap-3">
           <p className="text-[15px] leading-normal text-apoio">
             A plataforma envia o link de acesso e os avisos pela caixa de e-mail configurada na instalação. Para

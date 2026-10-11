@@ -151,15 +151,27 @@ export function validarMatricula(entrada: Entrada, agora: Date, recusarPassado: 
   return { ok: true, valor: { expira_em, inclui_conversacao, reservas_por_semana } };
 }
 
-export type NovaPessoa = { nome: string; email: string; curso_id: string | null; matricula: DadosDaMatricula | null; enviar_email: boolean };
+export type NovaPessoa = {
+  nome: string;
+  email: string;
+  papel: Papel;
+  curso_id: string | null;
+  matricula: DadosDaMatricula | null;
+  enviar_email: boolean;
+};
 
-// Formulário de novo aluno: nome, e-mail e, se um curso foi escolhido, os dados da matrícula.
+// Formulário de nova pessoa: nome, e-mail, papel (em branco, aluno) e, se um curso foi escolhido,
+// os dados da matrícula.
 export function validarNovaPessoa(entrada: Entrada, agora: Date): Resultado<NovaPessoa> {
   const erros: Erros = {};
   const nome = limpar(entrada.nome);
   const email = normalizarEmail(entrada.email);
   conferirNome(erros, nome);
   conferirEmail(erros, email);
+
+  const escrito = limpar(entrada.papel);
+  const papel = escrito === '' ? 'aluno' : lerPapel(escrito);
+  if (papel === null) erros.papel = 'Escolha um papel da lista.';
 
   const escolhido = limpar(entrada.curso_id);
   let curso_id: string | null = null;
@@ -172,8 +184,8 @@ export function validarNovaPessoa(entrada: Entrada, agora: Date): Resultado<Nova
     else Object.assign(erros, conferida.erros);
   }
 
-  if (Object.keys(erros).length > 0) return { ok: false, erros };
-  return { ok: true, valor: { nome, email, curso_id, matricula, enviar_email: entrada.enviar_email === 'on' } };
+  if (papel === null || Object.keys(erros).length > 0) return { ok: false, erros };
+  return { ok: true, valor: { nome, email, papel, curso_id, matricula, enviar_email: entrada.enviar_email === 'on' } };
 }
 
 // Bloquear e liberar o acesso sem mexer na validade.

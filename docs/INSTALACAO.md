@@ -127,6 +127,7 @@ Guarde os quatro no gerenciador de senhas.
 | `ADMIN_SENHA_INICIAL` | a do passo 3 |
 | `SMTP_USER` | o endereço completo da caixa da Hostinger (ex.: `aulas@seudominio.com`) |
 | `SMTP_PASS` | a senha dessa caixa |
+| `SMTP_PORT` | opcional: só se a porta 465 não conectar (passo 7). Pode ficar sem criar |
 | `SEGREDO_DA_GREENN` | o do passo 3 (em branco, a plataforma não aceita avisos de compra) |
 | `CHAVE_DA_ANTHROPIC` | opcional: só se for usar o Papo (passo 12). Pode ficar sem criar |
 
@@ -164,15 +165,23 @@ cadeado do navegador fechado. O certificado pode levar um ou dois minutos na pri
    escolha a senha definitiva.
 
 A partir daí as variáveis `ADMIN_EMAIL` e `ADMIN_SENHA_INICIAL` não fazem mais nada: elas só valem enquanto não
-existe nenhum administrador. Outros administradores e professores são criados em **Alunos**, mudando o papel.
+existe nenhum administrador. Outros administradores e professores são criados em **Alunos → Novo administrador ou
+professor**: a pessoa recebe por e-mail o link para criar a própria senha (o e-mail precisa estar funcionando,
+passo 7).
 
 ## Passo 7 — Testar o envio de e-mail
 
 No **Painel**, clique em **Enviar e-mail de teste**. O e-mail chega no endereço com que você entrou.
 
 - Chegou (confira também o spam): o envio está certo.
-- Não chegou: o painel diz o motivo em palavras simples. Os mais comuns são a senha da caixa (`SMTP_PASS`) e o
-  endereço (`SMTP_USER`, sempre o endereço completo). Corrija a variável na stack e clique em **Update the stack**.
+- Não chegou: o quadro diz o motivo em palavras simples, ao lado do botão. Os mais comuns são a senha da caixa
+  (`SMTP_PASS`) e o endereço (`SMTP_USER`, sempre o endereço completo). Corrija a variável na stack e clique em
+  **Update the stack**.
+- "Não consegui conectar ao servidor de e-mail": alguns provedores de VPS bloqueiam a saída pela porta 465. Crie
+  na stack a variável `SMTP_PORT` com o valor `587` (a Hostinger aceita as duas) e clique em **Update the stack**.
+  Se também não conectar, o provedor bloqueia o envio de e-mail e é preciso pedir a liberação a ele.
+- O detalhe técnico de cada falha fica em **Service logs** do serviço `portuguesjp_app`, em uma linha que começa
+  com `Falha no e-mail de teste`.
 
 Para os e-mails não caírem no spam dos alunos, o domínio da caixa precisa dos registros **SPF** e **DKIM**. A
 Hostinger mostra os dois no painel do e-mail; como o DNS fica no Cloudflare, é lá que eles são criados.
