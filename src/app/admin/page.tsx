@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { enviarEmailDeTeste, salvarLimiteDoPapo } from '@/app/admin/acoes';
+import { enviarEmailDeTeste, salvarLimiteDoPapo, testarPapo } from '@/app/admin/acoes';
 import { AvisoDaPagina, Botao, Cartao, Entrada, Etiqueta, LinkBotao, TituloDaPagina } from '@/components/admin/ui';
 import { avisoDe } from '@/lib/admin/avisos';
 import { ativos, carregarConteudo } from '@/lib/admin/dados';
 import { usoDoPapo } from '@/lib/admin/papo';
-import { configDoPapo } from '@/lib/papo';
+import { configDoPapo, NOME_DO_PROVEDOR } from '@/lib/papo';
 import { pessoaLogada } from '@/lib/supabase/servidor';
 
 export const metadata: Metadata = { title: 'Painel' };
@@ -29,13 +29,15 @@ export default async function PaginaPainel({ searchParams }: Props) {
   if (!pessoa) redirect('/entrar');
   const { aviso } = await searchParams;
   const doEmail = typeof aviso === 'string' && aviso.startsWith('email_');
+  const doTesteDoPapo = typeof aviso === 'string' && aviso.startsWith('papoteste_');
 
   const conteudo = await carregarConteudo();
   const cursos = ativos(conteudo.cursos);
   const modulos = ativos(conteudo.modulos);
   const aulas = ativos(conteudo.aulas);
   const publicadas = aulas.filter((aula) => aula.situacao === 'publicado').length;
-  const papoLigado = configDoPapo() !== null;
+  const configDoTutor = configDoPapo();
+  const papoLigado = configDoTutor !== null;
   const papo = await usoDoPapo();
 
   return (
@@ -44,7 +46,7 @@ export default async function PaginaPainel({ searchParams }: Props) {
         <LinkBotao href="/admin/aulas/nova">Nova aula</LinkBotao>
       </TituloDaPagina>
       {/* A resposta do e-mail de teste aparece no quadro do e-mail, ao lado do botão. */}
-      {doEmail ? null : <AvisoDaPagina aviso={avisoDe(aviso)} />}
+      {doEmail || doTesteDoPapo ? null : <AvisoDaPagina aviso={avisoDe(aviso)} />}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Numero valor={cursos.length} rotulo={cursos.length === 1 ? 'curso' : 'cursos'} href="/admin/cursos" />
@@ -107,11 +109,24 @@ export default async function PaginaPainel({ searchParams }: Props) {
           </h2>
           <Etiqueta tom={papoLigado ? 'verde' : 'aviso'}>{papoLigado ? 'Ligado' : 'Desligado'}</Etiqueta>
         </div>
+        {doTesteDoPapo ? (
+          <div className="mt-3">
+            <AvisoDaPagina aviso={avisoDe(aviso)} />
+          </div>
+        ) : null}
         <p className="mt-2 text-[15px] leading-normal text-apoio">
-          {papoLigado
-            ? 'O aluno com curso ativo conversa por escrito com o tutor, em “Papo”. Cada mensagem é respondida pelo serviço da Anthropic e tem um custo na conta de vocês lá.'
-            : 'O Papo aparece para o aluno quando a instalação tem a chave da Anthropic (variável ANTHROPIC_API_KEY, na stack). Sem a chave, o resto da plataforma funciona normalmente.'}
+          {configDoTutor
+            ? `O aluno com curso ativo conversa por escrito com o tutor, em “Papo”. Quem responde é um serviço de inteligência artificial, não uma pessoa: hoje, a ${NOME_DO_PROVEDOR[configDoTutor.provedor]} (modelo ${configDoTutor.modelo}). Cada mensagem tem um custo na conta de vocês lá.`
+            : 'O Papo aparece para o aluno quando a instalação tem a chave de API da OpenAI (variável CHAVE_DA_OPENAI, na stack). Sem a chave, o resto da plataforma funciona normalmente.'}
         </p>
+        {papoLigado && pessoa.papel === 'admin' ? (
+          <form action={testarPapo} className="mt-3 flex flex-col items-start gap-2">
+            <Botao variante="secundario">Testar o Papo</Botao>
+            <p className="text-sm leading-normal text-apoio">
+              Manda uma mensagem curta ao serviço e mostra aqui se ele respondeu. Não conta no limite de nenhum aluno.
+            </p>
+          </form>
+        ) : null}
         <p className="mt-2 text-[15px] leading-normal text-apoio">
           Nos últimos 7 dias: {papo.mensagens === 1 ? '1 mensagem' : `${papo.mensagens} mensagens`}, de{' '}
           {papo.pessoas === 1 ? '1 pessoa' : `${papo.pessoas} pessoas`}.

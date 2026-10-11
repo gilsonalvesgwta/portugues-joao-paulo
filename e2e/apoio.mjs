@@ -30,7 +30,9 @@ export function emailDeTeste(prefixo) {
 }
 
 // Com senha: pessoa que já usa a plataforma. Sem senha: como a conta nasce depois da compra.
-export async function criarPessoa({ email, nome = '', papel = 'aluno', comSenha = true }) {
+// "fusoConfirmado": a pessoa já passou pela confirmação do fuso horário (o fuso fica o do cadastro,
+// Madri). Com false, a conta fica como nasce de verdade, e a área do aluno pede a confirmação.
+export async function criarPessoa({ email, nome = '', papel = 'aluno', comSenha = true, fusoConfirmado = true }) {
   const { data, error } = await admin.auth.admin.createUser({
     email,
     email_confirm: true,
@@ -38,18 +40,28 @@ export async function criarPessoa({ email, nome = '', papel = 'aluno', comSenha 
     ...(comSenha ? { password: senha } : {}),
   });
   assert.equal(error, null, `criar ${email}: ${error?.message}`);
-  if (papel !== 'aluno') {
-    const { error: erroPapel } = await admin.from('perfis').update({ papel }).eq('id', data.user.id);
-    assert.equal(erroPapel, null, `definir papel: ${erroPapel?.message}`);
+  const mudancas = { ...(papel !== 'aluno' ? { papel } : {}), ...(fusoConfirmado ? { fuso_confirmado_em: new Date().toISOString() } : {}) };
+  if (Object.keys(mudancas).length > 0) {
+    const { error: erroDoPerfil } = await admin.from('perfis').update(mudancas).eq('id', data.user.id);
+    assert.equal(erroDoPerfil, null, `ajustar o perfil: ${erroDoPerfil?.message}`);
   }
   return data.user.id;
 }
 
+// A primeira tela de quem entra na área do aluno: confirmar o fuso horário. Escolhe o fuso pedido
+// e segue para o início.
+export async function confirmarZona(pagina, zona = 'Europe/Madrid') {
+  await pagina.waitForURL('**/zona-horaria');
+  await pagina.getByLabel('Tu zona horaria').selectOption(zona);
+  await pagina.getByRole('button', { name: 'Confirmar zona horaria' }).click();
+  await pagina.waitForURL('**/inicio');
+}
+
 // Os testes não dependem de sites de fora: a prévia do YouTube fica sem carregar.
-export async function novoContexto(navegador, largura = 1280, altura = 800) {
+export async function novoContexto(navegador, largura = 1280, altura = 800, opcoes = {}) {
   // Na passagem pelo Traefik de teste, o certificado é o de fábrica dele (não há um de verdade
   // para um endereço inventado): só nesse caso o navegador aceita certificado sem conferir.
-  const contexto = await navegador.newContext({ viewport: { width: largura, height: altura }, ignoreHTTPSErrors: process.env.E2E_CERTIFICADO_DE_TESTE === '1' });
+  const contexto = await navegador.newContext({ viewport: { width: largura, height: altura }, ignoreHTTPSErrors: process.env.E2E_CERTIFICADO_DE_TESTE === '1', ...opcoes });
   await contexto.route(/^https?:\/\/([^/]+\.)?(youtube\.com|youtube-nocookie\.com|ytimg\.com|googlevideo\.com)\//, (rota) => rota.abort());
   return contexto;
 }

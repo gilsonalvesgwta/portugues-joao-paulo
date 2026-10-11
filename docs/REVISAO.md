@@ -12,7 +12,7 @@ o que só pode ser conferido na instalação de verdade.
 | Administração (português) | Cursos, módulos, aulas, anotações em blocos, materiais por link (da aula e do curso), quiz, tarefas, trilha por dia, lixeira, conversação (temas, turmas, presença), alunos, pagamentos e painel |
 | Matrícula | Automática pela Greenn (compra, reembolso, assinatura) e manual pelo administrador, com validade e bloqueio |
 | Conversação ao vivo | Agenda no fuso do aluno, reserva com limite por semana, cancelamento com prazo, avaliação, e-mails de confirmação, de cancelamento e lembretes de 24 horas e de 1 hora |
-| Papo (opcional) | Tutor com inteligência artificial, com limite de mensagens por dia. Só liga com a chave da Anthropic |
+| Papo (opcional) | Tutor com inteligência artificial, com limite de mensagens por dia. Só liga com a chave de API da OpenAI (ou da Anthropic) |
 | Instalação | Stack própria para o Portainer (banco e login próprios), cópia de segurança e restauração |
 
 ## Como foi testado
@@ -21,9 +21,9 @@ A cada mudança, o GitHub roda tudo do zero. Nada entra no ramo principal sem pa
 
 | Conjunto | Quantidade | O que confere |
 | --- | --- | --- |
-| Lógica do aplicativo | 179 testes | Regras sem dependências: datas e fusos, quiz, trilha, validação do que o professor digita, e-mails, avisos da Greenn, limites |
-| Banco de dados | 232 verificações e 2 testes de disputa | Quem lê e grava o quê (regras por linha), reserva de turmas, pagamento, lembretes, Papo, e a lista do que fica aberto a quem está logado |
-| Ponta a ponta | 167 testes | Navegador de verdade clicando nas telas, do login à reserva de aula, contra dois ambientes: o Supabase local e a **mesma stack que vai para a VPS**, em Docker Swarm. Um deles é a jornada inteira de uma aluna, em sequência: compra, e-mail, senha, aula, quiz, reserva, fuso, telas do administrador, reembolso |
+| Lógica do aplicativo | 192 testes | Regras sem dependências: datas e fusos, quiz, trilha, validação do que o professor digita, e-mails, avisos da Greenn, limites |
+| Banco de dados | 235 verificações e 2 testes de disputa | Quem lê e grava o quê (regras por linha), reserva de turmas, pagamento, lembretes, Papo, e a lista do que fica aberto a quem está logado |
+| Ponta a ponta | 174 testes | Navegador de verdade clicando nas telas, do login à reserva de aula, contra dois ambientes: o Supabase local e a **mesma stack que vai para a VPS**, em Docker Swarm. Um deles é a jornada inteira de uma aluna, em sequência: compra, e-mail, senha, aula, quiz, reserva, fuso, telas do administrador, reembolso |
 | Atrás do Traefik | a cada execução | A stack atrás de um Traefik montado como o da VPS (rede, entrada `websecure`, `letsencryptresolver`), por https, no endereço da variável `DOMINIO`: rótulos, redirecionamentos, cookie da sessão cifrado, formulários, primeiro acesso e a jornada da aluna |
 | Cópia de segurança | a cada execução | Copia, estraga o banco de propósito, restaura, confere as contagens e refaz os testes de login, de conteúdo e da área do aluno |
 | Imagem | a cada execução | Construída sem nenhuma chave; conferido que nenhuma chave fica dentro; roda como usuário comum; depois de publicada, é baixada sem login (as duas imagens estão públicas, como a VPS precisa) |
@@ -64,9 +64,9 @@ Hoje tudo nasce fechado e os testes do banco acusam qualquer coisa que fique abe
 | Greenn de verdade | Compra de teste e reembolso do próprio produto | 10 |
 | Vídeo do YouTube | Assistir a uma aula: a tela guarda onde parou e marca como vista | 9 |
 | Google Meet | Entrar em uma turma pelo link, como aluno | 9 |
-| Papo com a Anthropic de verdade | Uma conversa curta depois de pôr a chave | 12 |
+| Papo com a OpenAI de verdade | O botão **Testar o Papo**, no painel, e uma conversa curta depois de pôr a chave | 12 |
 
-Nos testes, esses serviços de fora são imitados (o e-mail é gravado em arquivo; a Greenn, o YouTube e a Anthropic
+Nos testes, esses serviços de fora são imitados (o e-mail é gravado em arquivo; a Greenn, o YouTube e a OpenAI
 são simulados), então o caminho da plataforma está exercitado até a porta de cada um.
 
 ## O que a revisão minuciosa achou e corrigiu

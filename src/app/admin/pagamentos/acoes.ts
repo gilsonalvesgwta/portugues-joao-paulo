@@ -86,3 +86,12 @@ export async function dispensar(dados: FormData): Promise<void> {
   if (id === null) redirect(`${TELA}?aviso=nao_encontrado`);
   redirect(`${TELA}?aviso=${(await dispensarAviso(id)) ? 'aviso_dispensado' : 'nao_encontrado'}#avisos`);
 }
+
+// O endereço completo do webhook da Greenn, com o trecho secreto. Só o administrador recebe, e só
+// quando pede (botões "Mostrar" e "Copiar o endereço"): ele não vem escrito na página.
+export async function enderecoDoWebhook(): Promise<string | null> {
+  await exigirAdmin();
+  const segredo = process.env.GREENN_WEBHOOK_SEGREDO ?? '';
+  if (segredo.length < 24) return null;
+  return `${(process.env.SITE_URL ?? '').replace(/\/+$/, '')}/api/greenn/${segredo}`;
+}

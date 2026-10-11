@@ -27,9 +27,11 @@
 #   SEGREDO_DA_GREENN    segredo novo, só letras e números, 24 ou mais. Faz parte do endereço que a
 #                        Greenn chama (https://DOMINIO/api/greenn/SEGREDO). Em branco, a plataforma
 #                        não aceita avisos de compra e as matrículas são só as manuais
-#   CHAVE_DA_ANTHROPIC   opcional. Chave da conta na Anthropic (console.anthropic.com) para o Papo,
-#                        o tutor com inteligência artificial. Em branco, o Papo fica desligado
-#   MODELO_DO_PAPO       opcional. Em branco, o Papo usa o modelo padrão (Claude Haiku 4.5)
+#   CHAVE_DA_OPENAI      opcional. Chave de API da conta na OpenAI (platform.openai.com) para o
+#                        Papo, o tutor com inteligência artificial. Em branco, o Papo fica desligado
+#   CHAVE_DA_ANTHROPIC   opcional. Só para usar a Anthropic no lugar da OpenAI. Com as duas chaves,
+#                        vale a da OpenAI
+#   MODELO_DO_PAPO       opcional. Em branco, o Papo usa o modelo padrão do serviço
 #
 # Situação: testada no GitHub em Docker Swarm, também atrás de um Traefik montado como o da VPS
 # (entrada websecure, certificado letsencryptresolver).
@@ -71,6 +73,7 @@ services:
 
       ## Papo, o tutor com inteligência artificial (opcional). Em branco, o Papo fica desligado
       ## e o resto da plataforma funciona normalmente.
+      - OPENAI_API_KEY=${CHAVE_DA_OPENAI}
       - ANTHROPIC_API_KEY=${CHAVE_DA_ANTHROPIC}
       - PAPO_MODELO=${MODELO_DO_PAPO}
 

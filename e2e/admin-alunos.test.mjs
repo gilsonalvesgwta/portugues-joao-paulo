@@ -7,7 +7,7 @@ import { mkdir } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 import {
-  admin, base, caminho, clientePublico, criarPessoa, emailDeTeste, emailsPara, entrar, linkDoEmail, novaPagina, novoContexto, senha, textoDoAviso,
+  admin, base, caminho, clientePublico, confirmarZona, criarPessoa, emailDeTeste, emailsPara, entrar, linkDoEmail, novaPagina, novoContexto, senha, textoDoAviso,
 } from './apoio.mjs';
 
 const sufixo = randomBytes(3).toString('hex');
@@ -163,7 +163,8 @@ test('a aluna cria a senha pelo link do e-mail, entra e vê o curso; a ficha pas
   await dela.getByLabel('Contraseña nueva', { exact: true }).fill(senhaDaAluna);
   await dela.getByLabel('Repite la contraseña', { exact: true }).fill(senhaDaAluna);
   await dela.getByRole('button', { name: 'Guardar y entrar' }).click();
-  await dela.waitForURL('**/inicio');
+  // Primeira entrada: antes de qualquer tela, a confirmação do fuso horário.
+  await confirmarZona(dela);
   await dela.goto(`${base}/admin/alunos`);
   assert.equal(caminho(dela), '/inicio', 'aluna não abre a tela de alunos');
   await dela.context().close();

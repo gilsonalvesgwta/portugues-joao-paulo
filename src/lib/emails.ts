@@ -1,6 +1,8 @@
 // E-mails enviados ao aluno, em espanhol. Cada função devolve assunto, versão em texto e
 // versão em HTML. Todo dado variável passa por escaparHtml antes de entrar no HTML.
 
+import { rotuloDoFuso } from './reservas.ts';
+
 export type Email = { asunto: string; texto: string; html: string };
 
 const MARCA = 'Português com João Paulo';
@@ -33,7 +35,9 @@ function saludo(nombre: string): string {
   return limpio === '' ? 'Hola:' : `Hola, ${limpio}:`;
 }
 
-// "jueves, 8 de octubre de 2026, 20:00" no fuso do aluno, seguido do nome curto do fuso.
+// "jueves, 8 de octubre de 2026, 20:00, hora de Madrid (GMT+2)": a data e a hora no fuso do aluno,
+// dizendo de que lugar é a hora. A diferença para o horário universal é a daquele dia (muda com o
+// horário de verão), não a de hoje.
 export function fechaYHora(inicioIso: string, fuso: string): string {
   const instante = new Date(inicioIso);
   if (Number.isNaN(instante.getTime())) throw new Error('fecha_invalida');
@@ -41,9 +45,9 @@ export function fechaYHora(inicioIso: string, fuso: string): string {
     timeZone: fuso, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   }).format(instante);
   const hora = new Intl.DateTimeFormat('es', {
-    timeZone: fuso, hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short',
+    timeZone: fuso, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).format(instante);
-  return `${fecha}, ${hora}`;
+  return `${fecha}, ${hora}, hora de ${rotuloDoFuso(fuso, instante)}`;
 }
 
 type Boton = { rotulo: string; url: string };

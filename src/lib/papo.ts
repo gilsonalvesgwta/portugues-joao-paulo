@@ -7,17 +7,30 @@ export const MENSAGEM_MAX = 1000;
 export const HISTORICO_MAX = 24; // mensagens anteriores enviadas ao modelo
 export const HISTORICO_LETRAS_MAX = 12_000;
 export const RESPOSTA_TOKENS_MAX = 700;
-export const MODELO_PADRAO = 'claude-haiku-4-5-20251001';
-export const ENDERECO_PADRAO = 'https://api.anthropic.com/v1/messages';
+// Dois serviços de inteligência artificial são aceitos: a OpenAI e a Anthropic. Vale a chave que
+// a instalação tiver; com as duas, vale a da OpenAI.
+export type Provedor = 'openai' | 'anthropic';
+export const MODELO_PADRAO: Record<Provedor, string> = { openai: 'gpt-6-luna', anthropic: 'claude-haiku-4-5-20251001' };
+export const ENDERECO_PADRAO: Record<Provedor, string> = {
+  openai: 'https://api.openai.com/v1/chat/completions',
+  anthropic: 'https://api.anthropic.com/v1/messages',
+};
+export const NOME_DO_PROVEDOR: Record<Provedor, string> = { openai: 'OpenAI', anthropic: 'Anthropic' };
+// Nos modelos da OpenAI que "pensam" antes de responder, o limite conta também esse rascunho
+// interno: precisa de folga, senão a resposta sai vazia.
+export const RESPOSTA_TOKENS_MAX_OPENAI = 2500;
 
-export type ConfigDoPapo = { chave: string; modelo: string; endereco: string };
+export type ConfigDoPapo = { provedor: Provedor; chave: string; modelo: string; endereco: string };
 
-// O Papo só existe quando a instalação tem a chave da Anthropic. Sem ela, null: a tela avisa que
-// o tutor não está disponível e o menu não mostra o link.
+// O Papo só existe quando a instalação tem a chave de um dos serviços. Sem ela, null: a tela avisa
+// que o tutor não está disponível e o menu não mostra o link.
 export function configDoPapo(ambiente: Record<string, string | undefined> = process.env): ConfigDoPapo | null {
-  const chave = (ambiente.ANTHROPIC_API_KEY ?? '').trim();
-  if (chave === '') return null;
-  const endereco = (ambiente.PAPO_API_URL ?? '').trim() || ENDERECO_PADRAO;
+  const daOpenAI = (ambiente.OPENAI_API_KEY ?? '').trim();
+  const daAnthropic = (ambiente.ANTHROPIC_API_KEY ?? '').trim();
+  const provedor: Provedor | null = daOpenAI !== '' ? 'openai' : daAnthropic !== '' ? 'anthropic' : null;
+  if (provedor === null) return null;
+  const chave = provedor === 'openai' ? daOpenAI : daAnthropic;
+  const endereco = (ambiente.PAPO_API_URL ?? '').trim() || ENDERECO_PADRAO[provedor];
   let lido: URL;
   try {
     lido = new URL(endereco);
@@ -27,7 +40,7 @@ export function configDoPapo(ambiente: Record<string, string | undefined> = proc
   // A chave só viaja cifrada; sem cifra, só para o próprio computador (testes).
   const local = lido.hostname === '127.0.0.1' || lido.hostname === 'localhost';
   if (lido.protocol !== 'https:' && !(lido.protocol === 'http:' && local)) return null;
-  return { chave, modelo: (ambiente.PAPO_MODELO ?? '').trim() || MODELO_PADRAO, endereco: lido.href };
+  return { provedor, chave, modelo: (ambiente.PAPO_MODELO ?? '').trim() || MODELO_PADRAO[provedor], endereco: lido.href };
 }
 
 export type Autor = 'aluno' | 'papo';
@@ -103,13 +116,33 @@ export function historicoParaOModelo(mensagens: readonly MensagemDoPapo[]): Mens
   return saida;
 }
 
+// Os cabeçalhos do pedido: cada serviço recebe a chave do seu jeito.
+export function cabecalhosDoPedido(config: ConfigDoPapo): Record<string, string> {
+  return config.provedor === 'openai'
+    ? { 'content-type': 'application/json', authorization: `Bearer ${config.chave}` }
+    : { 'content-type': 'application/json', 'x-api-key': config.chave, 'anthropic-version': '2023-06-01' };
+}
+
+// Modelos antigos da OpenAI (GPT-3.5 e GPT-4): recebem as instruções como "system" e não aceitam
+// o ajuste de esforço de raciocínio.
+function modeloAntigoDaOpenAI(modelo: string): boolean {
+  return /^(gpt-3|gpt-4|chatgpt-4)/i.test(modelo);
+}
+
 export function corpoDoPedido(config: ConfigDoPapo, nomeDoAluno: string, mensagens: readonly MensagemDoPapo[]) {
-  return {
-    model: config.modelo,
-    max_tokens: RESPOSTA_TOKENS_MAX,
-    system: instrucoesDoPapo(nomeDoAluno),
-    messages: historicoParaOModelo(mensagens),
-  };
+  const instrucoes = instrucoesDoPapo(nomeDoAluno);
+  const historico = historicoParaOModelo(mensagens);
+  if (config.provedor === 'openai') {
+    const antigo = modeloAntigoDaOpenAI(config.modelo);
+    return {
+      model: config.modelo,
+      max_completion_tokens: antigo ? RESPOSTA_TOKENS_MAX : RESPOSTA_TOKENS_MAX_OPENAI,
+      // Uma conversa de idioma não pede raciocínio longo: pouco esforço responde mais rápido e custa menos.
+      ...(antigo ? {} : { reasoning_effort: 'low' }),
+      messages: [{ role: antigo ? 'system' : 'developer', content: instrucoes }, ...historico],
+    };
+  }
+  return { model: config.modelo, max_tokens: RESPOSTA_TOKENS_MAX, system: instrucoes, messages: historico };
 }
 
 export type RespostaDoModelo = { texto: string; tokensEntrada: number | null; tokensSaida: number | null };
@@ -118,19 +151,56 @@ function inteiro(valor: unknown): number | null {
   return typeof valor === 'number' && Number.isInteger(valor) && valor >= 0 ? valor : null;
 }
 
-// Lê a resposta da API. null quando ela não traz texto nenhum.
-export function lerResposta(corpo: unknown): RespostaDoModelo | null {
-  if (typeof corpo !== 'object' || corpo === null) return null;
-  const raiz = corpo as { content?: unknown; usage?: unknown };
-  if (!Array.isArray(raiz.content)) return null;
-  const texto = raiz.content
-    .map((parte) => (typeof parte === 'object' && parte !== null && (parte as { type?: unknown }).type === 'text' ? (parte as { text?: unknown }).text : ''))
+function objeto(valor: unknown): Record<string, unknown> {
+  return typeof valor === 'object' && valor !== null ? (valor as Record<string, unknown>) : {};
+}
+
+// O texto de uma resposta, que vem como texto simples ou como lista de partes de texto.
+function textoDasPartes(conteudo: unknown): string {
+  if (typeof conteudo === 'string') return conteudo;
+  if (!Array.isArray(conteudo)) return '';
+  return conteudo
+    .map((parte) => (objeto(parte).type === 'text' ? objeto(parte).text : ''))
     .filter((trecho): trecho is string => typeof trecho === 'string')
-    .join('')
-    .trim();
+    .join('');
+}
+
+// Lê a resposta da API, no formato de cada serviço. null quando ela não traz texto nenhum.
+export function lerResposta(corpo: unknown, provedor: Provedor = 'anthropic'): RespostaDoModelo | null {
+  const raiz = objeto(corpo);
+  const uso = objeto(raiz.usage);
+  if (provedor === 'openai') {
+    const escolhas = Array.isArray(raiz.choices) ? raiz.choices : [];
+    const texto = textoDasPartes(objeto(objeto(escolhas[0]).message).content).trim();
+    if (texto === '') return null;
+    return { texto: texto.slice(0, 8000), tokensEntrada: inteiro(uso.prompt_tokens), tokensSaida: inteiro(uso.completion_tokens) };
+  }
+  if (!Array.isArray(raiz.content)) return null;
+  const texto = textoDasPartes(raiz.content).trim();
   if (texto === '') return null;
-  const uso = typeof raiz.usage === 'object' && raiz.usage !== null ? (raiz.usage as { input_tokens?: unknown; output_tokens?: unknown }) : {};
   return { texto: texto.slice(0, 8000), tokensEntrada: inteiro(uso.input_tokens), tokensSaida: inteiro(uso.output_tokens) };
+}
+
+// Por que o serviço não respondeu, em uma palavra, a partir do código da resposta e do erro que
+// ele devolve. É o que o painel traduz para o administrador em palavras simples.
+export type MotivoDoPapo = 'chave' | 'credito' | 'modelo' | 'limite' | 'indisponivel' | 'pedido' | 'conexao' | 'vazia' | 'outro';
+
+export function motivoDaFalhaDoPapo(status: number, corpo: unknown): MotivoDoPapo {
+  const erro = objeto(objeto(corpo).error);
+  const tipo = typeof erro.type === 'string' ? erro.type : '';
+  const codigo = typeof erro.code === 'string' ? erro.code : '';
+  const mensagem = typeof erro.message === 'string' ? erro.message.toLowerCase() : '';
+  const semCredito =
+    tipo === 'insufficient_quota' || tipo === 'billing_error' ||
+    /insufficient_quota|credit_balance|spend_limit|usage_limit|billing/.test(codigo) ||
+    /credit balance|exceeded your current quota|billing/.test(mensagem);
+  if (semCredito) return 'credito';
+  if (status === 401 || status === 403) return 'chave';
+  if (status === 404 || codigo === 'model_not_found') return 'modelo';
+  if (status === 429) return 'limite';
+  if (status >= 500) return 'indisponivel';
+  if (status === 400 || status === 422) return 'pedido';
+  return 'outro';
 }
 
 // O dia de hoje ('AAAA-MM-DD') no fuso do aluno: é por ele que o limite diário é contado.

@@ -18,7 +18,7 @@ Tempo estimado: 40 a 60 minutos na primeira vez.
 | Um lugar seguro para guardar senhas (gerenciador de senhas) | As senhas criadas no passo 3 |
 
 Depois da instalação, quando existirem: o **código do produto na Greenn** (passo 10) e, se quiser o tutor com
-inteligência artificial, uma **chave da Anthropic** (passo 12).
+inteligência artificial, uma **chave de API da OpenAI** (passo 12).
 
 > **Regra das senhas.** Senhas e chaves vão **só** nas variáveis da stack, dentro do Portainer. Nunca em
 > conversa, e-mail, WhatsApp ou no repositório.
@@ -129,7 +129,7 @@ Guarde os quatro no gerenciador de senhas.
 | `SMTP_PASS` | a senha dessa caixa |
 | `SMTP_PORT` | opcional: só se a porta 465 não conectar (passo 7). Pode ficar sem criar |
 | `SEGREDO_DA_GREENN` | o do passo 3 (em branco, a plataforma não aceita avisos de compra) |
-| `CHAVE_DA_ANTHROPIC` | opcional: só se for usar o Papo (passo 12). Pode ficar sem criar |
+| `CHAVE_DA_OPENAI` | opcional: só se for usar o Papo (passo 12). Pode ficar sem criar |
 
 5. Clique em **Deploy the stack**.
 
@@ -153,7 +153,7 @@ Em **Stacks → portuguesjp**, a lista de serviços deve ficar assim em dois a q
 | `portuguesjp_banco` | **0/1** | **É o normal.** Ele prepara o banco e termina |
 
 Para ter certeza de que o banco foi preparado: clique em `portuguesjp_banco` → **Service logs**. A última linha
-deve ser `BANCO PRONTO (13 migração(ões) aplicada(s) agora).` (o número cresce conforme a versão).
+deve ser `BANCO PRONTO (14 migração(ões) aplicada(s) agora).` (o número cresce conforme a versão).
 
 Depois abra `https://portuguescomjoaopaulo.wtatech.com.br`. Deve aparecer a tela de acesso, em espanhol, com o
 cadeado do navegador fechado. O certificado pode levar um ou dois minutos na primeira vez.
@@ -210,22 +210,29 @@ O botão **Abrir a área do aluno**, no painel, mostra o curso do jeito que o al
 
 1. Em **Alunos → Novo aluno**, cadastre um e-mail seu (diferente do de administrador) e matricule no curso.
 2. O e-mail de boas-vindas chega em espanhol, com o botão para criar a senha (o link vale 24 horas e uma vez só).
-3. Crie a senha, entre e confira: a tela inicial, uma aula, o quiz, a conversação e «Mi cuenta».
+3. Crie a senha e entre. A primeira tela pede para **confirmar a zona horária**: o fuso do aparelho já vem
+   escolhido e a tela mostra que horas são nele. Só depois de confirmar o aluno vê o curso.
+4. Confira: a tela inicial, uma aula, o quiz, a conversação e «Mi cuenta».
+
+**Como ficam os horários.** O professor cadastra cada turma no **horário de Brasília** (está escrito no campo). Cada
+aluno vê a mesma aula na **hora do fuso que confirmou**: na agenda, em «Mis reservas», no e-mail de confirmação e
+nos lembretes, sempre com o nome do lugar ao lado da hora (por exemplo, "22:15, hora de Madrid (GMT+2)"). A tela da
+turma, na administração, mostra como o horário aparece em Madri, Buenos Aires, Bogotá e Cidade do México. Quem
+viaja troca o fuso em «Mi cuenta», e a agenda avisa quando o aparelho está em um fuso diferente do cadastro.
 
 ## Passo 10 — Ligar a Greenn
 
 1. Na plataforma, em **Pagamentos → Nova oferta**: o **código do produto na Greenn**, o curso, **365** dias de
    acesso, e se a compra inclui conversação (e quantas reservas por semana).
-2. Na Greenn, no produto, cadastre um **webhook** para os eventos de **venda** (e de assinatura, se houver) com o
-   endereço:
-
-   `https://portuguescomjoaopaulo.wtatech.com.br/api/greenn/SEGREDO_DA_GREENN`
-
-   No lugar de `SEGREDO_DA_GREENN` vai o valor criado no passo 3. Esse endereço completo é uma senha: não divulgue.
-3. Faça uma **compra de teste** com um e-mail seu. Em menos de um minuto: o aviso aparece em **Pagamentos →
+2. Copie o endereço de webhook: na plataforma, em **Pagamentos**, o quadro **Ligação com a Greenn** mostra o
+   endereço com o trecho secreto escondido. Clique em **Copiar o endereço** (ou em **Mostrar**, para ver).
+3. Na Greenn, no produto, cadastre um **webhook** para os eventos de **venda** (e de assinatura, se houver) e cole
+   esse endereço. Ele tem a forma `https://ENDEREÇO-DA-PLATAFORMA/api/greenn/SEGREDO_DA_GREENN` e funciona como uma
+   senha: quem o tem consegue liberar acesso. Cole só na Greenn.
+4. Faça uma **compra de teste** com um e-mail seu. Em menos de um minuto: o aviso aparece em **Pagamentos →
    Avisos recebidos da Greenn** (escolha "Todos") como "Processado", a pessoa aparece em **Alunos** e o e-mail de
    acesso chega.
-4. Peça o **reembolso** dessa compra e confira que o acesso foi encerrado.
+5. Peça o **reembolso** dessa compra e confira que o acesso foi encerrado.
 
 Se um aviso ficar **pendente**, a tela diz o motivo (o mais comum é o produto ainda não ter oferta cadastrada).
 Depois de corrigir, use **Processar de novo**.
@@ -266,16 +273,36 @@ O roteiro pede que você escreva `RESTAURAR` antes de mexer em qualquer coisa. S
 
 ## Passo 12 — Ligar o Papo (opcional)
 
-O Papo é o tutor com inteligência artificial: o aluno pratica por escrito e recebe as correções explicadas em
-espanhol. Cada mensagem tem custo na conta da Anthropic.
+O Papo é o tutor com inteligência artificial: o aluno escreve em português e recebe a resposta na hora, na própria
+página, com as correções explicadas em espanhol. Quem responde é um serviço pago de inteligência artificial, a
+**OpenAI**, e não uma pessoa. Cada mensagem tem um custo pequeno na conta da OpenAI de vocês.
 
-1. Crie uma conta em `console.anthropic.com`, coloque crédito, defina um **limite de gasto mensal** e crie uma chave.
-2. No Portainer, em **Stacks → portuguesjp → Editor**, crie a variável `CHAVE_DA_ANTHROPIC` com a chave e clique em
+A chave necessária é uma **chave de API**. A assinatura do ChatGPT (Plus, Pro) **não** serve e não dá crédito de
+API: são cobranças separadas.
+
+1. Abra `https://platform.openai.com` e entre (ou crie a conta). Pode ser a mesma conta do ChatGPT.
+2. Coloque crédito: abra `https://platform.openai.com/account/billing`, clique em **Add payment details**, cadastre o
+   cartão e escolha o valor da primeira compra (o mínimo é 5 dólares). **Desligue a opção "Use auto-reload"** se não
+   quiser recarga automática: sem ela, o gasto nunca passa do crédito comprado. O saldo pode levar alguns minutos
+   para aparecer.
+3. Crie a chave: abra `https://platform.openai.com/api-keys`, clique em **Create new secret key**, dê um nome (por
+   exemplo `plataforma-papo`) e confirme. A chave aparece **uma vez só**: copie na hora e guarde no gerenciador de
+   senhas. Ela não vai em conversa, e-mail nem WhatsApp.
+4. No Portainer, em **Stacks → portuguesjp → Editor**, crie a variável `CHAVE_DA_OPENAI` com a chave e clique em
    **Update the stack**.
-3. No **Painel**, o cartão do Papo passa a mostrar **Ligado**. Ali também se muda o limite de mensagens por pessoa,
-   por dia (o padrão é 40).
+5. No **Painel**, o quadro do Papo passa a mostrar **Ligado**. Clique em **Testar o Papo**: a resposta aparece ali
+   mesmo. Se falhar, o quadro diz o motivo (chave recusada, conta sem crédito, modelo desconhecido).
+6. No mesmo quadro se muda o limite de mensagens por pessoa, por dia (o padrão é 40).
 
-Para desligar, apague o valor da variável e atualize a stack. O resto da plataforma não muda.
+O modelo padrão é o `gpt-6-luna`, o mais barato da OpenAI para conversa em outubro de 2026 (10 centavos de dólar por
+milhão de tokens de entrada e 50 por milhão de saída). Para usar outro, crie a variável `MODELO_DO_PAPO` com o nome
+do modelo. Os modelos e os preços da OpenAI mudam com o tempo: se um dia o **Testar o Papo** disser que o serviço
+não conhece o modelo, é hora de trocar o nome nessa variável.
+
+Para desligar, apague a variável `CHAVE_DA_OPENAI` e atualize a stack. O resto da plataforma não muda.
+
+A plataforma também aceita a Anthropic no lugar da OpenAI (variável `CHAVE_DA_ANTHROPIC`). Com as duas chaves, vale a
+da OpenAI.
 
 ## Como atualizar a plataforma
 

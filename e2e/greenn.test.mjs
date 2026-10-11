@@ -9,7 +9,7 @@ import { mkdir } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 import {
-  admin, base, caminho, clientePublico, criarPessoa, emailDeTeste, emailsPara, entrar, linkDoEmail, novaPagina, novoContexto, senha, textoDoAviso,
+  admin, base, caminho, clientePublico, confirmarZona, criarPessoa, emailDeTeste, emailsPara, entrar, linkDoEmail, novaPagina, novoContexto, senha, textoDoAviso,
 } from './apoio.mjs';
 
 const SEGREDO = process.env.GREENN_WEBHOOK_SEGREDO ?? '';
@@ -190,7 +190,17 @@ test('o administrador cadastra a oferta, manda processar de novo e a compradora 
   await pagina.getByRole('navigation', { name: 'Administração' }).getByRole('link', { name: 'Pagamentos' }).click();
   await pagina.waitForURL('**/admin/pagamentos');
   await pagina.getByText('Pronta para receber').waitFor();
-  assert.equal((await pagina.content()).includes(SEGREDO), false, 'o segredo não aparece na tela');
+  // O endereço do webhook aparece com o trecho secreto escondido; o completo só vem quando o
+  // administrador pede.
+  assert.equal((await pagina.content()).includes(SEGREDO), false, 'o segredo não vem escrito na página');
+  const endereco = pagina.getByLabel('Endereço de webhook para a Greenn');
+  assert.match(await endereco.innerText(), /\/api\/greenn\/•+$/);
+  await pagina.getByRole('button', { name: 'Mostrar' }).click();
+  await pagina.getByRole('button', { name: 'Esconder' }).waitFor();
+  assert.ok((await endereco.innerText()).endsWith(`/api/greenn/${SEGREDO}`), 'o endereço completo aparece quando o administrador pede');
+  await pagina.getByRole('button', { name: 'Esconder' }).click();
+  await pagina.getByRole('button', { name: 'Mostrar' }).waitFor();
+  assert.match(await endereco.innerText(), /\/api\/greenn\/•+$/);
   const linha = pagina.locator('main tbody tr').filter({ hasText: compradora.email.toUpperCase() });
   assert.match(await linha.innerText(), /Venda paga/);
   assert.match(await linha.innerText(), /Produto sem oferta cadastrada/);
@@ -258,7 +268,7 @@ test('a compradora cria a senha pelo link e vê o curso; o mesmo aviso repetido 
   await dela.getByLabel('Contraseña nueva', { exact: true }).fill(senhaDaCompradora);
   await dela.getByLabel('Repite la contraseña', { exact: true }).fill(senhaDaCompradora);
   await dela.getByRole('button', { name: 'Guardar y entrar' }).click();
-  await dela.waitForURL('**/inicio');
+  await confirmarZona(dela);
   await dela.context().close();
   assert.deepEqual(await cursosVistosPor(compradora.email, senhaDaCompradora), [curso]);
 

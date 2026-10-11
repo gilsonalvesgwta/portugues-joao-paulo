@@ -80,6 +80,20 @@ export function fechaLarga(data: string): string {
   return `${parte('weekday')} ${parte('day')} de ${parte('month')}`;
 }
 
+// "17:15": a hora de um instante no fuso pedido.
+export function horaEn(instante: Date, fuso: string): string {
+  const local = partesLocais(instante, fuso);
+  return `${String(local.hora).padStart(2, '0')}:${String(local.minuto).padStart(2, '0')}`;
+}
+
+// O fuso que o navegador informa só serve se for o nome de um lugar. "UTC" e parecidos aparecem
+// em aparelhos sem fuso configurado: aí vale o que está no cadastro.
+export function zonaDelDispositivo(fuso: unknown): string | null {
+  if (!zonaValida(fuso)) return null;
+  if (!fuso.includes('/') || fuso.startsWith('Etc/')) return null;
+  return fuso;
+}
+
 export function zonaValida(fuso: unknown): fuso is string {
   if (typeof fuso !== 'string' || fuso === '' || fuso.length > 64) return false;
   try {

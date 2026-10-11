@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { dispensar, reprocessarAviso } from '@/app/admin/pagamentos/acoes';
 import { BotaoComConfirmacao } from '@/components/admin/BotaoComConfirmacao';
+import { EnderecoSecreto } from '@/components/admin/EnderecoSecreto';
 import { AvisoDaPagina, Botao, Cartao, Etiqueta, LinkBotao, TituloDaPagina } from '@/components/admin/ui';
 import { avisoDe } from '@/lib/admin/avisos';
 import { carregarConteudo } from '@/lib/admin/dados';
@@ -46,7 +47,7 @@ export default async function PaginaPagamentos({ searchParams }: Props) {
   const paginas = Math.max(1, Math.ceil(lista.total / AVISOS_POR_PAGINA));
   const cursoPorId = new Map(conteudo.cursos.map((curso) => [curso.id, curso]));
 
-  const site = process.env.SITE_URL ?? '';
+  const site = (process.env.SITE_URL ?? '').replace(/\/+$/, '');
   const configurado = (process.env.GREENN_WEBHOOK_SEGREDO ?? '').length >= SEGREDO_MIN;
 
   return (
@@ -61,11 +62,15 @@ export default async function PaginaPagamentos({ searchParams }: Props) {
         </div>
         {configurado ? (
           <div className="mt-2 flex flex-col gap-2 text-[15px] leading-normal text-apoio">
-            <p>Na Greenn, cadastre este endereço como webhook de vendas e de assinaturas:</p>
-            <p className="break-all rounded-[10px] bg-fundo px-3 py-2 font-mono text-sm text-texto">{site}/api/greenn/SEGREDO</p>
             <p>
-              No lugar de SEGREDO vai o valor que você definiu na instalação, na variável SEGREDO_DA_GREENN. Ele não é
-              mostrado aqui: quem tem esse endereço completo consegue liberar acesso.
+              Este é o endereço de webhook da plataforma. Na Greenn, no produto, cadastre-o como webhook dos eventos de venda
+              (e de assinatura, se houver):
+            </p>
+            {/* O trecho secreto não vem na página: só chega quando o administrador pede para ver ou copiar. */}
+            <EnderecoSecreto rotulo="Endereço de webhook para a Greenn" escondido={`${site}/api/greenn/${'•'.repeat(12)}`} />
+            <p>
+              Esse endereço funciona como uma senha: quem o tem consegue liberar acesso. Só o administrador o vê, e ele deve
+              ser colado apenas na Greenn. O trecho final é o valor da variável SEGREDO_DA_GREENN, definido na instalação.
             </p>
           </div>
         ) : (

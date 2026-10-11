@@ -24,7 +24,8 @@ export async function guardarCuenta(dados: FormData): Promise<void> {
   if (!zonaValida(fuso)) redirect(`${TELA}?error=zona`);
 
   const supabase = await clienteDoServidor();
-  const { error } = await supabase.from('perfis').update({ nome, fuso }).eq('id', pessoa.id);
+  // Guardar o fuso por aqui também vale como confirmação dele.
+  const { error } = await supabase.from('perfis').update({ nome, fuso, fuso_confirmado_em: new Date().toISOString() }).eq('id', pessoa.id);
   redirect(error ? `${TELA}?error=fallo` : `${TELA}?aviso=guardado`);
 }
 
