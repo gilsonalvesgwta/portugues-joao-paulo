@@ -26,7 +26,7 @@ A cada mudança, o GitHub roda tudo do zero. Nada entra no ramo principal sem pa
 | Ponta a ponta | 163 testes | Navegador de verdade clicando nas telas, do login à reserva de aula, contra dois ambientes: o Supabase local e a **mesma stack que vai para a VPS**, em Docker Swarm. Um deles é a jornada inteira de uma aluna, em sequência: compra, e-mail, senha, aula, quiz, reserva, fuso, telas do administrador, reembolso |
 | Atrás do Traefik | a cada execução | A stack atrás de um Traefik montado como o da VPS (rede, entrada `websecure`, `letsencryptresolver`), por https, no endereço da variável `DOMINIO`: rótulos, redirecionamentos, cookie da sessão cifrado, formulários, primeiro acesso e a jornada da aluna |
 | Cópia de segurança | a cada execução | Copia, estraga o banco de propósito, restaura, confere as contagens e refaz os testes de login, de conteúdo e da área do aluno |
-| Imagem | a cada execução | Construída sem nenhuma chave; conferido que nenhuma chave fica dentro; roda como usuário comum |
+| Imagem | a cada execução | Construída sem nenhuma chave; conferido que nenhuma chave fica dentro; roda como usuário comum; depois de publicada, é baixada sem login (as duas imagens estão públicas, como a VPS precisa) |
 
 Os dois testes de disputa colocam vários alunos pedindo ao mesmo tempo: 11 alunos para 10 vagas (entram 10) e um
 aluno pedindo 3 turmas com limite de 2 (entram 2).
@@ -59,7 +59,6 @@ Hoje tudo nasce fechado e os testes do banco acusam qualquer coisa que fique abe
 | Item | Como conferir | Passo do roteiro |
 | --- | --- | --- |
 | Certificado de verdade (Let's Encrypt) e o Traefik da sua VPS | A tela de acesso abre com o cadeado fechado. Nos testes o Traefik é montado igual, mas com certificado de teste | 5 |
-| Imagens públicas no GitHub | Os serviços sobem sem erro de download | 1 |
 | Caixa de e-mail da Hostinger | Botão "Enviar e-mail de teste" no painel | 7 |
 | Entrega dos e-mails (SPF e DKIM) | O e-mail de teste não cai no spam | 7 |
 | Greenn de verdade | Compra de teste e reembolso do próprio produto | 10 |

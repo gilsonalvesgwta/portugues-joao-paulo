@@ -217,10 +217,10 @@ todos com nome começado por `portuguesjp_`:
 
 | Serviço | O que faz | Memória medida no teste |
 | --- | --- | --- |
-| `portuguesjp_app` | O aplicativo (área do aluno e administração). É o único alcançado pelo Traefik | cerca de 95 MB |
-| `portuguesjp_db` | Banco de dados (mesma imagem do Supabase) | cerca de 90 MB |
-| `portuguesjp_auth` | Login: contas, senhas e sessões | cerca de 20 MB |
-| `portuguesjp_rest` | Leitura e gravação das tabelas, com as regras de acesso do banco | cerca de 26 MB |
+| `portuguesjp_app` | O aplicativo (área do aluno e administração). É o único alcançado pelo Traefik | cerca de 105 MB |
+| `portuguesjp_db` | Banco de dados (mesma imagem do Supabase) | cerca de 145 MB |
+| `portuguesjp_auth` | Login: contas, senhas e sessões | cerca de 21 MB |
+| `portuguesjp_rest` | Leitura e gravação das tabelas, com as regras de acesso do banco | cerca de 29 MB |
 | `portuguesjp_banco` | Prepara o banco e aplica as atualizações. Sobe, faz o trabalho e termina (aparece como 0/1) | — |
 
 A memória foi medida com o banco quase vazio, logo depois dos testes; com alunos de verdade o banco usa mais.
