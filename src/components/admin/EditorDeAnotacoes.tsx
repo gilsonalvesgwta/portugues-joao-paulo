@@ -16,11 +16,11 @@ import { ANOTACOES_INICIAL } from '@/lib/formulario';
 // alteração sem salvar, a tela avisa antes de sair.
 
 const classeDaEntrada =
-  'box-border h-11 w-full min-w-0 rounded-[10px] border border-borda-campo bg-cartao px-3 text-[15px] text-texto placeholder:text-apoio';
+  'box-border h-12 w-full min-w-0 rounded-xl border border-borda-campo bg-cartao px-3.5 text-base text-texto placeholder:text-apoio';
 const classeDaArea =
-  'box-border min-h-28 w-full min-w-0 rounded-[10px] border border-borda-campo bg-cartao px-3 py-2.5 text-[15px] leading-normal text-texto placeholder:text-apoio';
+  'box-border min-h-28 w-full min-w-0 rounded-xl border border-borda-campo bg-cartao px-3.5 py-3 text-base leading-normal text-texto placeholder:text-apoio';
 const classeDoBotaoMenor =
-  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-borda-campo bg-cartao px-3 text-sm font-semibold text-texto hover:bg-fundo disabled:cursor-default disabled:opacity-40';
+  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-linha bg-cartao px-3 text-sm font-semibold text-texto hover:bg-fundo disabled:cursor-default disabled:opacity-40';
 
 type Mudar = (bloco: Bloco) => void;
 
@@ -99,7 +99,7 @@ function CamposDaLista({
         // No celular, os campos da linha ficam empilhados e o botão de remover fica ao lado do primeiro.
         <div
           key={linha}
-          className={`grid grid-cols-[minmax(0,1fr)_44px] gap-2 border-t border-linha pt-3 first:border-t-0 first:pt-0 sm:border-t-0 sm:pt-0 ${colunas}`}
+          className={`grid grid-cols-[minmax(0,1fr)_44px] gap-2 border-t border-borda pt-3 first:border-t-0 first:pt-0 sm:border-t-0 sm:pt-0 ${colunas}`}
         >
           {campos.map((campo, c) => (
             <input
@@ -326,7 +326,7 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
         <input type="hidden" name="aula_id" value={aulaId} />
         <input type="hidden" name="anotacoes" value={JSON.stringify(blocos)} />
 
-        <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-linha bg-cartao px-5 py-4 shadow-sm">
+        <div className="sticky top-[72px] z-10 lg:top-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-borda bg-cartao px-5 py-4 shadow-sm">
           <p role="status" className={`text-[15px] font-semibold ${sujo ? 'text-aviso' : 'text-verde'}`}>
             {sujo
               ? 'Há alterações que ainda não foram salvas.'
@@ -339,7 +339,7 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
           <button
             type="submit"
             disabled={enviando || !pronto}
-            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-verde bg-verde px-4 text-[15px] font-bold text-white hover:bg-verde-link disabled:cursor-default disabled:opacity-50"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-verde bg-verde px-4 text-[15px] font-bold text-white hover:bg-verde-link disabled:cursor-default disabled:opacity-50"
           >
             {enviando ? 'Salvando…' : 'Salvar anotações'}
           </button>
@@ -362,10 +362,10 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
               <section
                 key={bloco.id}
                 aria-label={`Bloco ${indice + 1}: ${nome}`}
-                className={`flex flex-col gap-4 rounded-2xl border bg-cartao p-5 ${erro ? 'border-perigo' : 'border-linha'}`}
+                className={`flex flex-col gap-4 rounded-3xl border bg-cartao p-5 sm:p-6 sm:shadow-cartao ${erro ? 'border-perigo' : 'border-borda'}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-xs font-bold tracking-[0.1em] text-apoio">{nome.toUpperCase()}</h2>
+                  <h2 className="text-[15px] font-semibold text-dourado-texto">{nome}</h2>
                   <div className="flex gap-1.5">
                     <button
                       type="button"
@@ -414,7 +414,7 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
                   type="button"
                   disabled={blocos.length >= LIMITES.blocos || (tipo === 'capa' && temCapa)}
                   onClick={() => adicionar(tipo)}
-                  className="flex min-h-11 cursor-pointer flex-col items-start gap-0.5 rounded-[10px] border border-borda-campo bg-cartao px-3 py-2 text-left hover:bg-fundo disabled:cursor-default disabled:opacity-40"
+                  className="flex min-h-11 cursor-pointer flex-col items-start gap-0.5 rounded-xl border border-borda-campo bg-cartao px-3 py-2 text-left hover:bg-fundo disabled:cursor-default disabled:opacity-40"
                 >
                   <span className="text-[15px] font-bold text-texto">{nome}</span>
                   <span className="text-[13px] leading-snug text-apoio">{ajuda}</span>
@@ -430,9 +430,9 @@ export function EditorDeAnotacoes({ aulaId, numero, tituloEs, iniciais }: Props)
         aria-label="Prévia do aluno"
         className="flex min-w-0 flex-col gap-2.5 xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto"
       >
-        <p className="text-xs font-bold tracking-[0.12em] text-apoio">PRÉVIA DO ALUNO</p>
+        <p className="text-[15px] font-semibold text-dourado-texto">Prévia do aluno</p>
         {previa.length === 0 ? (
-          <p className="rounded-2xl border border-linha bg-cartao px-5 py-6 text-[15px] leading-normal text-apoio">
+          <p className="rounded-2xl border border-borda bg-cartao px-5 py-6 text-[15px] leading-normal text-apoio">
             A prévia aparece aqui conforme você preenche os blocos.
           </p>
         ) : (

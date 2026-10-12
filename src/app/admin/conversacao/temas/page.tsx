@@ -33,7 +33,7 @@ export default async function PaginaTemas({ searchParams }: Props) {
           {[...ativos, ...arquivados].map((tema) => {
             const nivel = lerNivel(tema.nivel);
             return (
-              <li key={tema.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-linha bg-cartao p-4">
+              <li key={tema.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-borda bg-cartao p-4">
                 <div className="flex min-w-0 flex-col gap-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span lang="es" className="font-bold">

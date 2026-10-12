@@ -217,7 +217,7 @@ export function FormularioApagarConta({ id }: { id: string }) {
         <button
           type="submit"
           disabled={enviando}
-          className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-perigo bg-cartao px-4 text-[15px] font-bold text-perigo hover:bg-fundo disabled:cursor-default disabled:opacity-50"
+          className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-perigo bg-cartao px-4 text-[15px] font-bold text-perigo hover:bg-fundo disabled:cursor-default disabled:opacity-50"
         >
           Apagar a conta de vez
         </button>

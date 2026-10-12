@@ -15,7 +15,7 @@ type Texto = string | string[] | undefined;
 type Props = { searchParams: Promise<{ aviso?: Texto; ver?: Texto; pagina?: Texto }> };
 
 // "relative" prende à área que rola os textos só para leitor de tela da tabela.
-const classeDaTabela = 'relative overflow-x-auto rounded-2xl border border-linha bg-cartao';
+const classeDaTabela = 'relative overflow-x-auto rounded-3xl border border-borda bg-cartao shadow-cartao';
 
 function endereco(passadas: boolean, pagina: number): string {
   const partes = new URLSearchParams();
@@ -79,11 +79,11 @@ export default async function PaginaConversacao({ searchParams }: Props) {
           <table className="w-full min-w-[720px] border-collapse text-left text-[15px]">
             <caption className="sr-only">{passadas ? 'Turmas passadas' : 'Próximas turmas'}</caption>
             <thead>
-              <tr className="border-b border-linha text-xs font-semibold tracking-[0.08em] text-apoio">
-                <th scope="col" className="px-4 py-3">QUANDO</th>
-                <th scope="col" className="px-4 py-3">TEMA</th>
-                <th scope="col" className="px-4 py-3">INSCRITOS</th>
-                <th scope="col" className="px-4 py-3">SITUAÇÃO</th>
+              <tr className="border-b border-borda bg-papel text-sm font-semibold text-apoio">
+                <th scope="col" className="px-4 py-3">Quando</th>
+                <th scope="col" className="px-4 py-3">Tema</th>
+                <th scope="col" className="px-4 py-3">Inscritos</th>
+                <th scope="col" className="px-4 py-3">Situação</th>
                 <th scope="col" className="px-4 py-3">
                   <span className="sr-only">Ações</span>
                 </th>
@@ -94,7 +94,7 @@ export default async function PaginaConversacao({ searchParams }: Props) {
                 const estado = estadoDaTurma(turma, agora);
                 const nivel = lerNivel(turma.nivel);
                 return (
-                  <tr key={turma.id} className="border-b border-linha last:border-b-0">
+                  <tr key={turma.id} className="border-b border-borda last:border-b-0">
                     <td className="px-4 py-3">
                       <span className="block font-semibold">{quandoEmBrasilia(turma.inicio)}</span>
                       <span className="block text-sm text-apoio">{turma.duracao_min} minutos</span>
@@ -143,7 +143,7 @@ export default async function PaginaConversacao({ searchParams }: Props) {
       ) : null}
 
       <Cartao>
-        <h2 className="text-lg font-bold">Regras de reserva</h2>
+        <h2 className="text-[21px] font-bold leading-tight">Regras de reserva</h2>
         {pessoa.papel === 'admin' ? (
           <div className="mt-4">
             <FormularioDasRegras key={JSON.stringify(regras)} regras={regras} />

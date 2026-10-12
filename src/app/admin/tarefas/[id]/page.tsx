@@ -38,7 +38,7 @@ export default async function PaginaEditarTarefa({ params, searchParams }: Props
         />
       </Cartao>
       <Cartao>
-        <h2 className="text-lg font-bold">Lixeira</h2>
+        <h2 className="text-[21px] font-bold leading-tight">Lixeira</h2>
         <form action={moverParaLixeira} className="mt-3 flex flex-col items-start gap-3">
           <p className="text-[15px] leading-normal text-apoio">
             A tarefa sai das listas e deixa de aparecer para o aluno. Dá para restaurar depois.

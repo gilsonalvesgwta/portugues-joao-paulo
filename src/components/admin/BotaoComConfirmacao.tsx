@@ -26,7 +26,7 @@ export function BotaoComConfirmacao({ acao, campos, pergunta, rotulo, children }
       <button
         type="submit"
         aria-label={rotulo}
-        className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-perigo bg-cartao px-4 text-[15px] font-bold text-perigo hover:bg-fundo"
+        className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-perigo bg-cartao px-4 text-[15px] font-bold text-perigo hover:bg-fundo"
       >
         {children}
       </button>

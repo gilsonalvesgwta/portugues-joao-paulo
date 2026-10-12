@@ -71,7 +71,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
       <AvisoDaPagina aviso={avisoDe(aviso)} />
 
       <Cartao>
-        <h2 className="text-lg font-bold">Entrada na plataforma</h2>
+        <h2 className="text-[21px] font-bold leading-tight">Entrada na plataforma</h2>
         <p className="mt-2 text-[15px] leading-normal text-apoio">
           {ultimoAcesso === undefined
             ? 'Não foi possível consultar quando esta pessoa entrou pela última vez.'
@@ -87,7 +87,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
           </p>
         </form>
         {envios.length > 0 ? (
-          <div className="mt-4 border-t border-linha pt-4">
+          <div className="mt-4 border-t border-borda pt-4">
             <h3 className="text-sm font-semibold">Últimos e-mails de acesso</h3>
             <ul className="mt-2 flex flex-col gap-1 text-[15px]">
               {envios.map((envio) => (
@@ -108,7 +108,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
       </Cartao>
 
       <Cartao>
-        <h2 id="matriculas" className="text-lg font-bold">
+        <h2 id="matriculas" className="text-[21px] font-bold leading-tight">
           Matrículas
         </h2>
         {matriculas.length === 0 ? (
@@ -120,7 +120,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
               const titulo = curso ? rotuloDoCurso(curso) : 'Curso não encontrado';
               const acesso = acessoDaMatricula(matricula, agora);
               return (
-                <li key={matricula.id} className="flex flex-col gap-4 rounded-xl border border-linha p-4">
+                <li key={matricula.id} className="flex flex-col gap-4 rounded-xl border border-borda p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-col gap-1">
                       <h3 className="text-base font-bold">{titulo}</h3>
@@ -142,7 +142,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
                       reservas_por_semana: String(matricula.reservas_por_semana),
                     }}
                   />
-                  <form action={mudarAcesso} className="border-t border-linha pt-4">
+                  <form action={mudarAcesso} className="border-t border-borda pt-4">
                     <input type="hidden" name="id" value={matricula.id} />
                     <input type="hidden" name="mudanca" value={matricula.situacao === 'ativa' ? 'bloquear' : 'liberar'} />
                     <Botao variante="secundario" aria-label={`${matricula.situacao === 'ativa' ? 'Bloquear' : 'Liberar'} o acesso a ${titulo}`}>
@@ -156,7 +156,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
         )}
 
         {cursosLivres.length > 0 ? (
-          <div className="mt-6 border-t border-linha pt-5">
+          <div className="mt-6 border-t border-borda pt-5">
             <h3 className="text-base font-bold">Matricular em um curso</h3>
             <div className="mt-4">
               <FormularioNovaMatricula key={matriculas.length} alunoId={perfil.id} cursos={cursosLivres} />
@@ -166,7 +166,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
       </Cartao>
 
       <Cartao>
-        <h2 className="text-lg font-bold">Cadastro</h2>
+        <h2 className="text-[21px] font-bold leading-tight">Cadastro</h2>
         <div className="mt-4 grid gap-6 lg:grid-cols-2">
           <FormularioDoNome key={`nome-${perfil.atualizado_em}`} id={perfil.id} nome={perfil.nome} />
           <FormularioDoEmail key={`email-${perfil.atualizado_em}`} id={perfil.id} email={perfil.email} />
@@ -174,7 +174,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
       </Cartao>
 
       <Cartao>
-        <h2 className="text-lg font-bold">Papel</h2>
+        <h2 className="text-[21px] font-bold leading-tight">Papel</h2>
         {perfil.id === eu.id ? (
           <p className="mt-2 text-[15px] leading-normal text-apoio">
             Você é {NOME_DO_PAPEL[papel].toLowerCase()}. Ninguém muda o próprio papel: assim a plataforma nunca fica sem
@@ -207,7 +207,7 @@ export default async function PaginaDaPessoa({ params, searchParams }: Props) {
 
       {perfil.id === eu.id ? null : (
         <Cartao>
-          <h2 id="apagar" className="text-lg font-bold">
+          <h2 id="apagar" className="text-[21px] font-bold leading-tight">
             Apagar a conta
           </h2>
           {papel === 'aluno' ? (

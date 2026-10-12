@@ -11,7 +11,7 @@ export default function ErroDaAdministracao({ reset }: { error: Error; reset: ()
       <button
         type="button"
         onClick={reset}
-        className="mt-4 min-h-11 cursor-pointer rounded-[10px] border border-verde bg-verde px-4 text-[15px] font-bold text-white hover:bg-verde-link"
+        className="mt-4 min-h-11 cursor-pointer rounded-xl border border-verde bg-verde px-4 text-[15px] font-bold text-white hover:bg-verde-link"
       >
         Tentar de novo
       </button>

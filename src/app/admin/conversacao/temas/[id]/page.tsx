@@ -39,7 +39,7 @@ export default async function PaginaEditarTema({ params, searchParams }: Props) 
         />
       </Cartao>
       <Cartao>
-        <h2 className="text-lg font-bold">{arquivado ? 'Tema arquivado' : 'Arquivar'}</h2>
+        <h2 className="text-[21px] font-bold leading-tight">{arquivado ? 'Tema arquivado' : 'Arquivar'}</h2>
         <form action={arquivarTema} className="mt-3 flex flex-col items-start gap-3">
           <p className="text-[15px] leading-normal text-apoio">
             {arquivado

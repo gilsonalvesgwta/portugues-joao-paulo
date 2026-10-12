@@ -29,6 +29,7 @@
   --color-verde-fundo: #0b4f47; /* miniatura de aula */
   --color-verde-profundo: #04352f; /* miniatura sobre o cartão verde */
   --color-menta: #dcebe6; /* texto de apoio sobre o verde */
+  --color-menta-escura: #bfd7d0; /* rótulos pequenos sobre o verde (contraste 5:1) */
   --color-dourado-claro: #e7d48b; /* rótulo sobre o verde */
   --color-dourado-vivo: #e3bc3f; /* barra de progresso sobre o verde */
   --color-texto-suave: #3a4542; /* parágrafo de leitura longa */

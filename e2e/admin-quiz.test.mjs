@@ -109,7 +109,7 @@ test('monta as três perguntas, a prévia não entrega a resposta, e o rascunho 
   await pagina.getByLabel('Dificuldade').selectOption('medio');
   await pagina.getByLabel('Nota mínima para passar (%)').fill('80');
 
-  await previa().getByText('CLASE 5 — QUIZ').waitFor();
+  await previa().getByText('Quiz de la clase 5').waitFor();
   await previa().getByText('Eu ______ brasileiro.').waitFor();
   await previa().getByText('Ella vive en Brasil.').waitFor();
   assert.equal(await previa().getByText('Ela mora no Brasil.').count(), 0, 'a frase na ordem certa não aparece para o aluno');

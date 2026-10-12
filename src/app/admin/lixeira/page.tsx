@@ -70,11 +70,11 @@ export default async function PaginaLixeira({ searchParams }: Props) {
         </Cartao>
       ) : (
         <Cartao className="py-2 sm:py-2">
-          <ul className="flex flex-col divide-y divide-linha">
+          <ul className="flex flex-col divide-y divide-borda">
             {itens.map((item) => (
               <li key={`${item.tipo}-${item.id}`} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div className="flex min-w-0 flex-col">
-                  <span className="text-xs font-semibold tracking-[0.08em] text-apoio">{NOME[item.tipo].toUpperCase()}</span>
+                  <span className="text-sm font-semibold text-dourado-texto">{NOME[item.tipo]}</span>
                   <span className="text-base font-semibold">{item.titulo}</span>
                   <span className="text-sm text-apoio">
                     {item.detalhe ? `${item.detalhe} · ` : ''}na lixeira desde {dataCurta(item.quando)}

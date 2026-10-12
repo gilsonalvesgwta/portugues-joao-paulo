@@ -30,7 +30,7 @@ function endereco(filtro: Filtro, busca: string, pagina: number): string {
 }
 
 // "relative" prende à área que rola os textos só para leitor de tela da tabela.
-const classeDaTabela = 'relative overflow-x-auto rounded-2xl border border-linha bg-cartao';
+const classeDaTabela = 'relative overflow-x-auto rounded-3xl border border-borda bg-cartao shadow-cartao';
 
 export default async function PaginaAlunos({ searchParams }: Props) {
   await exigirAdmin();
@@ -103,10 +103,10 @@ export default async function PaginaAlunos({ searchParams }: Props) {
             <table className="w-full min-w-[640px] border-collapse text-left text-[15px]">
               <caption className="sr-only">Pessoas cadastradas</caption>
               <thead>
-                <tr className="border-b border-linha text-xs font-semibold tracking-[0.08em] text-apoio">
-                  <th scope="col" className="px-4 py-3">PESSOA</th>
-                  <th scope="col" className="px-4 py-3">ACESSO</th>
-                  <th scope="col" className="px-4 py-3">DESDE</th>
+                <tr className="border-b border-borda bg-papel text-sm font-semibold text-apoio">
+                  <th scope="col" className="px-4 py-3">Pessoa</th>
+                  <th scope="col" className="px-4 py-3">Acesso</th>
+                  <th scope="col" className="px-4 py-3">Desde</th>
                   <th scope="col" className="px-4 py-3">
                     <span className="sr-only">Ações</span>
                   </th>
@@ -116,7 +116,7 @@ export default async function PaginaAlunos({ searchParams }: Props) {
                 {pessoas.map((pessoa) => {
                   const papel = lerPapel(pessoa.papel);
                   return (
-                    <tr key={pessoa.id} className="border-b border-linha last:border-b-0">
+                    <tr key={pessoa.id} className="border-b border-borda last:border-b-0">
                       <td className="px-4 py-3">
                         <span className="block font-semibold">{pessoa.nome || 'Sem nome'}</span>
                         <span className="block break-all text-sm text-apoio">{pessoa.email}</span>
