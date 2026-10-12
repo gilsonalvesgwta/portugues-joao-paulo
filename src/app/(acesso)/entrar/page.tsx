@@ -22,7 +22,7 @@ export default async function PaginaEntrar({ searchParams }: Props) {
 
   return (
     <>
-      <Cabecalho area={es.acesso.area} titulo={es.entrar.titulo} texto={es.entrar.texto} tituloOculto soNoComputador />
+      <Cabecalho area={es.acesso.area} titulo={es.entrar.titulo} tituloOculto />
       <form action={entrar} className="flex flex-col gap-4 lg:gap-[18px]">
         {erro ? <Aviso tipo="erro">{erro}</Aviso> : null}
         <CampoDeCorreo rotulo={es.entrar.correoCorto} exemplo={es.entrar.correoEjemplo} />

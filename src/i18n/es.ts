@@ -26,7 +26,6 @@ export const es = {
   },
   entrar: {
     titulo: 'Entra a tus clases',
-    texto: 'Usa el correo con el que hiciste tu compra.',
     correo: 'Correo electrónico de tu compra',
     correoCorto: 'Correo electrónico',
     correoEjemplo: 'tucorreo@email.com',

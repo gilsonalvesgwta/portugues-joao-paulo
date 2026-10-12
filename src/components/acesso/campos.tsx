@@ -9,25 +9,12 @@ export const classeDoRotulo = 'text-[15px] font-semibold';
 
 // "tituloOculto": a tela de entrada não mostra o título (o formulário já diz o que é); ele fica
 // só para leitor de tela, que precisa de um título em cada página.
-// "soNoComputador": o texto de apoio aparece só na tela larga.
-export function Cabecalho({
-  area,
-  titulo,
-  texto,
-  tituloOculto = false,
-  soNoComputador = false,
-}: {
-  area: string;
-  titulo: string;
-  texto?: string;
-  tituloOculto?: boolean;
-  soNoComputador?: boolean;
-}) {
+export function Cabecalho({ area, titulo, texto, tituloOculto = false }: { area: string; titulo: string; texto?: string; tituloOculto?: boolean }) {
   return (
     <div className="flex flex-col gap-1.5 lg:gap-2.5">
       <p className="text-sm font-semibold text-dourado-texto lg:text-[15px]">{area}</p>
       <h1 className={tituloOculto ? 'sr-only' : 'font-titulo text-[34px] font-bold leading-[1.1] lg:text-[46px] lg:leading-[1.08] lg:tracking-[-0.01em]'}>{titulo}</h1>
-      {texto ? <p className={`text-base leading-normal text-apoio lg:text-[17px] ${soNoComputador ? 'hidden lg:block' : ''}`}>{texto}</p> : null}
+      {texto ? <p className="text-base leading-normal text-apoio lg:text-[17px]">{texto}</p> : null}
     </div>
   );
 }
