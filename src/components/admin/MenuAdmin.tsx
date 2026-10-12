@@ -108,11 +108,13 @@ type Props = { admin: boolean; nome: string; papel: string };
 // A faixa verde da esquerda, no computador.
 export function MenuAdmin({ admin, nome, papel }: Props) {
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-7 overflow-y-auto bg-verde px-4 pb-5 pt-6 text-fundo lg:flex">
-      <Marca />
-      <Lista admin={admin} />
-      <div className="mt-auto">
-        <Pessoa nome={nome} papel={papel} />
+    <aside className="hidden w-64 shrink-0 bg-verde text-fundo lg:block">
+      <div className="sticky top-0 flex h-dvh flex-col gap-7 overflow-y-auto px-4 pb-5 pt-6">
+        <Marca />
+        <Lista admin={admin} />
+        <div className="mt-auto">
+          <Pessoa nome={nome} papel={papel} />
+        </div>
       </div>
     </aside>
   );

@@ -21,7 +21,7 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ aviso?: 
 // e o botão da ação.
 function Item({ feito, nome, detalhe, acao }: { feito: boolean; nome: string; detalhe: string; acao?: ReactNode }) {
   return (
-    <li className="flex items-center gap-3 border-b border-borda py-3 last:border-b-0 last:pb-1">
+    <li className="flex items-start gap-3 border-b border-borda py-3 last:border-b-0 last:pb-1">
       {feito ? (
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-verde text-white">
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -34,11 +34,13 @@ function Item({ feito, nome, detalhe, acao }: { feito: boolean; nome: string; de
           <span className="sr-only">Ainda não tem</span>
         </span>
       )}
-      <span className="flex min-w-0 flex-1 flex-col gap-px">
-        <span className="text-base font-bold">{nome}</span>
-        <span className="break-words text-sm leading-snug text-apoio">{detalhe}</span>
+      <span className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <span className="flex min-w-[9.5rem] flex-1 flex-col gap-px">
+          <span className="text-base font-bold">{nome}</span>
+          <span className="text-sm leading-snug text-apoio">{detalhe}</span>
+        </span>
+        {acao}
       </span>
-      {acao}
     </li>
   );
 }
