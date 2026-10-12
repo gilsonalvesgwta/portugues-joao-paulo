@@ -189,8 +189,8 @@ function PreviaDoQuiz({ numero, perguntas }: { numero: number; perguntas: Pergun
       {perguntas.map((pergunta, i) => (
         <section key={pergunta.id} className="flex flex-col gap-2.5">
           <p className="flex items-baseline gap-2 text-[15px] font-semibold text-dourado-texto">
-            <span className="font-titulo text-lg font-bold italic">{i + 1}</span>{' '}
-            <span>{pergunta.tipo === 'multipla_escolha' ? es.quiz.elige : pergunta.tipo === 'completar' ? es.quiz.completa : es.quiz.ordena}</span>
+            <em className="font-titulo text-lg font-bold">{i + 1}</em>{' '}
+            {pergunta.tipo === 'multipla_escolha' ? es.quiz.elige : pergunta.tipo === 'completar' ? es.quiz.completa : es.quiz.ordena}
           </p>
           {pergunta.tipo === 'multipla_escolha' ? <p className="text-base font-bold text-texto">{pergunta.enunciado}</p> : null}
           {pergunta.tipo === 'completar' ? (

@@ -186,7 +186,7 @@ test('a tela da aula e a lista mostram o quiz; com alteração sem salvar, sair 
   aoPerguntar = 'aceitar';
   await pagina.getByRole('link', { name: 'Editar aula 5' }).click();
   await pagina.waitForURL(`**/admin/aulas/${aulaId}`);
-  await pagina.getByText('2 perguntas · Publicado').waitFor();
+  await pagina.getByText('2 perguntas, publicado', { exact: true }).waitFor();
   assert.equal((await noBanco()).perguntas[1].conteudo.traducao, 'Ella vive en Brasil.', 'o que não foi salvo não foi gravado');
 
   await pagina.goto(`${base}/admin/aulas?busca=${sufixo}`);

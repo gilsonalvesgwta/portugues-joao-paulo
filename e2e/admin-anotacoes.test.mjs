@@ -177,7 +177,7 @@ test('com alteração sem salvar, sair pede confirmação', async () => {
   aoPerguntar = 'aceitar';
   await pagina.getByRole('link', { name: 'Editar aula 7' }).click();
   await pagina.waitForURL(`**/admin/aulas/${aulaId}`);
-  await pagina.getByText('5 blocos de anotações.').waitFor();
+  await pagina.getByText('5 blocos', { exact: true }).waitFor();
   assert.equal((await gravadas())[2].texto.startsWith('Se dice'), true, 'o que não foi salvo não foi gravado');
 
   await pagina.goto(`${base}/admin/aulas?busca=${sufixo}`);
