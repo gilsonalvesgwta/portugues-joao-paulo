@@ -52,11 +52,11 @@ export function EnderecoSecreto({ escondido, rotulo }: { escondido: string; rotu
   }
 
   const classeDoBotao =
-    'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-borda-campo bg-cartao px-4 text-[15px] font-bold text-texto hover:bg-fundo disabled:cursor-default disabled:opacity-50';
+    'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-linha bg-cartao px-4 text-[15px] font-bold text-texto hover:bg-fundo disabled:cursor-default disabled:opacity-50';
 
   return (
     <div className="flex flex-col gap-2">
-      <p aria-label={rotulo} className="select-all break-all rounded-[10px] bg-fundo px-3 py-2 font-mono text-sm text-texto">
+      <p aria-label={rotulo} className="select-all break-all rounded-xl bg-fundo px-3 py-2 font-mono text-sm text-texto">
         {visivel && endereco !== null ? endereco : escondido}
       </p>
       <div className="flex flex-wrap items-center gap-3">

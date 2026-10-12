@@ -19,7 +19,7 @@ export function ListaDeMateriais({
   return (
     <>
       <div id="materiais" className="flex scroll-mt-6 flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold">{titulo}</h2>
+        <h2 className="text-[21px] font-bold leading-tight">{titulo}</h2>
         <LinkBotao href={novo} variante="secundario">
           Adicionar material
         </LinkBotao>
@@ -27,7 +27,7 @@ export function ListaDeMateriais({
       {materiais.length === 0 ? (
         <p className="mt-2 text-[15px] leading-normal text-apoio">{vazio}</p>
       ) : (
-        <ol className="mt-3 flex flex-col divide-y divide-linha border-y border-linha">
+        <ol className="mt-3 flex flex-col divide-y divide-borda border-y border-borda">
           {materiais.map((material, indice) => (
             <li key={material.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div className="flex min-w-0 flex-col gap-0.5">

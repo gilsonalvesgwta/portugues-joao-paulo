@@ -26,7 +26,7 @@ export default async function PaginaEditarModulo({ params }: Props) {
         />
       </Cartao>
       <Cartao>
-        <h2 className="text-lg font-bold">Lixeira</h2>
+        <h2 className="text-[21px] font-bold leading-tight">Lixeira</h2>
         {quantas > 0 ? (
           <p className="mt-2 text-[15px] leading-normal text-apoio">
             Este módulo tem {quantas === 1 ? '1 aula' : `${quantas} aulas`}. Para movê-lo para a lixeira, antes mova as

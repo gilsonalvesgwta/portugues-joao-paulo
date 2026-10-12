@@ -13,9 +13,9 @@ import {
 // Como nos outros editores, nada é gravado até salvar, e a tela avisa antes de sair sem salvar.
 
 const classeDoBotaoMenor =
-  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-borda-campo bg-cartao px-3 text-sm font-semibold text-texto hover:bg-fundo disabled:cursor-default disabled:opacity-40';
+  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-linha bg-cartao px-3 text-sm font-semibold text-texto hover:bg-fundo disabled:cursor-default disabled:opacity-40';
 const classeDaSelecao =
-  'box-border h-11 w-full min-w-0 rounded-[10px] border border-borda-campo bg-cartao px-3 text-[15px] text-texto';
+  'box-border h-12 w-full min-w-0 rounded-xl border border-borda-campo bg-cartao px-3.5 text-base text-texto';
 
 const NOME_DO_TIPO: Record<TipoDeItem, string> = { aula: 'Aula', quiz: 'Quiz', tarefa: 'Tarefa' };
 const CLASSE_DO_TIPO: Record<TipoDeItem, string> = {
@@ -30,7 +30,7 @@ function AdicionarAoDia({ numero, fora, cheio, aoAdicionar }: { numero: number; 
   const id = `adicionar-ao-dia-${numero}`;
   if (fora.length === 0) return null;
   return (
-    <div className="flex flex-wrap items-end gap-2 border-t border-linha pt-4">
+    <div className="flex flex-wrap items-end gap-2 border-t border-borda pt-4">
       <div className="flex min-w-0 flex-1 basis-56 flex-col gap-1.5">
         <label htmlFor={id} className="text-sm font-semibold">
           Adicionar ao dia {numero}
@@ -108,7 +108,7 @@ export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
         <input type="hidden" name="curso_id" value={cursoId} />
         <input type="hidden" name="trilha" value={JSON.stringify(dias)} />
 
-        <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-linha bg-cartao px-5 py-4 shadow-sm">
+        <div className="sticky top-[72px] z-10 lg:top-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-borda bg-cartao px-5 py-4 shadow-sm">
           <p role="status" className={`text-[15px] font-semibold ${sujo ? 'text-aviso' : 'text-verde'}`}>
             {sujo
               ? 'Há alterações que ainda não foram salvas.'
@@ -121,7 +121,7 @@ export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
           <button
             type="submit"
             disabled={enviando || !pronto}
-            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-verde bg-verde px-4 text-[15px] font-bold text-white hover:bg-verde-link disabled:cursor-default disabled:opacity-50"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-verde bg-verde px-4 text-[15px] font-bold text-white hover:bg-verde-link disabled:cursor-default disabled:opacity-50"
           >
             {enviando ? 'Salvando…' : 'Salvar trilha'}
           </button>
@@ -136,7 +136,7 @@ export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
         <fieldset disabled={enviando || !pronto} className="flex min-w-0 flex-col gap-4">
           <legend className="sr-only">Dias da trilha</legend>
           {dias.map((dia, d) => (
-            <section key={d} aria-label={`Dia ${d + 1}`} className="flex flex-col gap-4 rounded-2xl border border-linha bg-cartao p-5">
+            <section key={d} aria-label={`Dia ${d + 1}`} className="flex flex-col gap-4 rounded-2xl border border-borda bg-cartao p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-titulo text-xl font-bold">Dia {d + 1}</h2>
                 <div className="flex gap-1.5">
@@ -172,7 +172,7 @@ export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
               {dia.itens.length === 0 ? (
                 <p className="rounded-xl bg-fundo px-4 py-3 text-[15px] text-apoio">Dia vazio. Dias sem nenhum item não são gravados.</p>
               ) : (
-                <ol className="flex flex-col divide-y divide-linha border-y border-linha">
+                <ol className="flex flex-col divide-y divide-borda border-y border-borda">
                   {dia.itens.map((item, i) => {
                     const disponivel = porChave.get(chave(item));
                     const rotulo = disponivel?.rotulo ?? 'Item que não existe mais';
@@ -255,8 +255,8 @@ export function EditorDaTrilha({ cursoId, iniciais, disponiveis }: Props) {
         </fieldset>
       </form>
 
-      <aside aria-label="Fora da trilha" className="flex min-w-0 flex-col gap-3 rounded-2xl border border-linha bg-cartao p-5 xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto">
-        <h2 className="text-xs font-bold tracking-[0.12em] text-apoio">FORA DA TRILHA</h2>
+      <aside aria-label="Fora da trilha" className="flex min-w-0 flex-col gap-3 rounded-2xl border border-borda bg-cartao p-5 xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto">
+        <h2 className="text-[15px] font-semibold text-dourado-texto">Fora da trilha</h2>
         {fora.length === 0 ? (
           <p className="text-[15px] leading-normal text-apoio">
             {disponiveis.length === 0 ? 'Este curso ainda não tem aulas, quizzes nem tarefas.' : 'Tudo o que existe no curso já está em algum dia.'}

@@ -364,7 +364,7 @@ test('a equipe vê o curso como o aluno, com tudo aberto, e nada do que faz fica
   const dele = await novaPagina(navegador);
   await entrar(dele, professor.email, senha);
   await dele.waitForURL('**/admin');
-  await dele.getByRole('link', { name: 'Abrir a área do aluno' }).click();
+  await dele.getByRole('link', { name: 'Ver como o aluno' }).click();
   await dele.waitForURL('**/inicio');
   await dele.goto(`${base}/inicio?curso=${cursoId}`);
   await dele.getByText('Vista previa del equipo: ves el curso como lo ve un alumno. Tu progreso no se guarda.').waitFor();

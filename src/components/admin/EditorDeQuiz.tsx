@@ -17,11 +17,11 @@ import {
 // direita como o aluno as recebe (sem a resposta marcada), e nada é gravado até salvar.
 
 const classeDaEntrada =
-  'box-border h-11 w-full min-w-0 rounded-[10px] border border-borda-campo bg-cartao px-3 text-[15px] text-texto placeholder:text-apoio';
+  'box-border h-12 w-full min-w-0 rounded-xl border border-borda-campo bg-cartao px-3.5 text-base text-texto placeholder:text-apoio';
 const classeDoBotaoMenor =
-  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border border-borda-campo bg-cartao px-3 text-sm font-semibold text-texto hover:bg-fundo disabled:cursor-default disabled:opacity-40';
+  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-linha bg-cartao px-3 text-sm font-semibold text-texto hover:bg-fundo disabled:cursor-default disabled:opacity-40';
 const classeDoBotaoDeSalvar =
-  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] border px-4 text-[15px] font-bold disabled:cursor-default disabled:opacity-50';
+  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-4 text-[15px] font-bold disabled:cursor-default disabled:opacity-50';
 
 type Mudar = (pergunta: PerguntaNoEditor) => void;
 
@@ -63,7 +63,7 @@ function Opcoes({
       <legend className="mb-1.5 text-sm font-semibold">Opções de resposta (marque a correta)</legend>
       {opcoes.map((opcao, i) => (
         <div key={i} className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
-          <label className="flex h-11 cursor-pointer items-center justify-center rounded-[10px] border border-borda-campo bg-cartao has-[:checked]:border-verde has-[:checked]:bg-verde-suave">
+          <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl border border-borda-campo bg-cartao has-[:checked]:border-verde has-[:checked]:bg-verde-suave">
             <input
               type="radio"
               name={`correta-${pergunta.id}`}
@@ -180,17 +180,17 @@ function CamposDaPergunta({ pergunta, aoMudar, foco }: { pergunta: PerguntaNoEdi
 
 // Como o aluno recebe cada pergunta: sem a resposta marcada, e com as palavras fora de ordem.
 function PreviaDoQuiz({ numero, perguntas }: { numero: number; perguntas: PerguntaNoEditor[] }) {
-  const chip = 'rounded-[10px] border border-borda-campo bg-cartao px-3 py-2 text-[15px] text-texto';
+  const chip = 'rounded-xl border border-borda-campo bg-cartao px-3 py-2 text-[15px] text-texto';
   return (
-    <article lang="es" className="flex flex-col gap-5 rounded-2xl border border-linha bg-cartao px-5 pb-7 pt-6">
-      <p className="self-start rounded border border-verde px-2.5 py-1.5 text-[11px] font-bold tracking-[0.16em] text-verde">
-        {es.clase.clase.toUpperCase()} {numero} — {es.quiz.titulo.toUpperCase()}
+    <article lang="es" className="flex flex-col gap-5 rounded-3xl border border-borda bg-cartao px-5 pb-7 pt-6 sm:shadow-cartao">
+      <p className="text-[15px] font-semibold text-dourado-texto">
+        {es.quiz.deLaClase} {numero}
       </p>
       {perguntas.map((pergunta, i) => (
         <section key={pergunta.id} className="flex flex-col gap-2.5">
-          <p className="text-xs font-bold tracking-[0.14em] text-dourado-texto">
-            {String(i + 1).padStart(2, '0')} —{' '}
-            {(pergunta.tipo === 'multipla_escolha' ? es.quiz.elige : pergunta.tipo === 'completar' ? es.quiz.completa : es.quiz.ordena).toUpperCase()}
+          <p className="flex items-baseline gap-2 text-[15px] font-semibold text-dourado-texto">
+            <em className="font-titulo text-lg font-bold">{i + 1}</em>{' '}
+            {pergunta.tipo === 'multipla_escolha' ? es.quiz.elige : pergunta.tipo === 'completar' ? es.quiz.completa : es.quiz.ordena}
           </p>
           {pergunta.tipo === 'multipla_escolha' ? <p className="text-base font-bold text-texto">{pergunta.enunciado}</p> : null}
           {pergunta.tipo === 'completar' ? (
@@ -272,7 +272,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
         <input type="hidden" name="aula_id" value={aulaId} />
         <input type="hidden" name="quiz" value={JSON.stringify(quiz)} />
 
-        <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-linha bg-cartao px-5 py-4 shadow-sm">
+        <div className="sticky top-[72px] z-10 lg:top-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-borda bg-cartao px-5 py-4 shadow-sm">
           <p role="status" className={`text-[15px] font-semibold ${sujo ? 'text-aviso' : 'text-verde'}`}>
             {sujo
               ? 'Há alterações que ainda não foram salvas.'
@@ -317,7 +317,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
         <fieldset disabled={enviando || !pronto} className="flex min-w-0 flex-col gap-4">
           <legend className="sr-only">Quiz da aula</legend>
 
-          <section aria-label="Configuração do quiz" className="grid gap-4 rounded-2xl border border-linha bg-cartao p-5 sm:grid-cols-2">
+          <section aria-label="Configuração do quiz" className="grid gap-4 rounded-2xl border border-borda bg-cartao p-5 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="dificuldade" className="text-sm font-semibold">
                 Dificuldade
@@ -363,11 +363,11 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
               <section
                 key={pergunta.id}
                 aria-label={`Pergunta ${indice + 1}: ${nome}`}
-                className={`flex flex-col gap-4 rounded-2xl border bg-cartao p-5 ${erro ? 'border-perigo' : 'border-linha'}`}
+                className={`flex flex-col gap-4 rounded-3xl border bg-cartao p-5 sm:p-6 sm:shadow-cartao ${erro ? 'border-perigo' : 'border-borda'}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-xs font-bold tracking-[0.1em] text-apoio">
-                    {indice + 1}. {nome.toUpperCase()}
+                  <h2 className="text-[15px] font-semibold text-dourado-texto">
+                    {indice + 1}. {nome}
                   </h2>
                   <div className="flex gap-1.5">
                     <button
@@ -417,7 +417,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
                   type="button"
                   disabled={quiz.perguntas.length >= LIMITES_DO_QUIZ.perguntas}
                   onClick={() => adicionar(tipo)}
-                  className="flex min-h-11 cursor-pointer flex-col items-start gap-0.5 rounded-[10px] border border-borda-campo bg-cartao px-3 py-2 text-left hover:bg-fundo disabled:cursor-default disabled:opacity-40"
+                  className="flex min-h-11 cursor-pointer flex-col items-start gap-0.5 rounded-xl border border-borda-campo bg-cartao px-3 py-2 text-left hover:bg-fundo disabled:cursor-default disabled:opacity-40"
                 >
                   <span className="text-[15px] font-bold text-texto">{nome}</span>
                   <span className="text-[13px] leading-snug text-apoio">{ajuda}</span>
@@ -433,9 +433,9 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
         aria-label="Prévia do aluno"
         className="flex min-w-0 flex-col gap-2.5 xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto"
       >
-        <p className="text-xs font-bold tracking-[0.12em] text-apoio">PRÉVIA DO ALUNO</p>
+        <p className="text-[15px] font-semibold text-dourado-texto">Prévia do aluno</p>
         {quiz.perguntas.length === 0 ? (
-          <p className="rounded-2xl border border-linha bg-cartao px-5 py-6 text-[15px] leading-normal text-apoio">
+          <p className="rounded-2xl border border-borda bg-cartao px-5 py-6 text-[15px] leading-normal text-apoio">
             A prévia aparece aqui conforme você adiciona as perguntas.
           </p>
         ) : (

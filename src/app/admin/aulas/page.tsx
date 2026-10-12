@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { AvisoDaPagina, Botao, Cartao, Etiqueta, LinkBotao, Selecao, Entrada, TituloDaPagina } from '@/components/admin/ui';
+import Link from 'next/link';
+import { AvisoDaPagina, Botao, Cartao, Etiqueta, LinkBotao, NumeroDaAula, Pilula, Selecao, Entrada, TituloDaPagina } from '@/components/admin/ui';
 import { avisoDe } from '@/lib/admin/avisos';
 import { ativos, blocosPorAula, carregarConteudo, modulosPorCurso, quizzesPorAula } from '@/lib/admin/dados';
 import { formatarDuracao, limpar } from '@/lib/conteudo';
@@ -11,7 +12,9 @@ type Props = { searchParams: Promise<{ aviso?: Texto; modulo?: Texto; situacao?:
 
 // "relative" prende à área que rola os textos só para leitor de tela (sr-only) da tabela;
 // sem isso eles alargam a página inteira no celular.
-const classeDaTabela = 'relative overflow-x-auto rounded-2xl border border-linha bg-cartao';
+// No computador, uma tabela; no celular, cada linha vira um cartão (as mesmas células, uma
+// embaixo da outra), sem rolar de lado. "relative" prende à área os textos só para leitor de tela.
+const classeDaTabela = 'relative md:overflow-x-auto md:rounded-3xl md:border md:border-borda md:bg-cartao md:shadow-cartao';
 
 // Compara sem diferenciar maiúsculas nem acentos: "licao" acha "Lição".
 function semAcento(texto: string): string {
@@ -58,7 +61,14 @@ export default async function PaginaAulas({ searchParams }: Props) {
   return (
     <>
       <TituloDaPagina titulo="Aulas" texto="Aulas em rascunho não aparecem para o aluno.">
-        {semModulos ? null : <LinkBotao href={novaAula}>Nova aula</LinkBotao>}
+        {semModulos ? null : (
+          <LinkBotao href={novaAula}>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>Nova aula</span>
+          </LinkBotao>
+        )}
       </TituloDaPagina>
       <AvisoDaPagina aviso={avisoDe(filtros.aviso)} />
 
@@ -73,8 +83,8 @@ export default async function PaginaAulas({ searchParams }: Props) {
         </Cartao>
       ) : (
         <>
-          <form method="get" className="flex flex-wrap items-end gap-3">
-            <div className="w-full sm:w-64">
+          <form method="get" className="flex flex-wrap items-end gap-3 rounded-[22px] border border-borda bg-cartao p-4 sm:rounded-3xl sm:px-5 sm:py-[18px]">
+            <div className="min-w-0 flex-1 basis-56">
               <Selecao id="modulo" rotulo="Módulo" defaultValue={moduloEscolhido}>
                 <option value="">Todos os módulos</option>
                 {grupos.map((grupo) => (
@@ -88,7 +98,7 @@ export default async function PaginaAulas({ searchParams }: Props) {
                 ))}
               </Selecao>
             </div>
-            <div className="w-full sm:w-44">
+            <div className="min-w-0 flex-1 basis-40">
               <Selecao id="situacao" rotulo="Situação" defaultValue={situacaoEscolhida}>
                 <option value="">Todas</option>
                 <option value="publicado">Publicadas</option>
@@ -114,73 +124,71 @@ export default async function PaginaAulas({ searchParams }: Props) {
             </Cartao>
           ) : (
             <div className={classeDaTabela}>
-              <table className="w-full min-w-[860px] border-collapse text-left text-[15px]">
+              <table className="block w-full border-collapse text-left text-[15px] md:table md:min-w-[820px]">
                 <caption className="sr-only">Lista de aulas</caption>
-                <thead>
-                  <tr className="border-b border-linha text-xs font-semibold tracking-[0.08em] text-apoio">
-                    <th scope="col" className="w-14 px-4 py-3">Nº</th>
-                    <th scope="col" className="px-4 py-3">AULA</th>
-                    <th scope="col" className="px-4 py-3">MÓDULO</th>
-                    <th scope="col" className="px-4 py-3">VÍDEO</th>
-                    <th scope="col" className="px-4 py-3">ANOTAÇÕES</th>
-                    <th scope="col" className="px-4 py-3">QUIZ</th>
-                    <th scope="col" className="px-4 py-3">SITUAÇÃO</th>
-                    <th scope="col" className="px-4 py-3">
+                <thead className="hidden md:table-header-group">
+                  <tr className="border-b border-borda bg-papel text-sm font-semibold text-apoio">
+                    <th scope="col" className="py-3.5 pl-5 pr-4">Aula</th>
+                    <th scope="col" className="px-4 py-3.5">Módulo</th>
+                    <th scope="col" className="px-4 py-3.5">Conteúdo</th>
+                    <th scope="col" className="px-4 py-3.5">Situação</th>
+                    <th scope="col" className="py-3.5 pl-4 pr-5">
                       <span className="sr-only">Ações</span>
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="flex flex-col gap-2.5 md:table-row-group">
                   {aulas.map((aula) => {
                     const dono = moduloPorId.get(aula.modulo_id);
                     const quantos = blocos.get(aula.id) ?? 0;
                     const quiz = quizzes.get(aula.id);
+                    const publicada = aula.situacao === 'publicado';
                     return (
-                      <tr key={aula.id} className="border-b border-linha last:border-b-0">
-                        <td className="px-4 py-3 font-bold">{aula.numero}</td>
-                        <td className="px-4 py-3">
-                          <span className="block font-semibold">{aula.titulo_pt}</span>
-                          <span className="block text-sm text-apoio" lang="es">
-                            {aula.titulo_es}
-                          </span>
+                      <tr
+                        key={aula.id}
+                        className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-2.5 rounded-[18px] border border-borda bg-cartao p-3.5 md:table-row md:rounded-none md:border-0 md:border-b md:bg-transparent md:p-0 md:last:border-b-0"
+                      >
+                        <td className="col-span-2 md:py-3.5 md:pl-5 md:pr-4">
+                          <div className="flex items-center gap-3 md:gap-3.5">
+                            <NumeroDaAula numero={aula.numero} publicada={publicada} />
+                            <span className="flex min-w-0 flex-col gap-0.5">
+                              <span className="break-words font-bold leading-snug">{aula.titulo_pt}</span>
+                              <span className="break-words text-sm text-apoio md:hidden">{dono?.modulo.titulo_pt}</span>
+                              <span className="hidden break-words text-sm text-apoio md:block" lang="es">
+                                {aula.titulo_es}
+                              </span>
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="hidden md:table-cell md:px-4 md:py-3.5">
                           <span className="block">{dono?.modulo.titulo_pt}</span>
                           {variosCursos ? <span className="block text-sm text-apoio">{dono?.curso.titulo_pt}</span> : null}
                         </td>
-                        <td className="px-4 py-3">
-                          {aula.video_id ? (
-                            <span>{formatarDuracao(aula.duracao_seg) || 'Com vídeo'}</span>
-                          ) : (
-                            <span className="font-semibold text-aviso">Sem vídeo</span>
-                          )}
+                        <td className="col-span-3 row-start-2 pl-14 md:table-cell md:px-4 md:py-3.5">
+                          <div className="flex flex-wrap gap-1.5">
+                            {aula.video_id ? <Pilula>{formatarDuracao(aula.duracao_seg) || 'Com vídeo'}</Pilula> : <Pilula alerta>Sem vídeo</Pilula>}
+                            <Pilula>{quantos === 0 ? 'Sem anotações' : quantos === 1 ? '1 bloco' : `${quantos} blocos`}</Pilula>
+                            {!quiz ? (
+                              <Pilula>Sem quiz</Pilula>
+                            ) : quiz.situacao === 'rascunho' ? (
+                              <Pilula alerta>Quiz em rascunho, {quiz.perguntas === 1 ? '1 pergunta' : `${quiz.perguntas} perguntas`}</Pilula>
+                            ) : (
+                              <Pilula>Quiz, {quiz.perguntas === 1 ? '1 pergunta' : `${quiz.perguntas} perguntas`}</Pilula>
+                            )}
+                          </div>
                         </td>
-                        <td className="px-4 py-3">
-                          {quantos === 0 ? (
-                            <span className="text-apoio">Vazias</span>
-                          ) : (
-                            <span>{quantos === 1 ? '1 bloco' : `${quantos} blocos`}</span>
-                          )}
+                        <td className="col-start-3 row-start-1 self-start md:table-cell md:px-4 md:py-3.5">
+                          <Etiqueta tom={publicada ? 'verde' : 'aviso'}>{publicada ? 'Publicada' : 'Rascunho'}</Etiqueta>
                         </td>
-                        <td className="px-4 py-3">
-                          {!quiz ? (
-                            <span className="text-apoio">Sem quiz</span>
-                          ) : (
-                            <>
-                              <span className="block">{quiz.perguntas === 1 ? '1 pergunta' : `${quiz.perguntas} perguntas`}</span>
-                              {quiz.situacao === 'rascunho' ? <span className="block text-sm text-aviso">em rascunho</span> : null}
-                            </>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Etiqueta tom={aula.situacao === 'publicado' ? 'verde' : 'aviso'}>
-                            {aula.situacao === 'publicado' ? 'Publicada' : 'Rascunho'}
-                          </Etiqueta>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <LinkBotao href={`/admin/aulas/${aula.id}`} variante="secundario">
-                            Editar<span className="sr-only"> a aula {aula.numero}</span>
-                          </LinkBotao>
+                        <td className="md:table-cell md:py-3.5 md:pl-4 md:pr-5 md:text-right">
+                          {/* No celular, o cartão inteiro abre a aula (o link cobre o cartão); no computador, é o botão. */}
+                          <Link
+                            href={`/admin/aulas/${aula.id}`}
+                            className="absolute inset-0 rounded-[18px] md:static md:inline-flex md:min-h-10 md:items-center md:rounded-xl md:border md:border-linha md:px-4 md:text-sm md:font-bold md:text-texto md:no-underline md:hover:bg-fundo"
+                          >
+                            <span className="sr-only md:not-sr-only">Editar</span>
+                            <span className="sr-only"> a aula {aula.numero}</span>
+                          </Link>
                         </td>
                       </tr>
                     );

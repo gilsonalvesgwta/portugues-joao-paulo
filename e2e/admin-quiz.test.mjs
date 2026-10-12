@@ -109,7 +109,7 @@ test('monta as três perguntas, a prévia não entrega a resposta, e o rascunho 
   await pagina.getByLabel('Dificuldade').selectOption('medio');
   await pagina.getByLabel('Nota mínima para passar (%)').fill('80');
 
-  await previa().getByText('CLASE 5 — QUIZ').waitFor();
+  await previa().getByText('Quiz de la clase 5').waitFor();
   await previa().getByText('Eu ______ brasileiro.').waitFor();
   await previa().getByText('Ella vive en Brasil.').waitFor();
   assert.equal(await previa().getByText('Ela mora no Brasil.').count(), 0, 'a frase na ordem certa não aparece para o aluno');
@@ -186,7 +186,7 @@ test('a tela da aula e a lista mostram o quiz; com alteração sem salvar, sair 
   aoPerguntar = 'aceitar';
   await pagina.getByRole('link', { name: 'Editar aula 5' }).click();
   await pagina.waitForURL(`**/admin/aulas/${aulaId}`);
-  await pagina.getByText('2 perguntas · Publicado').waitFor();
+  await pagina.getByText('2 perguntas, publicado', { exact: true }).waitFor();
   assert.equal((await noBanco()).perguntas[1].conteudo.traducao, 'Ella vive en Brasil.', 'o que não foi salvo não foi gravado');
 
   await pagina.goto(`${base}/admin/aulas?busca=${sufixo}`);

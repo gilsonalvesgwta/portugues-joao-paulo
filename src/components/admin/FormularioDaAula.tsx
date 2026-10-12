@@ -39,7 +39,7 @@ export function FormularioDaAula({ aula, grupos, previa = null }: Props) {
       <input type="hidden" name="id" value={aula.id} />
       <div key={estado.vez} className="flex flex-col gap-6">
         <section className="flex flex-col gap-5">
-          <h2 className="text-lg font-bold">Dados da aula</h2>
+          <h2 className="text-[21px] font-bold leading-tight">Dados da aula</h2>
           <div className="grid gap-5 sm:grid-cols-[140px_1fr]">
             <Entrada
               id="numero"
@@ -75,8 +75,8 @@ export function FormularioDaAula({ aula, grupos, previa = null }: Props) {
           </div>
         </section>
 
-        <section className="flex flex-col gap-5 border-t border-linha pt-6">
-          <h2 className="text-lg font-bold">Vídeo</h2>
+        <section className="flex flex-col gap-5 border-t border-borda pt-6">
+          <h2 className="text-[21px] font-bold leading-tight">Vídeo</h2>
           <div className="grid gap-5 sm:grid-cols-[1fr_180px]">
             <Entrada
               id="video_id"
@@ -110,19 +110,20 @@ export function FormularioDaAula({ aula, grupos, previa = null }: Props) {
                 allow="encrypted-media; picture-in-picture"
                 allowFullScreen
                 referrerPolicy="strict-origin-when-cross-origin"
-                className="aspect-video w-full max-w-[560px] rounded-xl border border-linha bg-carvao"
+                className="aspect-video w-full max-w-[560px] rounded-[18px] border border-borda bg-noite"
               />
             </div>
           ) : null}
         </section>
       </div>
 
-      <div className="flex flex-wrap gap-3 border-t border-linha pt-6">
-        <Botao name="situacao" value="rascunho" variante="secundario" disabled={enviando}>
-          Salvar como rascunho
-        </Botao>
+      {/* O rodapé encosta nas bordas do cartão, num fundo um tom mais quente. */}
+      <div className="-mx-[18px] -mb-[22px] flex flex-col gap-2.5 border-t border-borda bg-papel px-[18px] py-[18px] sm:-mx-7 sm:-mb-7 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 sm:rounded-b-3xl sm:px-7">
         <Botao name="situacao" value="publicado" disabled={enviando}>
           Salvar e publicar
+        </Botao>
+        <Botao name="situacao" value="rascunho" variante="secundario" disabled={enviando}>
+          Salvar como rascunho
         </Botao>
         <LinkBotao href="/admin/aulas" variante="discreto">
           Voltar sem salvar

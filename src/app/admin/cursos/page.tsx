@@ -58,7 +58,7 @@ export default async function PaginaCursos({ searchParams }: Props) {
           {modulos.length === 0 ? (
             <p className="rounded-xl bg-fundo px-4 py-3 text-[15px] text-apoio">Este curso ainda não tem módulos.</p>
           ) : (
-            <ol className="flex flex-col divide-y divide-linha border-y border-linha">
+            <ol className="flex flex-col divide-y divide-borda border-y border-borda">
               {modulos.map((modulo, indice) => {
                 const quantas = aulas.filter((aula) => aula.modulo_id === modulo.id).length;
                 return (

@@ -43,7 +43,7 @@ export default async function PaginaDaTurma({ params, searchParams }: Props) {
       <AvisoDaPagina aviso={avisoDe(aviso)} />
 
       <Cartao>
-        <h2 className="text-lg font-bold">Como o aluno vê este horário</h2>
+        <h2 className="text-[21px] font-bold leading-tight">Como o aluno vê este horário</h2>
         <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {horarioNasCidades(turma.inicio).map((cidade) => (
             <div key={cidade.cidade} className="rounded-xl bg-fundo px-3.5 py-3">
@@ -56,7 +56,7 @@ export default async function PaginaDaTurma({ params, searchParams }: Props) {
 
       {estado === 'cancelada' ? null : (
         <Cartao>
-          <h2 className="text-lg font-bold">Dados da turma</h2>
+          <h2 className="text-[21px] font-bold leading-tight">Dados da turma</h2>
           {reservas.length > 0 ? (
             <p className="mt-2 text-[15px] leading-normal text-apoio">
               Já há gente inscrita: o tema, a data e a hora não mudam mais. Para mudar o horário, cancele esta turma e crie outra.
@@ -84,7 +84,7 @@ export default async function PaginaDaTurma({ params, searchParams }: Props) {
       )}
 
       <Cartao>
-        <h2 id="inscritos" className="text-lg font-bold">
+        <h2 id="inscritos" className="text-[21px] font-bold leading-tight">
           Inscritos: {reservas.length} de {turma.vagas}
         </h2>
         {reservas.length === 0 ? (
@@ -94,7 +94,7 @@ export default async function PaginaDaTurma({ params, searchParams }: Props) {
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {reservas.map((reserva) => (
-              <li key={reserva.reserva_id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-linha p-3.5">
+              <li key={reserva.reserva_id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-borda p-3.5">
                 <div className="flex min-w-0 flex-col gap-0.5">
                   {pessoa.papel === 'admin' ? (
                     <Link href={`/admin/alunos/${reserva.aluno_id}`} className="font-semibold text-verde-link underline hover:text-verde">
@@ -149,7 +149,7 @@ export default async function PaginaDaTurma({ params, searchParams }: Props) {
 
       {estado === 'aberta' || estado === 'acontecendo' ? (
         <Cartao>
-          <h2 className="text-lg font-bold">Cancelar a turma</h2>
+          <h2 className="text-[21px] font-bold leading-tight">Cancelar a turma</h2>
           <p className="mb-3 mt-2 text-[15px] leading-normal text-apoio">
             Quem está inscrito recebe um e-mail avisando e ganha a reserva de volta para escolher outra aula. Não dá para desfazer.
           </p>

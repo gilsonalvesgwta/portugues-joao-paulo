@@ -2,36 +2,36 @@ import Link from 'next/link';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import type { AvisoDaAcao } from '@/lib/admin/avisos';
 
-// Peças visuais da administração (em português). Mesma paleta da área do aluno,
-// com campos e botões um pouco mais compactos, próprios de tela de trabalho.
+// Peças visuais da administração (em português). O mesmo visual da área do aluno: cartões de
+// canto largo com sombra leve, botões e campos altos, títulos em Playfair.
 
 const classeDaEntrada =
-  'box-border h-11 w-full min-w-0 rounded-[10px] border border-borda-campo bg-cartao px-3 text-[15px] text-texto placeholder:text-apoio aria-[invalid=true]:border-perigo';
+  'box-border h-12 w-full min-w-0 rounded-xl border border-borda-campo bg-cartao px-3.5 text-base text-texto placeholder:text-apoio aria-[invalid=true]:border-perigo';
 
 export function TituloDaPagina({ titulo, texto, children }: { titulo: string; texto?: string; children?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <h1 className="font-titulo text-[32px] font-bold leading-tight">{titulo}</h1>
-        {texto ? <p className="text-[15px] leading-normal text-apoio">{texto}</p> : null}
+    <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <div className="flex min-w-0 flex-col gap-1.5 lg:gap-2">
+        <h1 className="break-words font-titulo text-[32px] font-bold leading-[1.1] lg:text-[40px] lg:tracking-[-0.01em]">{titulo}</h1>
+        {texto ? <p className="text-base leading-normal text-apoio">{texto}</p> : null}
       </div>
-      {children ? <div className="flex flex-wrap items-center gap-3">{children}</div> : null}
+      {children ? <div className="flex flex-wrap items-center gap-2.5">{children}</div> : null}
     </div>
   );
 }
 
 export function Cartao({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-2xl border border-linha bg-cartao p-5 sm:p-6 ${className}`}>{children}</section>;
+  return <section className={`rounded-[22px] border border-borda bg-cartao px-[18px] py-[22px] sm:rounded-3xl sm:p-7 sm:shadow-cartao ${className}`}>{children}</section>;
 }
 
 export function AvisoDaPagina({ aviso }: { aviso: AvisoDaAcao | null }) {
   if (!aviso) return null;
   return aviso.tipo === 'erro' ? (
-    <p role="alert" className="rounded-xl border border-perigo bg-cartao px-4 py-3 text-[15px] font-semibold text-perigo">
+    <p role="alert" className="rounded-2xl border border-perigo bg-cartao px-4 py-3 text-[15px] font-semibold leading-normal text-perigo">
       {aviso.texto}
     </p>
   ) : (
-    <p role="status" className="rounded-xl border border-verde bg-verde-suave px-4 py-3 text-[15px] font-semibold text-verde">
+    <p role="status" className="rounded-2xl border border-verde bg-verde-suave px-4 py-3 text-[15px] font-semibold leading-normal text-verde">
       {aviso.texto}
     </p>
   );
@@ -46,7 +46,7 @@ const CLASSE_DO_TOM: Record<Tom, string> = {
 
 export function Etiqueta({ tom = 'neutro', children }: { tom?: Tom; children: ReactNode }) {
   return (
-    <span className={`inline-flex h-7 items-center whitespace-nowrap rounded-full px-3 text-[13px] font-semibold ${CLASSE_DO_TOM[tom]}`}>
+    <span className={`inline-flex h-[30px] items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm font-bold ${CLASSE_DO_TOM[tom]}`}>
       {children}
     </span>
   );
@@ -54,12 +54,12 @@ export function Etiqueta({ tom = 'neutro', children }: { tom?: Tom; children: Re
 
 type Variante = 'principal' | 'secundario' | 'discreto';
 const CLASSE_DA_VARIANTE: Record<Variante, string> = {
-  principal: 'bg-verde text-white no-underline hover:bg-verde-link border border-verde',
-  secundario: 'bg-cartao text-texto no-underline border border-borda-campo hover:bg-fundo',
+  principal: 'bg-verde text-white no-underline hover:bg-verde-link border border-verde shadow-botao',
+  secundario: 'bg-cartao text-texto no-underline border border-linha hover:bg-fundo',
   discreto: 'bg-transparent text-verde-link border border-transparent underline hover:text-verde',
 };
 const classeDoBotao =
-  'inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[10px] text-[15px] font-bold disabled:cursor-default disabled:opacity-50';
+  'inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl text-[15px] font-bold transition-colors disabled:cursor-default disabled:opacity-50';
 
 // "quadrado": botão de um símbolo só (setas de subir e descer).
 export function Botao({
@@ -71,7 +71,7 @@ export function Botao({
     <button
       type="submit"
       {...resto}
-      className={`${classeDoBotao} ${CLASSE_DA_VARIANTE[variante]} ${quadrado ? 'w-11' : variante === 'discreto' ? 'px-1' : 'px-4'}`}
+      className={`${classeDoBotao} ${CLASSE_DA_VARIANTE[variante]} ${quadrado ? 'w-12' : variante === 'discreto' ? 'px-1' : 'px-[18px]'}`}
     />
   );
 }
@@ -86,7 +86,7 @@ export function LinkBotao({
   children: ReactNode;
 }) {
   return (
-    <Link href={href} className={`${classeDoBotao} ${CLASSE_DA_VARIANTE[variante]} ${variante === 'discreto' ? 'px-1' : 'px-4'}`}>
+    <Link href={href} className={`${classeDoBotao} ${CLASSE_DA_VARIANTE[variante]} ${variante === 'discreto' ? 'px-1' : 'px-[18px]'}`}>
       {children}
     </Link>
   );
@@ -99,7 +99,7 @@ type PropsDoCampo = { id: string; nome?: string; rotulo: string; erro?: string; 
 function Moldura({ id, rotulo, erro, ajuda, children }: PropsDoCampo & { children: ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-semibold">
+      <label htmlFor={id} className="text-sm font-semibold sm:text-[15px]">
         {rotulo}
       </label>
       {children}
@@ -187,7 +187,7 @@ export function AreaDeTexto({
         name={id}
         aria-invalid={erro ? true : undefined}
         aria-describedby={descricao(id, erro, ajuda)}
-        className="box-border min-h-32 w-full min-w-0 rounded-[10px] border border-borda-campo bg-cartao px-3 py-2.5 text-[15px] leading-normal text-texto placeholder:text-apoio aria-[invalid=true]:border-perigo"
+        className="box-border min-h-32 w-full min-w-0 rounded-xl border border-borda-campo bg-cartao px-3.5 py-3 text-base leading-normal text-texto placeholder:text-apoio aria-[invalid=true]:border-perigo"
       />
     </Moldura>
   );
@@ -226,8 +226,36 @@ export function Caixa({
 // Caminho de volta no topo dos formulários: "Aulas / Editar aula 18".
 export function Trilha({ href, rotulo }: { href: string; rotulo: string }) {
   return (
-    <Link href={href} className="self-start text-[15px] font-semibold text-verde-link underline hover:text-verde">
-      ← {rotulo}
+    <Link href={href} className="-my-2 inline-flex min-h-11 items-center gap-1.5 self-start text-[15px] font-semibold text-verde-link no-underline hover:text-verde">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 6l-6 6 6 6" />
+      </svg>
+      <span>{rotulo}</span>
     </Link>
+  );
+}
+
+// Título de cartão, igual em todas as telas.
+export const TITULO_DO_CARTAO = 'text-[21px] font-bold leading-tight';
+
+// Uma linha de lista dentro de um cartão: o quadradinho com o número (verde se publicado, areia
+// se rascunho), o título e a linha de apoio. Serve às listas do painel e das aulas.
+export function NumeroDaAula({ numero, publicada }: { numero: number | string; publicada: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex size-11 shrink-0 items-center justify-center rounded-xl font-titulo text-xl font-bold italic ${publicada ? 'bg-verde-fundo text-dourado-claro' : 'bg-areia text-pedra'}`}
+    >
+      {numero}
+    </span>
+  );
+}
+
+// Selo pequeno e neutro, para dizer o que uma aula tem (duração, blocos, quiz).
+export function Pilula({ alerta = false, children }: { alerta?: boolean; children: ReactNode }) {
+  return (
+    <span className={`inline-flex h-7 items-center whitespace-nowrap rounded-full px-2.5 text-[13px] ${alerta ? 'bg-aviso-suave font-bold text-aviso' : 'bg-fundo font-semibold text-texto-suave'}`}>
+      {children}
+    </span>
   );
 }

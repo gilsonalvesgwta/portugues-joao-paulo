@@ -127,7 +127,7 @@ test('sem a chave, o Papo não aparece no menu, a tela explica e o painel mostra
   const dele = await novaPagina(navegador);
   await entrar(dele, administrador.email, senha);
   await dele.waitForURL('**/admin');
-  await dele.getByRole('heading', { name: 'Papo, o tutor com inteligência artificial' }).waitFor();
+  await dele.getByRole('heading', { name: 'Papo, o tutor' }).waitFor();
   await dele.getByText('Desligado', { exact: true }).waitFor();
   await dele.getByText(/variável CHAVE_DA_OPENAI/).waitFor();
   assert.equal(await dele.getByRole('button', { name: 'Testar o Papo' }).count(), 0, 'sem a chave não há o que testar');
@@ -248,7 +248,7 @@ test('painel: o administrador vê o Papo ligado e muda o limite do dia; o profes
   const dele = await novaPagina(navegador);
   await entrar(dele, administrador.email, senha);
   await dele.waitForURL('**/admin');
-  await dele.getByRole('heading', { name: 'Papo, o tutor com inteligência artificial' }).waitFor();
+  await dele.getByRole('heading', { name: 'Papo, o tutor' }).waitFor();
   await dele.getByText('Ligado', { exact: true }).waitFor();
   await dele.getByText(/hoje, a OpenAI \(modelo gpt-6-luna\)/).waitFor();
   await dele.getByText(/Nos últimos 7 dias: \d+ mensagens?, de \d+ pessoas?\./).waitFor();

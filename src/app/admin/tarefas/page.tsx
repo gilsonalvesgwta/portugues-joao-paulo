@@ -9,7 +9,7 @@ type Texto = string | string[] | undefined;
 type Props = { searchParams: Promise<{ aviso?: Texto; curso?: Texto }> };
 
 // "relative" prende à área que rola os textos só para leitor de tela da tabela.
-const classeDaTabela = 'relative overflow-x-auto rounded-2xl border border-linha bg-cartao';
+const classeDaTabela = 'relative overflow-x-auto rounded-3xl border border-borda bg-cartao shadow-cartao';
 
 export default async function PaginaTarefas({ searchParams }: Props) {
   const { aviso, curso: pedido } = await searchParams;
@@ -66,10 +66,10 @@ export default async function PaginaTarefas({ searchParams }: Props) {
           <table className="w-full min-w-[640px] border-collapse text-left text-[15px]">
             <caption className="sr-only">Tarefas do curso {curso.titulo_pt}</caption>
             <thead>
-              <tr className="border-b border-linha text-xs font-semibold tracking-[0.08em] text-apoio">
-                <th scope="col" className="px-4 py-3">TAREFA</th>
-                <th scope="col" className="px-4 py-3">AULA LIGADA</th>
-                <th scope="col" className="px-4 py-3">LINK</th>
+              <tr className="border-b border-borda bg-papel text-sm font-semibold text-apoio">
+                <th scope="col" className="px-4 py-3">Tarefa</th>
+                <th scope="col" className="px-4 py-3">Aula ligada</th>
+                <th scope="col" className="px-4 py-3">Link</th>
                 <th scope="col" className="px-4 py-3">
                   <span className="sr-only">Ações</span>
                 </th>
@@ -79,7 +79,7 @@ export default async function PaginaTarefas({ searchParams }: Props) {
               {tarefas.map((tarefa) => {
                 const aula = tarefa.aula_id ? aulaPorId.get(tarefa.aula_id) : undefined;
                 return (
-                  <tr key={tarefa.id} className="border-b border-linha last:border-b-0">
+                  <tr key={tarefa.id} className="border-b border-borda last:border-b-0">
                     <td className="px-4 py-3" lang="es">
                       <span className="block font-semibold">{tarefa.titulo_es}</span>
                       <span className="line-clamp-2 block text-sm text-apoio">{tarefa.instrucao_es}</span>

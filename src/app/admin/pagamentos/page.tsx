@@ -20,7 +20,7 @@ type Texto = string | string[] | undefined;
 type Props = { searchParams: Promise<{ aviso?: Texto; ver?: Texto; pagina?: Texto }> };
 
 // "relative" prende à área que rola os textos só para leitor de tela da tabela.
-const classeDaTabela = 'relative overflow-x-auto rounded-2xl border border-linha bg-cartao';
+const classeDaTabela = 'relative overflow-x-auto rounded-3xl border border-borda bg-cartao shadow-cartao';
 const SEGREDO_MIN = 24;
 
 function endereco(todos: boolean, pagina: number): string {
@@ -57,7 +57,7 @@ export default async function PaginaPagamentos({ searchParams }: Props) {
 
       <Cartao>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className="text-lg font-bold">Ligação com a Greenn</h2>
+          <h2 className="text-[21px] font-bold leading-tight">Ligação com a Greenn</h2>
           <Etiqueta tom={configurado ? 'verde' : 'aviso'}>{configurado ? 'Pronta para receber' : 'Falta configurar'}</Etiqueta>
         </div>
         {configurado ? (
@@ -84,7 +84,7 @@ export default async function PaginaPagamentos({ searchParams }: Props) {
       <Cartao>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-1">
-            <h2 className="text-lg font-bold">Ofertas</h2>
+            <h2 className="text-[21px] font-bold leading-tight">Ofertas</h2>
             <p className="text-[15px] leading-normal text-apoio">Cada produto vendido na Greenn aponta para um curso.</p>
           </div>
           <LinkBotao href="/admin/pagamentos/ofertas/nova">Nova oferta</LinkBotao>
@@ -98,7 +98,7 @@ export default async function PaginaPagamentos({ searchParams }: Props) {
             {ofertas.map((oferta) => {
               const curso = cursoPorId.get(oferta.curso_id);
               return (
-                <li key={oferta.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-linha p-4">
+                <li key={oferta.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-borda p-4">
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="font-bold">{oferta.nome}</span>
@@ -122,7 +122,7 @@ export default async function PaginaPagamentos({ searchParams }: Props) {
 
       <section aria-labelledby="avisos" className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h2 id="avisos" className="text-lg font-bold">
+          <h2 id="avisos" className="text-[21px] font-bold leading-tight">
             Avisos recebidos da Greenn
           </h2>
           <p className="text-[15px] leading-normal text-apoio">
@@ -164,18 +164,18 @@ export default async function PaginaPagamentos({ searchParams }: Props) {
             <table className="w-full min-w-[720px] border-collapse text-left text-[15px]">
               <caption className="sr-only">Avisos de pagamento</caption>
               <thead>
-                <tr className="border-b border-linha text-xs font-semibold tracking-[0.08em] text-apoio">
-                  <th scope="col" className="px-4 py-3">QUANDO</th>
-                  <th scope="col" className="px-4 py-3">AVISO</th>
-                  <th scope="col" className="px-4 py-3">QUEM COMPROU</th>
-                  <th scope="col" className="px-4 py-3">SITUAÇÃO</th>
+                <tr className="border-b border-borda bg-papel text-sm font-semibold text-apoio">
+                  <th scope="col" className="px-4 py-3">Quando</th>
+                  <th scope="col" className="px-4 py-3">Aviso</th>
+                  <th scope="col" className="px-4 py-3">Quem comprou</th>
+                  <th scope="col" className="px-4 py-3">Situação</th>
                 </tr>
               </thead>
               <tbody>
                 {lista.avisos.map((item) => {
                   const situacao = situacaoDoAviso(item);
                   return (
-                    <tr key={item.id} className="border-b border-linha align-top last:border-b-0">
+                    <tr key={item.id} className="border-b border-borda align-top last:border-b-0">
                       <td className="whitespace-nowrap px-4 py-3">{dataEHora(item.recebido_em)}</td>
                       <td className="px-4 py-3">
                         <span className="block font-semibold">{nomeDoAviso(item.tipo, item.status_atual)}</span>
