@@ -2,3 +2,5 @@
 *
 !supabase/migrations
 !deploy/banco/aplicar.sh
+!deploy/banco/copias.sh
+!deploy/banco/conferir-copia.awk
