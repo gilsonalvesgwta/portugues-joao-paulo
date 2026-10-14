@@ -241,17 +241,32 @@ A memória foi medida com o banco quase vazio, logo depois dos testes; com aluno
 
 ### Cópia de segurança
 
-Dois roteiros, para rodar na VPS como root:
+O serviço `portuguesjp_copias` (mesma imagem do preparo do banco, com `deploy/banco/copias.sh`) fica no ar ao lado
+do banco e divide com o aplicativo o volume `portuguesjp_copias`:
 
-- `sh deploy/copia-de-seguranca.sh [pasta]` grava os dados da plataforma (tabelas, contas e senhas) em um arquivo
-  `.sql.gz` com data e hora, sem tirar nada do ar. Guarda 14 dias (`MANTER_DIAS`). A pasta padrão é
-  `/root/copias-portuguesjp`. O arquivo tem dados dos alunos: vale guardar também fora da VPS.
-- `sh deploy/restaurar-copia.sh <arquivo>` troca todos os dados atuais pelos da cópia (pede confirmação). Para a
-  plataforma por cerca de um minuto; se falhar no meio, nada muda. A cópia entra em uma plataforma já instalada,
-  na mesma versão ou em uma mais nova.
+- todo dia, a partir de `HORA_DA_COPIA` (padrão 3h, horário de Brasília), grava os dados da plataforma (tabelas,
+  contas e senhas) em um `.sql.gz` com data e hora, sem tirar nada do ar, e apaga as automáticas com mais de
+  `MANTER_DIAS` dias (padrão 14);
+- atende os pedidos da tela **Cópias de segurança** da administração (só do administrador): fazer uma cópia
+  agora e restaurar uma cópia. Baixar, enviar e apagar o aplicativo faz sozinho.
 
-A cada mudança, o GitHub roda os dois na stack de teste: copia, estraga o banco de propósito, restaura, confere
-as contagens e refaz os testes de login, de conteúdo e da área do aluno.
+A cópia tem só os dados, com um cabeçalho que diz de que versão da plataforma ela é; a estrutura das tabelas vem da
+instalação. Por isso ela entra em outra VPS, numa plataforma da mesma versão ou mais nova. Antes de restaurar, o
+serviço confere o arquivo linha por linha (`deploy/banco/conferir-copia.awk`: só ajustes de sessão, linhas das
+tabelas da plataforma e das contas e acerto dos contadores; um arquivo com qualquer outro comando é recusado),
+guarda uma cópia do que existe agora e troca os dados em uma transação só: ou a cópia entra inteira, ou nada muda.
+
+Para quando a administração não abrir, dois roteiros para o terminal da VPS, como root:
+
+- `sh deploy/copia-de-seguranca.sh [pasta]` grava a cópia na pasta (padrão `/root/copias-portuguesjp`).
+- `sh deploy/restaurar-copia.sh <arquivo>` restaura um arquivo (os da administração também servem). Pede
+  confirmação e para o aplicativo por cerca de um minuto.
+
+A cada mudança, o GitHub testa tudo na stack de teste: os dois roteiros (copia, estraga o banco, restaura e confere
+as contagens), a tela de cópias (cópia automática, cópia na hora, baixar, enviar, arquivo que não é cópia, apagar)
+e a mudança de VPS completa: baixa uma cópia pela tela, apaga a stack inteira com os volumes, instala do zero,
+envia a cópia e restaura pela tela, confere que contas, senhas e dados ficaram iguais e refaz os testes de login,
+de conteúdo e da área do aluno.
 
 O passo a passo está em [`docs/INSTALACAO.md`](docs/INSTALACAO.md), e o resumo do que foi revisado e testado em
 [`docs/REVISAO.md`](docs/REVISAO.md).

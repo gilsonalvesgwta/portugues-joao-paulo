@@ -42,11 +42,11 @@ O que saber antes de contar com ele:
 - Em outro provedor (Hetzner, DigitalOcean, Contabo) o recurso tem o mesmo nome, snapshot, no painel da VPS.
 
 Na prática o snapshot é a rede de segurança, não o caminho normal de volta. A instalação só acrescenta coisas:
-cinco serviços e dois volumes com nome `portuguesjp_`, e um endereço novo no Traefik. Para desfazer só a plataforma,
+seis serviços e três volumes com nome `portuguesjp_`, e um endereço novo no Traefik. Para desfazer só a plataforma,
 sem tocar no resto:
 
 1. No Portainer, **Stacks → portuguesjp → Delete this stack**.
-2. Em **Volumes**, remova `portuguesjp_db_dados` e `portuguesjp_db_config`.
+2. Em **Volumes**, remova `portuguesjp_db_dados`, `portuguesjp_db_config` e `portuguesjp_copias`.
 3. No Cloudflare, apague o registro `portuguescomjoaopaulo`.
 
 Para não arriscar nada nos outros projetos, a alternativa é instalar em uma VPS nova: veja
@@ -151,6 +151,7 @@ Em **Stacks → portuguesjp**, a lista de serviços deve ficar assim em dois a q
 | `portuguesjp_rest` | 1/1 | Os dados. Também reinicia sozinho no começo |
 | `portuguesjp_app` | 1/1 | O aplicativo |
 | `portuguesjp_banco` | **0/1** | **É o normal.** Ele prepara o banco e termina |
+| `portuguesjp_copias` | 1/1 | As cópias de segurança: uma automática por dia e as pedidas pela administração |
 
 Para ter certeza de que o banco foi preparado: clique em `portuguesjp_banco` → **Service logs**. A última linha
 deve ser `BANCO PRONTO (14 migração(ões) aplicada(s) agora).` (o número cresce conforme a versão).
@@ -240,36 +241,38 @@ Depois de corrigir, use **Processar de novo**.
 Se a Greenn só aceitar um endereço por produto e ele já estiver ocupado pelo n8n, faça o n8n **repassar o aviso
 sem mexer no conteúdo** para o endereço acima.
 
-## Passo 11 — Cópia de segurança todos os dias
+## Passo 11 — Cópias de segurança
 
-No terminal da VPS, como root:
+Não há nada para configurar: a stack já traz o serviço `portuguesjp_copias`, que faz uma cópia automática de
+todos os dados todo dia às 3h (horário de Brasília) e guarda as automáticas por 14 dias. Para mudar a hora ou o
+tempo de guarda, mude `HORA_DA_COPIA` e `MANTER_DIAS` no serviço `portuguesjp_copias` do arquivo da stack.
+
+Tudo o mais fica na administração, em **Cópias de segurança** (só para o administrador):
+
+- **Fazer uma cópia agora**: por exemplo, antes de uma mudança grande.
+- **Baixar**: leva a cópia para o seu computador. Uma cópia que só existe na VPS se perde junto com ela; de vez
+  em quando, baixe a mais recente e guarde em um lugar protegido (ela tem os dados dos alunos).
+- **Enviar uma cópia**: traz uma cópia baixada antes, ou a de outra instalação.
+- **Restaurar**: troca todos os dados atuais pelos da cópia, depois de você escrever `RESTAURAR`. Antes de trocar,
+  a plataforma guarda sozinha uma cópia do que existia (aparece como “Antes de restaurar”), para dar para voltar
+  atrás. Se algo falhar no meio, nada é trocado. Quem estiver usando a plataforma pode precisar entrar de novo.
+
+O painel da administração mostra se as cópias estão em dia. Se aparecer “Serviço parado”, confira no Portainer se
+o serviço `portuguesjp_copias` está rodando (1/1).
+
+**Se a administração não abrir** (o aplicativo fora do ar), ainda dá para copiar e restaurar pelo terminal da VPS,
+como root:
 
 ```sh
 mkdir -p /root/portuguesjp && cd /root/portuguesjp
 curl -fsSLO https://raw.githubusercontent.com/gilsonalvesgwta/portugues-joao-paulo/main/deploy/copia-de-seguranca.sh
 curl -fsSLO https://raw.githubusercontent.com/gilsonalvesgwta/portugues-joao-paulo/main/deploy/restaurar-copia.sh
 sh copia-de-seguranca.sh
+sh restaurar-copia.sh /root/copias-portuguesjp/portuguesjp-AAAA-MM-DD-HHMMSS.sql.gz
 ```
 
-O último comando faz a primeira cópia e termina com `CÓPIA PRONTA: ...`. As cópias ficam em
-`/root/copias-portuguesjp`, uma por arquivo, e as com mais de 14 dias são apagadas.
-
-Para repetir todo dia às 3h30, rode `crontab -e` e acrescente esta linha:
-
-```
-30 3 * * * sh /root/portuguesjp/copia-de-seguranca.sh >> /root/portuguesjp/copias.log 2>&1
-```
-
-Uma cópia que só existe na própria VPS se perde junto com ela. De tempos em tempos, baixe o arquivo mais recente
-para outro lugar protegido (ele tem os dados dos alunos).
-
-**Para restaurar** (troca todos os dados atuais pelos da cópia; a plataforma fica cerca de um minuto fora do ar):
-
-```sh
-sh /root/portuguesjp/restaurar-copia.sh /root/copias-portuguesjp/portuguesjp-AAAA-MM-DD-HHMMSS.sql.gz
-```
-
-O roteiro pede que você escreva `RESTAURAR` antes de mexer em qualquer coisa. Se algo falhar no meio, nada é trocado.
+O primeiro grava a cópia em `/root/copias-portuguesjp`; o segundo restaura um arquivo (os baixados pela
+administração também servem) e pede que você escreva `RESTAURAR` antes de mexer em qualquer coisa.
 
 ## Passo 12 — Ligar o Papo (opcional)
 
@@ -308,7 +311,7 @@ da OpenAI.
 
 Quando houver versão nova:
 
-1. Faça uma cópia de segurança (`sh /root/portuguesjp/copia-de-seguranca.sh`).
+1. Faça uma cópia de segurança: na administração, **Cópias de segurança → Fazer uma cópia agora**.
 2. No Portainer, em **Stacks → portuguesjp → Editor**, cole a versão nova do
    [arquivo da stack](https://raw.githubusercontent.com/gilsonalvesgwta/portugues-joao-paulo/main/deploy/portainer-stack.yml)
    por cima da atual e clique em **Update the stack** (com **Re-pull image and redeploy** ligada, se a opção
@@ -395,8 +398,10 @@ mas o Supabase ocupa memória à toa. Numa VPS só da plataforma, pode apagar a 
 
 ## Mudar para uma VPS só da plataforma, mais tarde
 
-1. Na VPS atual, faça uma cópia de segurança e baixe o arquivo.
-2. Na VPS nova, repita este roteiro (pode usar `SENHA_DO_BANCO` e `SEGREDO_JWT` novos) e espere tudo subir.
-3. Envie o arquivo da cópia para a VPS nova e rode o `restaurar-copia.sh`. Contas, senhas, matrículas e progresso
-   voltam como estavam; os alunos só precisam entrar de novo.
+1. Na VPS atual, na administração, em **Cópias de segurança**: **Fazer uma cópia agora** e depois **Baixar**.
+2. Na VPS nova, repita este roteiro (pode usar `SENHA_DO_BANCO` e `SEGREDO_JWT` novos) e espere tudo subir. A
+   plataforma nova precisa ser da mesma versão da antiga ou mais nova.
+3. Entre na VPS nova com o primeiro administrador (`ADMIN_EMAIL`), vá em **Cópias de segurança**, envie o arquivo
+   baixado e clique em **Restaurar**. Contas, senhas, matrículas, progresso, cursos e aulas voltam como estavam; o
+   administrador e os alunos só precisam entrar de novo, com as senhas de sempre.
 4. Aponte o endereço no Cloudflare para a VPS nova e atualize o webhook na Greenn se o endereço mudar.

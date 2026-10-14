@@ -6,7 +6,9 @@
 # - todo serviço tem nome começado por "portuguesjp_", que não existe em outra stack;
 # - não abre nenhuma porta da VPS: só o aplicativo é alcançado, e só pelo Traefik;
 # - banco, login e dados ficam invisíveis para a internet (não têm rótulo do Traefik);
-# - os dados ficam em dois volumes próprios (portuguesjp_db_dados e portuguesjp_db_config).
+# - os dados ficam em dois volumes próprios (portuguesjp_db_dados e portuguesjp_db_config);
+# - as cópias de segurança ficam em um terceiro volume (portuguesjp_copias): uma automática por
+#   dia, às 3 da manhã (horário de Brasília), guardada por 14 dias, e as feitas pela administração.
 #
 # Os valores entre ${...} são preenchidos no Portainer, em "Environment variables" da stack.
 # Nenhuma senha fica escrita neste arquivo.
@@ -76,6 +78,12 @@ services:
       - OPENAI_API_KEY=${CHAVE_DA_OPENAI}
       - ANTHROPIC_API_KEY=${CHAVE_DA_ANTHROPIC}
       - PAPO_MODELO=${MODELO_DO_PAPO}
+
+      ## Cópias de segurança (a pasta é o volume que o serviço de cópias também usa)
+      - PASTA_DAS_COPIAS=/copias
+
+    volumes:
+      - portuguesjp_copias:/copias
 
     deploy:
       mode: replicated
@@ -242,11 +250,46 @@ services:
       update_config:
         failure_action: continue
 
+  ## Cópias de segurança: faz a cópia automática de cada dia e atende os pedidos da administração
+  ## (fazer uma cópia agora, restaurar uma cópia). Usa a mesma imagem do preparo do banco.
+  portuguesjp_copias:
+    image: ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco:latest
+    entrypoint: ["/bin/sh", "/copias.sh"]
+    ## O mesmo usuário do aplicativo: os dois leem e gravam a pasta das cópias.
+    user: "1000:1000"
+
+    networks:
+      - rede_interna ## O nome verdadeiro da rede vem da variável REDE_INTERNA
+
+    environment:
+      - PGHOST=portuguesjp_db
+      - POSTGRES_PASSWORD=${SENHA_DO_BANCO}
+      - TZ=America/Sao_Paulo
+      ## Hora da cópia automática (0 a 23, horário de Brasília) e por quantos dias ela fica guardada
+      - HORA_DA_COPIA=3
+      - MANTER_DIAS=14
+
+    volumes:
+      - portuguesjp_copias:/copias
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
 volumes:
   portuguesjp_db_dados:
     name: portuguesjp_db_dados
   portuguesjp_db_config:
     name: portuguesjp_db_config
+  portuguesjp_copias:
+    name: portuguesjp_copias
 
 # A rede é a que o Traefik da VPS usa. Ela já existe (foi criada na instalação do Traefik) e o
 # nome dela é preenchido no Portainer, na variável REDE_INTERNA.

@@ -50,19 +50,16 @@ parar
 sleep 10
 
 echo "Restaurando..."
-# Primeiro as tabelas da plataforma e das contas são esvaziadas; depois entram os dados da cópia.
-# Tudo em uma transação só, parando no primeiro erro: ou a cópia entra inteira, ou nada muda.
-ESVAZIAR="do \$\$
-declare
-  v_tabelas text;
-begin
-  select string_agg(format('%I.%I', schemaname, tablename), ', ') into v_tabelas
-  from pg_tables
-  where schemaname in ('public', 'auth') and not (schemaname = 'auth' and tablename = 'schema_migrations');
-  execute 'truncate table ' || v_tabelas || ' cascade';
-end \$\$;"
-{ printf '%s\n' "$ESVAZIAR"; gunzip -c "$ARQUIVO"; } | docker exec -i "$CONTEINER" psql -X -q -h 127.0.0.1 -U supabase_admin -d postgres \
-  -v ON_ERROR_STOP=1 --single-transaction > /dev/null
+# As tabelas que a cópia traz são esvaziadas e recebem os dados dela (uma tabela que a cópia não
+# traz, criada por uma versão mais nova da plataforma, fica como está). Tudo em uma transação só,
+# parando no primeiro erro: ou a cópia entra inteira, ou nada muda.
+TABELAS="$(gunzip -c "$ARQUIVO" | awk '
+  dentro == 1 { if ($0 == "\\.") dentro = 0; next }
+  /^COPY / { dentro = 1; lista = lista (lista == "" ? "" : ", ") $2 }
+  END { print lista }
+')"
+{ printf 'TRUNCATE TABLE %s CASCADE;\n' "$TABELAS"; gunzip -c "$ARQUIVO"; } | docker exec -i "$CONTEINER" psql -X -q -h 127.0.0.1 -U supabase_admin -d postgres \
+  -v ON_ERROR_STOP=1 --single-transaction -f - > /dev/null
 
 echo "Ligando de novo o aplicativo, o login e o serviço de dados..."
 voltar

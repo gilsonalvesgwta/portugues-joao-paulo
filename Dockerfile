@@ -25,6 +25,9 @@ ENV NODE_ENV=production \
 COPY --from=compilacao --chown=node:node /app/.next/standalone ./
 COPY --from=compilacao --chown=node:node /app/.next/static ./.next/static
 COPY --from=compilacao --chown=node:node /app/public ./public
+# Pasta das cópias de segurança (um volume compartilhado com o serviço de cópias, que grava como
+# o mesmo usuário 1000 = node). Um volume novo montado aqui nasce com esse dono.
+RUN mkdir -p /copias && chown node:node /copias && chmod 700 /copias
 # Roda como usuário comum, sem poderes de administrador dentro do contêiner.
 USER node
 EXPOSE 3000
