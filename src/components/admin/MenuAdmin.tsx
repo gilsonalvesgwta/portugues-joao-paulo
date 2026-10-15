@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { sair } from '@/app/(acesso)/acoes';
 
-// O menu da administração, em dois grupos. No computador fica na faixa verde da esquerda; no
+// O menu da administração, em grupos. No computador fica na faixa verde da esquerda; no
 // celular e no tablet, uma faixa fina no topo com o botão "Menu", que abre a lista por cima da
 // tela. "soAdmin": o professor não vê.
 
@@ -39,17 +39,24 @@ const GRUPOS: { titulo: string; itens: Item[] }[] = [
       { href: '/admin/lixeira', rotulo: 'Lixeira', prefixos: ['/admin/lixeira'], soAdmin: false, icone: <Icone><path d="M4 7h16" /><path d="M9 7V4.5h6V7" /><path d="M6 7l1 12.5a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5L18 7" /></Icone> },
     ],
   },
+  {
+    titulo: 'Plataforma',
+    itens: [
+      { href: '/admin/copias', rotulo: 'Cópias de segurança', prefixos: ['/admin/copias'], soAdmin: true, icone: <Icone><ellipse cx="12" cy="6" rx="7.5" ry="2.8" /><path d="M4.5 6v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6" /><path d="M4.5 12v6c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-6" /></Icone> },
+    ],
+  },
 ];
 
 function Lista({ admin }: { admin: boolean }) {
   const caminho = usePathname();
   return (
     <nav aria-label="Administração" className="flex flex-col gap-[22px]">
-      {GRUPOS.map((grupo) => (
+      {GRUPOS.map((grupo) => ({ ...grupo, itens: grupo.itens.filter((item) => admin || !item.soAdmin) }))
+        .filter((grupo) => grupo.itens.length > 0)
+        .map((grupo) => (
         <div key={grupo.titulo} className="flex flex-col gap-0.5">
           <p className="mb-1.5 px-3 text-[13px] font-semibold text-menta-escura">{grupo.titulo}</p>
           {grupo.itens
-            .filter((item) => admin || !item.soAdmin)
             .map((item) => {
               const atual = caminho === item.href || item.prefixos.some((p) => caminho === p || caminho.startsWith(`${p}/`));
               return (

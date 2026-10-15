@@ -229,6 +229,7 @@ jobs:
             ADMIN_EMAIL=dono@exemplo.test ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA" \
             EMAIL_PASTA="$STACK_PASTA_DA_CAIXA" \
             GREENN_WEBHOOK_SEGREDO="$STACK_SEGREDO_DA_GREENN" \
+            COPIAS_NA_STACK=1 \
             npm run e2e 2>&1 | tee saida/12-ponta-a-ponta-na-stack.txt
           # Uma atualização roda o preparo do banco de novo: ele não pode reaplicar o que já fez.
           {
@@ -334,6 +335,87 @@ jobs:
               GREENN_WEBHOOK_SEGREDO="$STACK_SEGREDO_DA_GREENN" \
               node --test e2e/acesso.test.mjs e2e/admin-conteudo.test.mjs e2e/aluno.test.mjs
           } 2>&1 | tee saida/13-copia-de-seguranca.txt
+      # Levar a plataforma para outra VPS pela administração, como o dono faria: na instalação atual,
+      # "Fazer uma cópia agora" e "Baixar"; a stack é apagada inteira, com os volumes, e instalada do
+      # zero, como numa VPS nova; na nova, o primeiro administrador envia a cópia e restaura pela
+      # tela. Os dados têm de ficar iguais aos da antiga, e o login e a administração, funcionando.
+      - name: Levar para outra VPS pela tela de cópias
+        run: |
+          {
+            sql() { docker exec "$(docker ps -q --filter name=portuguesjp_db | head -n 1)" psql -X -q -h 127.0.0.1 -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -Atc "$1"; }
+            contagem() { sql "select (select count(*) from auth.users) || ' contas, ' || (select count(*) from auth.identities) || ' identidades, ' || (select count(*) from public.perfis) || ' perfis, ' || (select count(*) from public.matriculas) || ' matrículas, ' || (select count(*) from public.cursos) || ' cursos, ' || (select count(*) from public.aulas) || ' aulas, ' || (select count(*) from public.reservas) || ' reservas, ' || (select count(*) from controle.migracoes) || ' migrações'"; }
+            emails() { sql "select md5(string_agg(email || coalesce(encrypted_password, ''), ',' order by email)) from auth.users"; }
+            rodar() {
+              env -u SUPABASE_URL -u SUPABASE_ANON_KEY -u SUPABASE_SERVICE_ROLE_KEY -u OPENAI_API_KEY -u ANTHROPIC_API_KEY -u PAPO_API_URL -u PAPO_DE_TESTE_PORTA \
+                BASE_URL=http://127.0.0.1:3200 \
+                SUPABASE_AUTH_URL=http://127.0.0.1:9999 SUPABASE_REST_URL=http://127.0.0.1:3001 \
+                SUPABASE_JWT_SECRET="$STACK_SEGREDO_JWT" \
+                ADMIN_EMAIL=dono@exemplo.test ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA" \
+                EMAIL_PASTA="$STACK_PASTA_DA_CAIXA" \
+                GREENN_WEBHOOK_SEGREDO="$STACK_SEGREDO_DA_GREENN" \
+                "$@"
+            }
+            esperar_no_ar() {
+              PRONTO=""
+              for i in $(seq 1 90); do
+                if docker service logs portuguesjp_portuguesjp_banco 2>&1 | grep -q "BANCO PRONTO"; then PRONTO="sim"; break; fi
+                sleep 4
+              done
+              test -n "$PRONTO"
+              SEGUIDAS=0
+              for i in $(seq 1 90); do
+                APP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3200/api/saude || true)
+                LOGIN=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:9999/health || true)
+                DADOS=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/ || true)
+                if [ "$APP" = "200" ] && [ "$LOGIN" = "200" ] && [ "$DADOS" = "200" ]; then SEGUIDAS=$((SEGUIDAS + 1)); else SEGUIDAS=0; fi
+                if [ "$SEGUIDAS" -ge 4 ]; then break; fi
+                sleep 2
+              done
+              echo "respostas: aplicativo $APP, login $LOGIN, dados $DADOS"
+              test "$SEGUIDAS" -ge 4
+            }
+
+            echo "== na instalação antiga: fazer uma cópia e baixar =="
+            rodar node e2e/so-na-stack/levar-para-outra-vps.mjs exportar "$RUNNER_TEMP/exportada.sql.gz"
+            ANTES="$(contagem)"
+            CONTAS_ANTES="$(emails)"
+            echo "na instalação antiga: $ANTES"
+
+            echo "== a stack é apagada, com os volumes, e instalada do zero =="
+            docker stack rm portuguesjp > /dev/null
+            for i in $(seq 1 60); do
+              [ "$(docker ps -aq --filter name=portuguesjp_ | wc -l)" = "0" ] && break
+              sleep 2
+            done
+            for volume in portuguesjp_db_dados portuguesjp_db_config portuguesjp_copias; do
+              for i in $(seq 1 30); do docker volume rm "$volume" > /dev/null 2>&1 && break; sleep 2; done
+            done
+            echo "volumes que sobraram da instalação antiga: $(docker volume ls -q | grep -c '^portuguesjp_' || true)"
+            test "$(docker volume ls -q | grep -c '^portuguesjp_' || true)" = "0"
+            unset OPENAI_API_KEY ANTHROPIC_API_KEY PAPO_API_URL PAPO_DE_TESTE_PORTA
+            export DOMINIO=plataforma.exemplo.test REDE_INTERNA=Wtatechor3Net
+            export SENHA_DO_BANCO="$STACK_SENHA_DO_BANCO" SEGREDO_JWT="$STACK_SEGREDO_JWT"
+            export ADMIN_EMAIL=dono@exemplo.test ADMIN_SENHA_INICIAL="$STACK_ADMIN_SENHA"
+            export SMTP_USER=aulas@exemplo.test SMTP_PASS=nao-usada-no-teste
+            export SEGREDO_DA_GREENN="$STACK_SEGREDO_DA_GREENN" PASTA_DA_CAIXA="$STACK_PASTA_DA_CAIXA"
+            docker stack deploy --resolve-image never -c deploy/portainer-stack.yml -c deploy/teste-github.yml portuguesjp 2>&1 | grep -v -i "image .* could not be accessed" || true
+            esperar_no_ar
+            NOVA="$(contagem)"
+            echo "na instalação nova, antes de restaurar: $NOVA"
+            test "$NOVA" != "$ANTES"
+
+            echo "== na instalação nova: enviar a cópia e restaurar pela tela =="
+            rodar node e2e/so-na-stack/levar-para-outra-vps.mjs importar "$RUNNER_TEMP/exportada.sql.gz"
+            DEPOIS="$(contagem)"
+            echo "na instalação nova, depois de restaurar: $DEPOIS"
+            test "$ANTES" = "$DEPOIS"
+            test "$CONTAS_ANTES" = "$(emails)"
+            echo "contas e senhas iguais às da instalação antiga: sim"
+            echo "cópias na pasta da instalação nova: $(docker exec "$(docker ps -q --filter name=portuguesjp_copias | head -n 1)" ls /copias/arquivos | tr '\n' ' ')"
+
+            echo "== login, regras de acesso e administração de conteúdo na instalação nova =="
+            rodar node --test e2e/acesso.test.mjs e2e/admin-conteudo.test.mjs e2e/aluno.test.mjs
+          } 2>&1 | tee saida/16-outra-vps.txt
       # O que só existia na VPS passa a ser testado aqui: a plataforma atrás de um Traefik montado
       # como o de lá, por https, com o endereço da variável DOMINIO. Confere os rótulos da stack,
       # os redirecionamentos, o cookie da sessão (que em https só viaja cifrado) e os formulários
@@ -380,7 +462,7 @@ jobs:
               echo "== memória e saúde de cada contêiner, depois dos testes =="
               docker stats --no-stream --format '{{.Name}}: {{.MemUsage}}' | sed -E 's/\.[0-9]+\.[a-z0-9]+:/:/' | grep portuguesjp || true
               docker ps --filter name=portuguesjp --format '{{.Names}}: {{.Status}}' | sed -E 's/\.[0-9]+\.[a-z0-9]+:/:/'
-              for servico in app auth rest db banco; do
+              for servico in app auth rest db banco copias; do
                 echo
                 echo "== registro de portuguesjp_$servico =="
                 docker service logs "portuguesjp_portuguesjp_$servico" 2>&1 | sed -E 's/^[^|]*\| //' | grep -v -i -E "password|secret|jwt|postgres://|$STACK_SENHA_DO_BANCO|$STACK_SEGREDO_JWT|$STACK_SEGREDO_DA_GREENN" | tail -n 12 | cut -c1-400

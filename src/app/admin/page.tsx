@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { enviarEmailDeTeste, salvarLimiteDoPapo, testarPapo } from '@/app/admin/acoes';
 import { AvisoDaPagina, Botao, Cartao, Entrada, Etiqueta, LinkBotao, NumeroDaAula, TituloDaPagina, TITULO_DO_CARTAO } from '@/components/admin/ui';
 import { avisoDe } from '@/lib/admin/avisos';
+import { carregarCopias } from '@/lib/admin/copias';
+import { quandoEmPalavras, saudeDasCopias } from '@/lib/copias';
 import { ativos, carregarConteudo, quizzesPorAula } from '@/lib/admin/dados';
 import { formatarDuracao } from '@/lib/conteudo';
 import { usoDoPapo } from '@/lib/admin/papo';
@@ -43,6 +45,13 @@ export default async function PaginaPainel({ searchParams }: Props) {
   const configDoTutor = configDoPapo();
   const papoLigado = configDoTutor !== null;
   const papo = await usoDoPapo();
+  // Cópias de segurança: só o administrador vê (e só ele restaura).
+  const copias = pessoa.papel === 'admin' ? await carregarCopias() : null;
+  const ultimaCopia = copias?.copias.find((copia) => copia.tipo !== 'enviada') ?? null;
+  const agora = new Date();
+  const saudeDaCopia = copias
+    ? saudeDasCopias({ ligado: copias.ligado, vivo: copias.vivo, ultimaCopia: ultimaCopia?.quando ?? null, agora })
+    : null;
 
   const rascunhos = aulas
     .filter((aula) => aula.situacao === 'rascunho')
@@ -150,6 +159,29 @@ export default async function PaginaPainel({ searchParams }: Props) {
         </div>
 
         <div className="flex min-w-0 flex-col gap-6">
+      {saudeDaCopia ? (
+        <Cartao className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className={TITULO_DO_CARTAO}>Cópias de segurança</h2>
+            <Etiqueta tom={saudeDaCopia === 'em_dia' ? 'verde' : saudeDaCopia === 'desligado' ? 'neutro' : 'aviso'}>
+              <span aria-hidden="true" className={`size-2 rounded-full ${saudeDaCopia === 'em_dia' ? 'bg-verde' : saudeDaCopia === 'desligado' ? 'bg-apoio' : 'bg-aviso'}`} />
+              {saudeDaCopia === 'em_dia' ? 'Em dia' : saudeDaCopia === 'desligado' ? 'Desligadas' : 'Atenção'}
+            </Etiqueta>
+          </div>
+          <p className="text-[15px] leading-normal text-apoio">
+            {saudeDaCopia === 'desligado'
+              ? 'Esta instalação ainda não tem o serviço de cópias. Atualize a stack com o arquivo novo para ligar.'
+              : saudeDaCopia === 'parado'
+                ? 'O serviço de cópias não está respondendo. Confira no Portainer o serviço portuguesjp_copias.'
+                : ultimaCopia
+                  ? `Última cópia: ${quandoEmPalavras(ultimaCopia.quando, agora)}. Uma automática sai todo dia.`
+                  : 'Ainda não há cópia. A primeira automática sai de madrugada; se preferir, faça uma agora.'}
+          </p>
+          <Link href="/admin/copias" className="self-start text-[15px] font-bold text-verde-link">
+            Ver as cópias
+          </Link>
+        </Cartao>
+      ) : null}
       <Cartao className="flex flex-col gap-3">
         <h2 id="email" className={`scroll-mt-6 ${TITULO_DO_CARTAO}`}>
           Envio de e-mail

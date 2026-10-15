@@ -3,7 +3,9 @@
 # - abre portas no computador de teste para o navegador e os testes alcançarem os serviços
 #   (na VPS nenhuma porta é aberta);
 # - grava os e-mails em uma pasta, em vez de enviar;
-# - confere os lembretes das aulas a cada 3 segundos (na VPS, a cada 5 minutos).
+# - confere os lembretes das aulas a cada 3 segundos (na VPS, a cada 5 minutos);
+# - faz a cópia automática do dia logo ao subir (na VPS, às 3 da manhã), e tenta de novo depois
+#   de 10 segundos se falhar (na VPS, 30 minutos).
 version: "3.7"
 services:
   portuguesjp_app:
@@ -25,3 +27,8 @@ services:
       - "3001:3000"
   portuguesjp_banco:
     image: banco:teste
+  portuguesjp_copias:
+    image: banco:teste
+    environment:
+      - HORA_DA_COPIA=0
+      - ESPERA_DEPOIS_DE_FALHA=10

@@ -51,5 +51,7 @@ export async function proxy(pedido: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|marca/|icon.png|favicon.ico).*)'],
+  // O envio de uma cópia de segurança fica de fora: o proxy guardaria o arquivo inteiro na
+  // memória (e cortaria os grandes). Aquele endereço confere sozinho quem está logado.
+  matcher: ['/((?!_next/static|_next/image|marca/|icon.png|favicon.ico|api/admin/copias/enviar).*)'],
 };

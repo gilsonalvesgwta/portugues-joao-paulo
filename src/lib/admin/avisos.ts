@@ -139,6 +139,17 @@ export const AVISOS: Record<string, AvisoDaAcao> = {
   },
   aviso_falhou: { tipo: 'erro', texto: 'Não foi possível processar o aviso. Ele continua pendente, com o motivo ao lado.' },
   link_falhou: { tipo: 'erro', texto: 'O e-mail não saiu. Confira o envio de e-mail no Painel, com o botão “Enviar e-mail de teste”.' },
+  copia_pedida: { tipo: 'ok', texto: 'Cópia pedida. Ela fica pronta em alguns segundos e aparece na lista.' },
+  restauracao_pedida: {
+    tipo: 'ok',
+    texto: 'Restauração pedida. Antes de trocar os dados, a plataforma guarda uma cópia do que existe agora. Acompanhe abaixo.',
+  },
+  copia_apagada: { tipo: 'ok', texto: 'Cópia apagada.' },
+  copia_enviada: { tipo: 'ok', texto: 'Cópia enviada. Ela está na lista; para usar, clique em “Restaurar” ao lado dela.' },
+  copias_ocupado: { tipo: 'erro', texto: 'O serviço de cópias ainda está trabalhando no pedido anterior. Espere ele terminar.' },
+  copias_desligado: { tipo: 'erro', texto: 'O serviço de cópias não está ligado nesta instalação.' },
+  copia_confirmar: { tipo: 'erro', texto: 'Para restaurar, escreva RESTAURAR no campo, em letras maiúsculas.' },
+  copia_nao_encontrada: { tipo: 'erro', texto: 'Essa cópia não existe mais.' },
 };
 
 export function avisoDe(codigo: string | string[] | undefined): AvisoDaAcao | null {
