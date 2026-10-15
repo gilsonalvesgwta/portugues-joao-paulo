@@ -169,7 +169,7 @@ restaurar() { # arquivo
     gunzip -c "$arquivo"
   } | psql -X -q -v ON_ERROR_STOP=1 --single-transaction -f - > /dev/null 2> "$ESTADO/erro.txt"; then
     anotar copiar ok "$antes" "Cópia do que existia antes da restauração ($(tamanho "$ARQUIVOS/$antes"))."
-    anotar restaurar ok "$nome" "Restauração pronta. Os dados de antes estão na cópia $antes."
+    anotar restaurar ok "$nome" "Restauração pronta. Os dados de antes dela ficaram guardados na cópia “Antes de restaurar” da lista."
     descansando
     return 0
   fi

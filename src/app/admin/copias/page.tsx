@@ -123,8 +123,9 @@ export default async function PaginaDasCopias({ searchParams }: Props) {
         </Cartao>
       ) : (
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="flex min-w-0 flex-col gap-6">
-            <Cartao>
+          {/* No celular os quadros ficam em uma coluna só, com a situação primeiro. */}
+          <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+            <Cartao className="order-2 lg:order-none">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <h2 id="copias" className={TITULO_DO_CARTAO}>
                   Cópias guardadas
@@ -150,7 +151,7 @@ export default async function PaginaDasCopias({ searchParams }: Props) {
             </Cartao>
 
             {situacao.historico.length > 0 ? (
-              <Cartao>
+              <Cartao className="order-3 lg:order-none">
                 <h2 className={TITULO_DO_CARTAO}>Últimos acontecimentos</h2>
                 <ul className="mt-3 flex flex-col">
                   {situacao.historico.slice(0, 8).map((item, i) => (
@@ -172,8 +173,8 @@ export default async function PaginaDasCopias({ searchParams }: Props) {
             ) : null}
           </div>
 
-          <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-10">
-            <Cartao>
+          <div className="contents lg:sticky lg:top-10 lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+            <Cartao className="order-1 lg:order-none">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 id="andamento" className={`scroll-mt-6 ${TITULO_DO_CARTAO}`}>
                   Situação
@@ -206,7 +207,7 @@ export default async function PaginaDasCopias({ searchParams }: Props) {
               </div>
             </Cartao>
 
-            <Cartao>
+            <Cartao className="order-4 lg:order-none">
               <h2 className={TITULO_DO_CARTAO}>Enviar uma cópia</h2>
               <p className="mt-2 mb-4 text-[15px] leading-normal text-apoio">
                 Para trazer os dados de outra instalação, ou uma cópia que você baixou antes. Ela entra na lista; restaurar é
@@ -215,7 +216,7 @@ export default async function PaginaDasCopias({ searchParams }: Props) {
               <EnviarCopia />
             </Cartao>
 
-            <section className="rounded-[22px] border border-borda bg-papel px-[18px] py-[22px] sm:rounded-3xl sm:p-7">
+            <section className="order-5 rounded-[22px] border border-borda bg-papel lg:order-none px-[18px] py-[22px] sm:rounded-3xl sm:p-7">
               <h2 className="text-lg font-bold leading-tight">Guarde também fora da VPS</h2>
               <p className="mt-2 text-[15px] leading-normal text-apoio">
                 Uma cópia que só existe na VPS se perde junto com ela. De vez em quando, baixe a mais recente e guarde em um
