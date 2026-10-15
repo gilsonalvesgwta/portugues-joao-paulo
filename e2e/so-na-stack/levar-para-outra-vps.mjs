@@ -29,10 +29,13 @@ try {
   const linhas = () => pagina.getByRole('list', { name: 'Cópias guardadas' }).getByRole('listitem');
 
   if (modo === 'exportar') {
+    // Os testes de antes já deixaram cópias feitas na hora: espera aparecer uma a mais.
+    const feitasNaHora = () => linhas().filter({ hasText: 'Feita na hora' }).count();
+    const antes = await feitasNaHora();
     await pagina.getByRole('button', { name: 'Fazer uma cópia agora' }).click();
     await pagina.waitForURL('**/admin/copias?aviso=copia_pedida');
-    const nova = linhas().filter({ hasText: 'Feita na hora' }).first();
-    await nova.waitFor({ timeout: 60_000 });
+    for (let i = 0; i < 30 && (await feitasNaHora()) === antes; i++) await pagina.waitForTimeout(2000);
+    assert.equal(await feitasNaHora(), antes + 1, 'a cópia pedida não apareceu na lista em 1 minuto');
     // A mais nova fica no topo da lista.
     const [baixado] = await Promise.all([pagina.waitForEvent('download'), linhas().first().getByRole('link', { name: /^Baixar/ }).click()]);
     assert.match(baixado.suggestedFilename(), /-manual\.sql\.gz$/);

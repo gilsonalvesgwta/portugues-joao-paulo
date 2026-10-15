@@ -98,7 +98,11 @@ export default async function PaginaDasCopias({ searchParams }: Props) {
     <>
       <TituloDaPagina
         titulo="Cópias de segurança"
-        texto={`Todo dia, às ${horaCheia(hora)}, a plataforma guarda uma cópia de todos os dados: contas e senhas, alunos, matrículas, progresso, reservas, cursos e aulas.`}
+        texto={
+          situacao.ligado
+            ? `Todo dia, às ${horaCheia(hora)}, a plataforma guarda uma cópia de todos os dados: contas e senhas, alunos, matrículas, progresso, reservas, cursos e aulas.`
+            : undefined
+        }
       >
         {situacao.ligado ? (
           <form action={fazerCopiaAgora}>
