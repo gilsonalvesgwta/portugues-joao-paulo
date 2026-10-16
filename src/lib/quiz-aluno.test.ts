@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { corrigirEntrega, entregar, lerRespostas, perguntaDoBanco, respostaParaGuardar, type LinhaDePergunta } from './quiz-aluno.ts';
+import { conferirTentativa, corrigirEntrega, entregar, lerRespostas, perguntaDoBanco, respostaParaGuardar, type LinhaDePergunta } from './quiz-aluno.ts';
 
 const linhas: LinhaDePergunta[] = [
   { id: 'p1', tipo: 'multipla_escolha', conteudo: { enunciado: '¿Cómo se dice "gracias"?', opcoes: ['por favor', 'obrigado', 'desculpa'], correta: 1 } },
@@ -86,4 +86,51 @@ test('o que fica gravado da resposta: texto ou lista de palavras, dentro do limi
   assert.equal(respostaParaGuardar(['a', 5]), null);
   assert.equal(respostaParaGuardar({ texto: 'a' }), null);
   assert.equal(respostaParaGuardar(undefined), null);
+});
+
+const AUDIO = '0b9c2f0e-1d2a-4c5b-8e6f-7a8b9c0d1e2f';
+const pares: LinhaDePergunta = {
+  id: 'p4',
+  tipo: 'parear_audio',
+  conteudo: { modo: 'audio', pares: [{ palavra: 'tudo bem', traducao: 'todo bien', audio: AUDIO }, { palavra: 'obrigado', traducao: 'gracias', audio: null }] },
+};
+
+test('jogo de pares: vai para o navegador sem a palavra gravada, e cada tentativa é conferida no servidor', () => {
+  const [entregue] = entregar([pares], sorteioFixo());
+  assert.ok(entregue && entregue.tipo === 'parear_audio');
+  const texto = JSON.stringify(entregue);
+  assert.equal(texto.includes('tudo bem'), false, 'a palavra com gravação não vai escrita');
+  assert.equal(texto.includes(AUDIO), true);
+  // Sem gravação, o navegador precisa do texto para ler em voz alta.
+  assert.equal(texto.includes('"fala":"obrigado"'), true);
+  assert.deepEqual([...entregue.traducoes].sort(), ['gracias', 'todo bien']);
+
+  assert.deepEqual(conferirTentativa(pares, 0, 'todo bien'), { certo: true, palavra: 'tudo bem' });
+  assert.deepEqual(conferirTentativa(pares, 0, 'gracias'), { certo: false });
+  assert.deepEqual(conferirTentativa(linhas[0] as LinhaDePergunta, 0, 'obrigado'), { certo: false });
+
+  const semErro = lerRespostas([{ id: 'p4', resposta: [{ i: 1, t: 'gracias' }, { i: 0, t: 'todo bien' }] }]);
+  assert.deepEqual(corrigirEntrega([pares], semErro, 70).conferencia, [{ id: 'p4', correta: true, certa: 'tudo bem = todo bien, obrigado = gracias' }]);
+  const comErro = lerRespostas([{ id: 'p4', resposta: [{ i: 1, t: 'todo bien' }, { i: 1, t: 'gracias' }, { i: 0, t: 'todo bien' }] }]);
+  assert.equal(corrigirEntrega([pares], comErro, 70).acertos, 0);
+});
+
+test('jogo de pares com conteúdo quebrado é pulado; gravação que não é identificador vira voz do navegador', () => {
+  for (const conteudo of [
+    { modo: 'audio', pares: [{ palavra: 'oi', traducao: 'hola' }] },
+    { modo: 'cantado', pares: [{ palavra: 'oi', traducao: 'hola' }, { palavra: 'tchau', traducao: 'chao' }] },
+    { modo: 'audio', pares: [{ palavra: 'oi', traducao: 'hola' }, { palavra: 'olá', traducao: 'hola' }] },
+    { modo: 'audio', pares: [{ palavra: 'oi', traducao: 'hola' }, { palavra: '', traducao: 'chao' }] },
+  ]) {
+    assert.equal(perguntaDoBanco({ id: 'x', tipo: 'parear_audio', conteudo }), null, JSON.stringify(conteudo));
+  }
+  const estranha = perguntaDoBanco({ id: 'x', tipo: 'parear_audio', conteudo: { modo: 'audio', pares: [{ palavra: 'oi', traducao: 'hola', audio: '../x' }, { palavra: 'tchau', traducao: 'chao' }] } });
+  assert.deepEqual(estranha && estranha.tipo === 'parear_audio' && estranha.pares[0], { palavra: 'oi', traducao: 'hola' });
+});
+
+test('o que fica gravado do jogo de pares: a lista de tentativas', () => {
+  assert.deepEqual(respostaParaGuardar([{ i: 0, t: 'hola' }, { i: 1, t: 'chao' }]), [{ i: 0, t: 'hola' }, { i: 1, t: 'chao' }]);
+  assert.equal(respostaParaGuardar([{ i: -1, t: 'hola' }]), null);
+  assert.equal(respostaParaGuardar([{ i: 0, t: 'x'.repeat(101) }]), null);
+  assert.equal(respostaParaGuardar([{ i: 0 }]), null);
 });

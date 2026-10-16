@@ -10,7 +10,7 @@ import { motivoDaFalha } from '@/lib/smtp';
 import { validarAnotacoes } from '@/lib/anotacoes';
 import { carregarDisponiveis, carregarTrilha } from '@/lib/admin/dados';
 import type { EstadoDaTrilha, EstadoDasAnotacoes, EstadoDoFormulario, EstadoDoQuiz } from '@/lib/formulario';
-import { paraOBanco, validarQuiz } from '@/lib/quiz-editor';
+import { audiosDoQuiz, paraOBanco, soComAudios, validarQuiz } from '@/lib/quiz-editor';
 import { chave, validarTrilha } from '@/lib/trilha-editor';
 import { ehEquipe } from '@/lib/papeis';
 import { clienteDoServidor, pessoaLogada } from '@/lib/supabase/servidor';
@@ -346,19 +346,35 @@ export async function salvarQuiz(anterior: EstadoDoQuiz, dados: FormData): Promi
   const conferido = validarQuiz(lido, situacao === 'publicado');
   if (!conferido.ok) return falha(conferido.erros);
 
+  // As gravações citadas precisam existir e ser desta aula; as outras saem do par.
+  let quiz = conferido.quiz;
+  const citados = audiosDoQuiz(quiz);
+  if (citados.length > 0) {
+    const { data: achados } = await supabase.from('audios').select('id').eq('aula_id', aulaId).in('id', citados);
+    quiz = soComAudios(quiz, new Set((achados ?? []).map((linha) => String(linha.id))));
+  }
+
   const { error } = await supabase.rpc('salvar_quiz', {
     p_aula: aulaId,
-    p_dificuldade: conferido.quiz.dificuldade,
-    p_nota_minima: conferido.quiz.nota_minima,
+    p_dificuldade: quiz.dificuldade,
+    p_nota_minima: quiz.nota_minima,
     p_situacao: situacao,
-    p_perguntas: conferido.quiz.perguntas.map(paraOBanco),
+    p_perguntas: quiz.perguntas.map(paraOBanco),
   });
   if (error) {
     return falha({
       geral: error.message.includes('aula_inexistente') ? 'Não encontrei esta aula. Ela pode ter ido para a lixeira.' : FALHA,
     });
   }
-  return { vez: anterior.vez + 1, situacao: 'salvo', erros: {}, quiz: conferido.quiz, publicado: situacao === 'publicado' };
+
+  // Gravações desta aula que o quiz não usa mais (o par foi apagado ou regravado) saem depois de
+  // um dia: dá tempo de outra aba, aberta ao mesmo tempo, ainda salvar com elas.
+  const usados = audiosDoQuiz(quiz);
+  const sobras = supabase.from('audios').delete().eq('aula_id', aulaId).lt('criado_em', new Date(Date.now() - 86_400_000).toISOString());
+  const { error: erroDaLimpeza } = usados.length > 0 ? await sobras.not('id', 'in', `(${usados.join(',')})`) : await sobras;
+  if (erroDaLimpeza) console.error('Não foi possível apagar as gravações que sobraram:', erroDaLimpeza.message);
+
+  return { vez: anterior.vez + 1, situacao: 'salvo', erros: {}, quiz, publicado: situacao === 'publicado' };
 }
 
 // ---------------------------------------------------------------------------

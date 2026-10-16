@@ -2,15 +2,17 @@
 
 import { useActionState, useEffect, useState, type KeyboardEvent } from 'react';
 import { usePronto } from '@/components/usePronto';
+import { AudioDoPar } from '@/components/admin/AudioDoPar';
+import { JogoDePares } from '@/components/aluno/JogoDePares';
 import { salvarQuiz } from '@/app/admin/acoes';
 import { useAvisoAoSair } from '@/components/admin/aoSair';
 import { es } from '@/i18n/es';
 import { mover } from '@/lib/conteudo';
 import { QUIZ_INICIAL } from '@/lib/formulario';
-import { LACUNA } from '@/lib/quiz';
+import { LACUNA, type CartaoDoPar } from '@/lib/quiz';
 import {
-  DIFICULDADES, LIMITES_DO_QUIZ, nomeDaPergunta, palavrasDe, perguntaVazia, TIPOS_DE_PERGUNTA, type Dificuldade, type PerguntaNoEditor,
-  type QuizNoEditor, type TipoNoEditor,
+  DIFICULDADES, LIMITES_DO_QUIZ, MODOS_DOS_PARES, nomeDaPergunta, palavrasDe, perguntaVazia, TIPOS_DE_PERGUNTA, type Dificuldade,
+  type PerguntaNoEditor, type QuizNoEditor, type TipoNoEditor,
 } from '@/lib/quiz-editor';
 
 // Editor do quiz da aula. Como nas anotações: o professor monta as perguntas à esquerda, vê à
@@ -113,8 +115,103 @@ function Opcoes({
   );
 }
 
-function CamposDaPergunta({ pergunta, aoMudar, foco }: { pergunta: PerguntaNoEditor; aoMudar: Mudar; foco: boolean }) {
+// Os pares do jogo de combinar: como o aluno vê a palavra (ouvindo ou lendo) e, em cada par, a
+// palavra em português, a tradução e (no modo com áudio) a gravação.
+function Pares({ aulaId, pergunta, aoMudar, foco }: { aulaId: string; pergunta: Extract<PerguntaNoEditor, { tipo: 'parear_audio' }>; aoMudar: Mudar; foco: boolean }) {
+  const { pares, modo } = pergunta;
+  const mudarPar = (i: number, mudanca: Partial<(typeof pares)[number]>) =>
+    aoMudar({ ...pergunta, pares: pares.map((par, j) => (j === i ? { ...par, ...mudanca } : par)) });
+  return (
+    <div className="flex flex-col gap-4">
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1.5 text-sm font-semibold">Como o aluno recebe a palavra em português</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {MODOS_DOS_PARES.map((opcao) => (
+            <label
+              key={opcao.valor}
+              className="flex cursor-pointer items-start gap-3 rounded-xl border border-borda-campo bg-cartao p-3 has-[:checked]:border-verde has-[:checked]:bg-verde-suave"
+            >
+              <input
+                type="radio"
+                name={`modo-${pergunta.id}`}
+                checked={modo === opcao.valor}
+                onChange={() => aoMudar({ ...pergunta, modo: opcao.valor })}
+                className="mt-0.5 size-5 shrink-0 cursor-pointer accent-verde"
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-[15px] font-bold">{opcao.nome}</span>
+                <span className="text-[13px] leading-snug text-apoio">{opcao.ajuda}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <ol className="flex flex-col gap-3">
+        {pares.map((par, i) => (
+          <li key={i} className="flex flex-col gap-3 rounded-2xl border border-borda bg-papel p-3.5 sm:p-4">
+            <div className="grid grid-cols-[minmax(0,1fr)_44px] items-end gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px]">
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <label htmlFor={`${pergunta.id}-palavra-${i}`} className="text-sm font-semibold">
+                  Palavra {i + 1}, em português
+                </label>
+                <input
+                  id={`${pergunta.id}-palavra-${i}`}
+                  type="text"
+                  value={par.palavra}
+                  maxLength={LIMITES_DO_QUIZ.palavraDoPar}
+                  lang="pt-BR"
+                  autoFocus={foco && i === 0}
+                  onChange={(e) => mudarPar(i, { palavra: e.target.value })}
+                  className={classeDaEntrada}
+                />
+              </div>
+              <button
+                type="button"
+                aria-label={`Remover o par ${i + 1}`}
+                disabled={pares.length <= LIMITES_DO_QUIZ.paresMin}
+                onClick={() => aoMudar({ ...pergunta, pares: pares.filter((_, j) => j !== i) })}
+                className={`${classeDoBotaoMenor} px-0 sm:order-last`}
+              >
+                ✕
+              </button>
+              <div className="col-span-2 flex min-w-0 flex-col gap-1.5 sm:col-span-1">
+                <label htmlFor={`${pergunta.id}-traducao-${i}`} className="text-sm font-semibold">
+                  Tradução {i + 1}, em espanhol
+                </label>
+                <input
+                  id={`${pergunta.id}-traducao-${i}`}
+                  type="text"
+                  value={par.traducao}
+                  maxLength={LIMITES_DO_QUIZ.palavraDoPar}
+                  lang="es"
+                  onChange={(e) => mudarPar(i, { traducao: e.target.value })}
+                  className={classeDaEntrada}
+                />
+              </div>
+            </div>
+            {modo === 'audio' ? (
+              <AudioDoPar aulaId={aulaId} numero={i + 1} palavra={par.palavra} audio={par.audio} aoMudar={(audio) => mudarPar(i, { audio })} />
+            ) : null}
+          </li>
+        ))}
+      </ol>
+      <button
+        type="button"
+        disabled={pares.length >= LIMITES_DO_QUIZ.paresMax}
+        onClick={() => aoMudar({ ...pergunta, pares: [...pares, { palavra: '', traducao: '', audio: null }] })}
+        className={`${classeDoBotaoMenor} self-start`}
+      >
+        Adicionar par
+      </button>
+    </div>
+  );
+}
+
+function CamposDaPergunta({ aulaId, pergunta, aoMudar, foco }: { aulaId: string; pergunta: PerguntaNoEditor; aoMudar: Mudar; foco: boolean }) {
   switch (pergunta.tipo) {
+    case 'parear_audio':
+      return <Pares aulaId={aulaId} pergunta={pergunta} aoMudar={aoMudar} foco={foco} />;
     case 'multipla_escolha':
       return (
         <div className="flex flex-col gap-4">
@@ -178,6 +275,31 @@ function CamposDaPergunta({ pergunta, aoMudar, foco }: { pergunta: PerguntaNoEdi
   }
 }
 
+// O jogo de pares na prévia: dá para jogar, conferindo com os próprios pares do editor. Muda um
+// par, o jogo recomeça. As traduções vão em ordem alfabética (o aluno recebe embaralhadas).
+function PreviaDosPares({ pergunta }: { pergunta: Extract<PerguntaNoEditor, { tipo: 'parear_audio' }> }) {
+  const pares = pergunta.pares.filter((par) => par.palavra.trim() !== '' && par.traducao.trim() !== '');
+  const cartoes = pares.map((par, indice): CartaoDoPar => {
+    if (pergunta.modo === 'escrita') return { indice, palavra: par.palavra };
+    return par.audio ? { indice, audio: par.audio } : { indice, fala: par.palavra };
+  });
+  const traducoes = [...new Set(pares.map((par) => par.traducao.trim()))].sort((a, b) => a.localeCompare(b, 'es'));
+  if (pares.length === 0) return <p className="text-[15px] text-apoio">Os pares aparecem aqui conforme você escreve.</p>;
+  return (
+    <JogoDePares
+      key={JSON.stringify(pares) + pergunta.modo}
+      modo={pergunta.modo}
+      cartoes={cartoes}
+      traducoes={traducoes}
+      rotulo={pergunta.modo === 'audio' ? es.quiz.combinaAudio : es.quiz.combinaPalabras}
+      conferir={async (indice, traducao) => {
+        const par = pares[indice];
+        return par && par.traducao.trim() === traducao ? { certo: true, palavra: par.palavra } : { certo: false };
+      }}
+    />
+  );
+}
+
 // Como o aluno recebe cada pergunta: sem a resposta marcada, e com as palavras fora de ordem.
 function PreviaDoQuiz({ numero, perguntas }: { numero: number; perguntas: PerguntaNoEditor[] }) {
   const chip = 'rounded-xl border border-borda-campo bg-cartao px-3 py-2 text-[15px] text-texto';
@@ -190,8 +312,17 @@ function PreviaDoQuiz({ numero, perguntas }: { numero: number; perguntas: Pergun
         <section key={pergunta.id} className="flex flex-col gap-2.5">
           <p className="flex items-baseline gap-2 text-[15px] font-semibold text-dourado-texto">
             <em className="font-titulo text-lg font-bold">{i + 1}</em>{' '}
-            {pergunta.tipo === 'multipla_escolha' ? es.quiz.elige : pergunta.tipo === 'completar' ? es.quiz.completa : es.quiz.ordena}
+            {pergunta.tipo === 'multipla_escolha'
+              ? es.quiz.elige
+              : pergunta.tipo === 'completar'
+                ? es.quiz.completa
+                : pergunta.tipo === 'parear_audio'
+                  ? pergunta.modo === 'audio'
+                    ? es.quiz.combinaAudio
+                    : es.quiz.combinaPalabras
+                  : es.quiz.ordena}
           </p>
+          {pergunta.tipo === 'parear_audio' ? <PreviaDosPares pergunta={pergunta} /> : null}
           {pergunta.tipo === 'multipla_escolha' ? <p className="text-base font-bold text-texto">{pergunta.enunciado}</p> : null}
           {pergunta.tipo === 'completar' ? (
             <p lang="pt-BR" className="text-base font-bold text-texto">
@@ -199,6 +330,7 @@ function PreviaDoQuiz({ numero, perguntas }: { numero: number; perguntas: Pergun
             </p>
           ) : null}
           {pergunta.tipo === 'ordenar' ? <p className="text-[15px] text-apoio">{pergunta.traducao}</p> : null}
+          {pergunta.tipo === 'parear_audio' ? null : (
           <div lang="pt-BR" className="flex flex-wrap gap-2">
             {(pergunta.tipo === 'ordenar'
               ? [...palavrasDe(pergunta.frase)].sort((a, b) => a.localeCompare(b, 'pt-BR'))
@@ -209,6 +341,7 @@ function PreviaDoQuiz({ numero, perguntas }: { numero: number; perguntas: Pergun
               </span>
             ))}
           </div>
+          )}
         </section>
       ))}
     </article>
@@ -400,6 +533,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
                 </div>
                 {erro ? <p className="text-sm font-semibold text-perigo">{erro}</p> : null}
                 <CamposDaPergunta
+                  aulaId={aulaId}
                   pergunta={pergunta}
                   aoMudar={(nova) => comPerguntas(quiz.perguntas.map((p) => (p.id === nova.id ? nova : p)))}
                   foco={recemCriada === pergunta.id}
@@ -410,7 +544,7 @@ export function EditorDeQuiz({ aulaId, numero, inicial, publicadoNoInicio, exist
 
           <section aria-label="Adicionar pergunta" className="flex flex-col gap-3 rounded-2xl border border-dashed border-borda-campo p-5">
             <h2 className="text-base font-bold">Adicionar pergunta</h2>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2">
               {TIPOS_DE_PERGUNTA.map(({ tipo, nome, ajuda }) => (
                 <button
                   key={tipo}

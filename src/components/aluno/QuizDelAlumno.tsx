@@ -1,7 +1,8 @@
 'use client';
 
 import { startTransition, useActionState, useState } from 'react';
-import { responderQuiz } from '@/app/(aluno)/acoes';
+import { conferirParDoQuiz, responderQuiz } from '@/app/(aluno)/acoes';
+import { JogoDePares, type Tentativa } from '@/components/aluno/JogoDePares';
 import { Aviso, Boton, Sello } from '@/components/aluno/ui';
 import { usePronto } from '@/components/usePronto';
 import { es } from '@/i18n/es';
@@ -11,23 +12,31 @@ import { RESPOSTA_INICIAL, type PerguntaEntregue } from '@/lib/quiz-aluno';
 // para o servidor, que corrige e devolve acerto por acerto. Para tentar de novo, a página é
 // carregada outra vez (com as opções em outra ordem).
 
-// O que o aluno escolheu em cada pergunta: o texto da opção, ou (em "ordenar") as posições das
-// palavras tocadas, na ordem em que foram tocadas.
-type Escolha = string | number[];
+// O que o aluno escolheu em cada pergunta: o texto da opção, (em "ordenar") as posições das
+// palavras tocadas, na ordem em que foram tocadas, ou (no jogo de pares) as tentativas feitas.
+type Pares = { tentativas: Tentativa[]; completo: boolean };
+type Escolha = string | number[] | Pares;
+
+function ehPares(escolha: Escolha | undefined): escolha is Pares {
+  return typeof escolha === 'object' && escolha !== null && !Array.isArray(escolha);
+}
 
 function respondida(pergunta: PerguntaEntregue, escolha: Escolha | undefined): boolean {
   if (pergunta.tipo === 'ordenar') return Array.isArray(escolha) && escolha.length === pergunta.palavras.length;
+  if (pergunta.tipo === 'parear_audio') return ehPares(escolha) && escolha.completo;
   return typeof escolha === 'string';
 }
 
 function paraEnviar(pergunta: PerguntaEntregue, escolha: Escolha | undefined): unknown {
   if (pergunta.tipo === 'ordenar') return Array.isArray(escolha) ? escolha.map((posicao) => pergunta.palavras[posicao] ?? '') : [];
+  if (pergunta.tipo === 'parear_audio') return ehPares(escolha) ? escolha.tentativas : [];
   return typeof escolha === 'string' ? escolha : null;
 }
 
 function enunciado(pergunta: PerguntaEntregue): string {
   if (pergunta.tipo === 'multipla_escolha') return es.quiz.elige;
   if (pergunta.tipo === 'completar') return es.quiz.completa;
+  if (pergunta.tipo === 'parear_audio') return pergunta.modo === 'audio' ? es.quiz.combinaAudio : es.quiz.combinaPalabras;
   return es.quiz.ordena;
 }
 
@@ -168,7 +177,23 @@ export function QuizDelAlumno({ quizId, notaMinima, perguntas, previa }: Props) 
                 {conferida ? <Sello tom={conferida.correta ? 'verde' : 'aviso'}>{conferida.correta ? es.quiz.correcta : es.quiz.incorrecta}</Sello> : null}
               </div>
 
-              {pergunta.tipo === 'ordenar' ? (
+              {pergunta.tipo === 'parear_audio' ? (
+                <JogoDePares
+                  modo={pergunta.modo}
+                  cartoes={pergunta.cartoes}
+                  traducoes={pergunta.traducoes}
+                  rotulo={enunciado(pergunta)}
+                  conferir={async (indice, traducao) => {
+                    try {
+                      const resposta = await conferirParDoQuiz(quizId, pergunta.id, indice, traducao);
+                      return resposta.situacao === 'ok' ? resposta : null;
+                    } catch {
+                      return null;
+                    }
+                  }}
+                  aoMudar={(tentativas, completo) => escolher(pergunta.id, { tentativas, completo })}
+                />
+              ) : pergunta.tipo === 'ordenar' ? (
                 <Ordenar pergunta={pergunta} escolha={Array.isArray(escolha) ? escolha : []} mudar={(nova) => escolher(pergunta.id, nova)} />
               ) : (
                 <>

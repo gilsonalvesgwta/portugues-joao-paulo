@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { corrigir } from './quiz.ts';
-import { doBanco, palavrasDe, paraOBanco, perguntaVazia, TIPOS_DE_PERGUNTA, validarQuiz } from './quiz-editor.ts';
+import { audiosDoQuiz, doBanco, palavrasDe, paraOBanco, perguntaVazia, TIPOS_DE_PERGUNTA, validarQuiz } from './quiz-editor.ts';
 
 const bom = {
   dificuldade: 'medio',
@@ -127,4 +127,45 @@ test('pergunta vazia de cada tipo e separação das palavras', () => {
   for (const { tipo } of TIPOS_DE_PERGUNTA) assert.equal(perguntaVazia(tipo).tipo, tipo);
   assert.deepEqual(palavrasDe('  Eu  sou   de São Paulo. '), ['Eu', 'sou', 'de', 'São', 'Paulo.']);
   assert.deepEqual(palavrasDe(''), []);
+});
+
+const GRAVACAO = '0b9c2f0e-1d2a-4c5b-8e6f-7a8b9c0d1e2f';
+
+test('combinar pares: linhas em branco saem, gravação estranha é ignorada, e volta igual do banco', () => {
+  const r = validarQuiz({
+    dificuldade: 'facil', nota_minima: 70,
+    perguntas: [{
+      id: 'pares00001', tipo: 'parear_audio', modo: 'audio',
+      pares: [
+        { palavra: ' tudo  bem ', traducao: 'todo bien', audio: GRAVACAO },
+        { palavra: '', traducao: '', audio: null },
+        { palavra: 'obrigado', traducao: 'gracias', audio: '../segredo' },
+      ],
+    }],
+  }, true);
+  assert.equal(r.ok, true);
+  if (!r.ok) return;
+  assert.deepEqual(r.quiz.perguntas[0], {
+    id: 'pares00001', tipo: 'parear_audio', modo: 'audio',
+    pares: [{ palavra: 'tudo bem', traducao: 'todo bien', audio: GRAVACAO }, { palavra: 'obrigado', traducao: 'gracias', audio: null }],
+  });
+  assert.deepEqual(audiosDoQuiz(r.quiz), [GRAVACAO]);
+  const banco = r.quiz.perguntas.map(paraOBanco);
+  assert.deepEqual(banco[0], { tipo: 'parear_audio', modo: 'audio', pares: [{ palavra: 'tudo bem', traducao: 'todo bien', audio: GRAVACAO }, { palavra: 'obrigado', traducao: 'gracias' }] });
+  const volta = doBanco(banco.map(({ tipo, ...conteudo }) => ({ tipo, conteudo })));
+  assert.deepEqual(volta.map(({ id: _id, ...resto }) => resto), [{ tipo: 'parear_audio', modo: 'audio', pares: r.quiz.perguntas[0]?.tipo === 'parear_audio' ? r.quiz.perguntas[0].pares : [] }]);
+});
+
+test('combinar pares: falta de par, repetição e excesso são apontados', () => {
+  const com = (pares: unknown[], modo = 'escrita') => validarQuiz({ dificuldade: 'facil', nota_minima: 70, perguntas: [{ id: 'pares00001', tipo: 'parear_audio', modo, pares }] }, false);
+  const um = com([{ palavra: 'oi', traducao: 'hola' }]);
+  assert.equal(!um.ok && um.erros.pares00001, 'Inclua pelo menos 2 pares.');
+  const repetida = com([{ palavra: 'oi', traducao: 'hola' }, { palavra: 'olá', traducao: 'Hola' }]);
+  assert.equal(!repetida.ok && repetida.erros.pares00001, 'As traduções não podem se repetir.');
+  const semTraducao = com([{ palavra: 'oi', traducao: 'hola' }, { palavra: 'tchau', traducao: '' }]);
+  assert.equal(!semTraducao.ok && semTraducao.erros.pares00001, 'Todo par precisa da palavra em português e da tradução.');
+  const muitos = com(Array.from({ length: 7 }, (_, i) => ({ palavra: `p${i}`, traducao: `t${i}` })));
+  assert.equal(!muitos.ok && muitos.erros.pares00001, 'Até 6 pares por pergunta.');
+  const modoDesconhecido = com([{ palavra: 'oi', traducao: 'hola' }, { palavra: 'tchau', traducao: 'chao' }], 'cantado');
+  assert.equal(modoDesconhecido.ok && modoDesconhecido.quiz.perguntas[0]?.tipo === 'parear_audio' && modoDesconhecido.quiz.perguntas[0].modo, 'audio');
 });

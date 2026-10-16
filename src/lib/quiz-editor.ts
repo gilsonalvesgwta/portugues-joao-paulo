@@ -1,15 +1,19 @@
-import { LACUNA, validarPergunta, type Pergunta } from './quiz.ts';
+import { LACUNA, validarPergunta, type ModoDosPares, type Pergunta } from './quiz.ts';
 
 // O quiz como o editor da administração o enxerga, e a conferência do que ele manda gravar.
-// Por enquanto o editor cria os três tipos de pergunta de texto. Os dois tipos com áudio
-// (parear áudio e ditado) entram quando a forma de gerar o áudio estiver definida.
+// O editor cria os três tipos de pergunta de texto e o jogo de combinar pares (com a voz do
+// professor gravada em cada palavra). O ditado ainda não entra.
 // Sem dependências: vale na tela, no servidor e nos testes.
 
 export type PerguntaNoEditor =
   | { id: string; tipo: 'multipla_escolha'; enunciado: string; opcoes: string[]; correta: number }
   | { id: string; tipo: 'completar'; frase: string; opcoes: string[]; correta: number }
   // "frase" é a frase inteira, na ordem certa; ao gravar, vira a lista de palavras.
-  | { id: string; tipo: 'ordenar'; frase: string; traducao: string };
+  | { id: string; tipo: 'ordenar'; frase: string; traducao: string }
+  // "audio" de cada par: o identificador da gravação, ou null quando ainda não há gravação.
+  | { id: string; tipo: 'parear_audio'; modo: ModoDosPares; pares: ParNoEditor[] };
+
+export type ParNoEditor = { palavra: string; traducao: string; audio: string | null };
 
 export type TipoNoEditor = PerguntaNoEditor['tipo'];
 export type Dificuldade = 'facil' | 'medio' | 'dificil';
@@ -24,6 +28,9 @@ export const LIMITES_DO_QUIZ = {
   enunciado: 500,
   opcao: 200,
   palavras: 15,
+  paresMin: 2,
+  paresMax: 6,
+  palavraDoPar: 100,
 } as const;
 
 export const DIFICULDADES: { valor: Dificuldade; nome: string }[] = [
@@ -36,6 +43,12 @@ export const TIPOS_DE_PERGUNTA: { tipo: TipoNoEditor; nome: string; ajuda: strin
   { tipo: 'multipla_escolha', nome: 'Múltipla escolha', ajuda: 'Uma pergunta e várias opções; só uma é a certa.' },
   { tipo: 'completar', nome: 'Completar a frase', ajuda: 'Uma frase com uma lacuna e as opções para preencher.' },
   { tipo: 'ordenar', nome: 'Ordenar a frase', ajuda: 'O aluno recebe as palavras embaralhadas e monta a frase.' },
+  { tipo: 'parear_audio', nome: 'Combinar pares', ajuda: 'O aluno ouve (ou lê) cada palavra em português e escolhe a tradução.' },
+];
+
+export const MODOS_DOS_PARES: { valor: ModoDosPares; nome: string; ajuda: string }[] = [
+  { valor: 'audio', nome: 'O aluno ouve a palavra', ajuda: 'Os cartões de cima tocam a sua gravação. Palavra sem gravação é lida pela voz do navegador.' },
+  { valor: 'escrita', nome: 'O aluno lê a palavra', ajuda: 'Os cartões de cima mostram a palavra em português escrita, sem som.' },
 ];
 
 export function nomeDaPergunta(tipo: TipoNoEditor): string {
@@ -43,6 +56,29 @@ export function nomeDaPergunta(tipo: TipoNoEditor): string {
 }
 
 const ID = /^[a-z0-9]{6,16}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// O quiz sem as gravações que não existem (apagadas, ou de outra aula): o par fica sem gravação.
+export function soComAudios(quiz: QuizNoEditor, existentes: ReadonlySet<string>): QuizNoEditor {
+  return {
+    ...quiz,
+    perguntas: quiz.perguntas.map((pergunta) =>
+      pergunta.tipo === 'parear_audio'
+        ? { ...pergunta, pares: pergunta.pares.map((par) => (par.audio && !existentes.has(par.audio) ? { ...par, audio: null } : par)) }
+        : pergunta,
+    ),
+  };
+}
+
+// As gravações que o quiz usa (para o servidor conferir que existem e apagar as que sobraram).
+export function audiosDoQuiz(quiz: QuizNoEditor): string[] {
+  const ids = new Set<string>();
+  for (const pergunta of quiz.perguntas) {
+    if (pergunta.tipo !== 'parear_audio') continue;
+    for (const par of pergunta.pares) if (par.audio) ids.add(par.audio);
+  }
+  return [...ids];
+}
 
 function novoId(): string {
   let id = '';
@@ -54,6 +90,7 @@ export function perguntaVazia(tipo: TipoNoEditor): PerguntaNoEditor {
   const id = novoId();
   if (tipo === 'multipla_escolha') return { id, tipo, enunciado: '', opcoes: ['', ''], correta: -1 };
   if (tipo === 'completar') return { id, tipo, frase: '', opcoes: ['', ''], correta: -1 };
+  if (tipo === 'parear_audio') return { id, tipo, modo: 'audio', pares: Array.from({ length: 4 }, () => ({ palavra: '', traducao: '', audio: null })) };
   return { id, tipo, frase: '', traducao: '' };
 }
 
@@ -95,6 +132,13 @@ export function paraOBanco(pergunta: PerguntaNoEditor): Pergunta {
   }
   if (pergunta.tipo === 'completar') {
     return { tipo: pergunta.tipo, frase: pergunta.frase, opcoes: pergunta.opcoes, correta: pergunta.correta };
+  }
+  if (pergunta.tipo === 'parear_audio') {
+    return {
+      tipo: pergunta.tipo,
+      modo: pergunta.modo,
+      pares: pergunta.pares.map((par) => (par.audio ? { palavra: par.palavra, traducao: par.traducao, audio: par.audio } : { palavra: par.palavra, traducao: par.traducao })),
+    };
   }
   return { tipo: pergunta.tipo, palavras: palavrasDe(pergunta.frase), traducao: pergunta.traducao };
 }
@@ -143,11 +187,27 @@ export function validarQuiz(entrada: unknown, publicar: boolean): ResultadoDoQui
       if (palavrasDe(frase).length > LIMITES_DO_QUIZ.palavras) extra = `A frase pode ter até ${LIMITES_DO_QUIZ.palavras} palavras.`;
       if (traducao.length > LIMITES_DO_QUIZ.enunciado) extra = `A tradução pode ter até ${LIMITES_DO_QUIZ.enunciado} letras.`;
       pergunta = { id, tipo: bruta.tipo, frase, traducao };
+    } else if (bruta.tipo === 'parear_audio') {
+      const modo = MODOS_DOS_PARES.find((m) => m.valor === bruta.modo)?.valor ?? 'audio';
+      const brutos = Array.isArray(bruta.pares) ? bruta.pares : [];
+      if (brutos.length > LIMITES_DO_QUIZ.paresMax) extra = `Até ${LIMITES_DO_QUIZ.paresMax} pares por pergunta.`;
+      const pares = brutos
+        .slice(0, LIMITES_DO_QUIZ.paresMax)
+        .map((par): ParNoEditor => {
+          const o = ehObjeto(par) ? par : {};
+          return { palavra: umaLinha(o.palavra), traducao: umaLinha(o.traducao), audio: typeof o.audio === 'string' && UUID.test(o.audio) ? o.audio : null };
+        })
+        // Linha toda em branco (sem palavra, sem tradução e sem gravação) é descartada.
+        .filter((par) => par.palavra !== '' || par.traducao !== '' || par.audio !== null);
+      if (pares.some((par) => par.palavra.length > LIMITES_DO_QUIZ.palavraDoPar || par.traducao.length > LIMITES_DO_QUIZ.palavraDoPar)) {
+        extra = `Cada palavra pode ter até ${LIMITES_DO_QUIZ.palavraDoPar} letras.`;
+      }
+      pergunta = { id, tipo: bruta.tipo, modo, pares };
     } else {
       return { ok: false, erros: { geral: 'Há uma pergunta de um tipo que este editor ainda não aceita.' } };
     }
 
-    if (pergunta.tipo !== 'ordenar') {
+    if (pergunta.tipo === 'multipla_escolha' || pergunta.tipo === 'completar') {
       if (pergunta.opcoes.length > LIMITES_DO_QUIZ.opcoesMax) extra = `Até ${LIMITES_DO_QUIZ.opcoesMax} opções por pergunta.`;
       if (pergunta.opcoes.some((opcao) => opcao.length > LIMITES_DO_QUIZ.opcao)) extra = `Cada opção pode ter até ${LIMITES_DO_QUIZ.opcao} letras.`;
     }
@@ -175,6 +235,13 @@ export function doBanco(linhas: readonly { tipo: string; conteudo: unknown }[]):
       perguntas.push({ id: novoId(), tipo: linha.tipo, frase: texto(c.frase), opcoes: lista(c.opcoes), correta: numero(c.correta) });
     } else if (linha.tipo === 'ordenar') {
       perguntas.push({ id: novoId(), tipo: linha.tipo, frase: lista(c.palavras).join(' '), traducao: texto(c.traducao) });
+    } else if (linha.tipo === 'parear_audio') {
+      const pares = (Array.isArray(c.pares) ? c.pares : []).filter(ehObjeto).map((par) => ({
+        palavra: texto(par.palavra),
+        traducao: texto(par.traducao),
+        audio: typeof par.audio === 'string' && UUID.test(par.audio) ? par.audio : null,
+      }));
+      perguntas.push({ id: novoId(), tipo: linha.tipo, modo: c.modo === 'escrita' ? 'escrita' : 'audio', pares });
     }
   }
   return perguntas;

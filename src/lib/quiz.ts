@@ -3,15 +3,26 @@
 // As respostas são dadas pelo conteúdo (texto escolhido), não por posição, para que
 // embaralhar as opções não mude a correção.
 
+// "parear_audio": combinar cada palavra em português com a tradução em espanhol. No modo
+// "audio" o aluno ouve a palavra (a gravação do professor; sem gravação, a voz do navegador); no
+// modo "escrita" ele lê a palavra. "audio" de um par é o identificador da gravação.
+export type ModoDosPares = 'audio' | 'escrita';
+export type Par = { palavra: string; traducao: string; audio?: string };
+
 export type Pergunta =
-  | { tipo: 'parear_audio'; pares: { audio: string; traducao: string }[] }
+  | { tipo: 'parear_audio'; modo: ModoDosPares; pares: Par[] }
   | { tipo: 'multipla_escolha'; enunciado: string; opcoes: string[]; correta: number; audio?: string }
   | { tipo: 'completar'; frase: string; opcoes: string[]; correta: number }
   | { tipo: 'ordenar'; palavras: string[]; traducao: string }
   | { tipo: 'ouvir_escrever'; audio: string; texto: string };
 
+// Um cartão de cima do jogo de pares. "indice" diz qual par ele é (sem dizer a tradução). No modo
+// com áudio, o cartão leva a gravação ou, sem gravação, o texto que o navegador lê em voz alta
+// ("fala"); no modo escrito, a palavra.
+export type CartaoDoPar = { indice: number; audio?: string; fala?: string; palavra?: string };
+
 export type PerguntaDoAluno =
-  | { tipo: 'parear_audio'; audios: string[]; traducoes: string[] }
+  | { tipo: 'parear_audio'; modo: ModoDosPares; cartoes: CartaoDoPar[]; traducoes: string[] }
   | { tipo: 'multipla_escolha'; enunciado: string; opcoes: string[]; audio?: string }
   | { tipo: 'completar'; frase: string; opcoes: string[] }
   | { tipo: 'ordenar'; palavras: string[]; traducao: string }
@@ -54,12 +65,18 @@ function iguais(a: readonly string[], b: readonly string[]): boolean {
 // e com a ordem embaralhada.
 export function paraAluno(pergunta: Pergunta, sorteio: Sorteio = Math.random): PerguntaDoAluno {
   switch (pergunta.tipo) {
-    case 'parear_audio':
+    case 'parear_audio': {
+      const cartoes = pergunta.pares.map((par, indice): CartaoDoPar => {
+        if (pergunta.modo === 'escrita') return { indice, palavra: par.palavra };
+        return par.audio ? { indice, audio: par.audio } : { indice, fala: par.palavra };
+      });
       return {
         tipo: 'parear_audio',
-        audios: embaralhar(pergunta.pares.map((p) => p.audio), sorteio),
+        modo: pergunta.modo,
+        cartoes: embaralhar(cartoes, sorteio),
         traducoes: embaralhar(pergunta.pares.map((p) => p.traducao), sorteio),
       };
+    }
     case 'multipla_escolha': {
       const base = { tipo: 'multipla_escolha' as const, enunciado: pergunta.enunciado, opcoes: embaralhar(pergunta.opcoes, sorteio) };
       return pergunta.audio === undefined ? base : { ...base, audio: pergunta.audio };
@@ -100,8 +117,17 @@ function listaDeTextos(valor: unknown): string[] | null {
 const ERRADA: Correcao = { correta: false };
 const CERTA: Correcao = { correta: true };
 
+// Uma tentativa no jogo de pares: o cartão de cima (pelo índice do par) com uma tradução.
+// Devolve se acertou e, quando acertou, a palavra em português, que passa a aparecer no cartão.
+export function conferirPar(pergunta: Pergunta, indice: unknown, traducao: unknown): { certo: boolean; palavra?: string } {
+  if (pergunta.tipo !== 'parear_audio' || typeof indice !== 'number' || typeof traducao !== 'string') return { certo: false };
+  const par = pergunta.pares[indice];
+  return par && par.traducao === traducao ? { certo: true, palavra: par.palavra } : { certo: false };
+}
+
 // Formato esperado da resposta por tipo:
-// - parear_audio: lista de { audio, traducao };
+// - parear_audio: a lista das tentativas, na ordem, cada uma { i: índice do cartão, t: tradução };
+//   a pergunta conta como certa quando todos os pares foram combinados sem nenhum erro;
 // - multipla_escolha e completar: o texto da opção escolhida;
 // - ordenar: a lista de palavras na ordem montada;
 // - ouvir_escrever: o texto digitado.
@@ -110,14 +136,12 @@ export function corrigir(pergunta: Pergunta, resposta: unknown): Correcao {
   switch (pergunta.tipo) {
     case 'parear_audio': {
       if (!Array.isArray(resposta) || resposta.length !== pergunta.pares.length) return ERRADA;
-      const gabarito = new Map(pergunta.pares.map((p) => [p.audio, p.traducao]));
-      const usados = new Set<string>();
-      for (const par of resposta) {
-        if (typeof par !== 'object' || par === null) return ERRADA;
-        const { audio, traducao } = par as { audio?: unknown; traducao?: unknown };
-        if (typeof audio !== 'string' || typeof traducao !== 'string') return ERRADA;
-        if (usados.has(audio) || gabarito.get(audio) !== traducao) return ERRADA;
-        usados.add(audio);
+      const combinados = new Set<number>();
+      for (const tentativa of resposta) {
+        if (typeof tentativa !== 'object' || tentativa === null) return ERRADA;
+        const { i, t } = tentativa as { i?: unknown; t?: unknown };
+        if (typeof i !== 'number' || combinados.has(i) || !conferirPar(pergunta, i, t).certo) return ERRADA;
+        combinados.add(i);
       }
       return CERTA;
     }
@@ -159,10 +183,11 @@ export function validarPergunta(pergunta: Pergunta): string[] {
   const vazio = (t: string) => t.trim() === '';
   switch (pergunta.tipo) {
     case 'parear_audio':
+      if (pergunta.modo !== 'audio' && pergunta.modo !== 'escrita') erros.push('Escolha se o aluno ouve ou lê a palavra.');
       if (pergunta.pares.length < 2) erros.push('Inclua pelo menos 2 pares.');
-      if (pergunta.pares.some((p) => vazio(p.audio) || vazio(p.traducao))) erros.push('Todo par precisa de áudio e de tradução.');
-      if (repetidos(pergunta.pares.map((p) => p.traducao))) erros.push('As traduções não podem se repetir.');
-      if (repetidos(pergunta.pares.map((p) => p.audio))) erros.push('Os áudios não podem se repetir.');
+      if (pergunta.pares.some((p) => vazio(p.palavra) || vazio(p.traducao))) erros.push('Todo par precisa da palavra em português e da tradução.');
+      if (repetidos(pergunta.pares.map((p) => p.palavra.toLowerCase()))) erros.push('As palavras em português não podem se repetir.');
+      if (repetidos(pergunta.pares.map((p) => p.traducao.toLowerCase()))) erros.push('As traduções não podem se repetir.');
       break;
     case 'multipla_escolha':
     case 'completar':

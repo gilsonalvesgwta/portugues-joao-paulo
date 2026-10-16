@@ -2,7 +2,7 @@
 // gabarito e o aluno nunca a lê: o servidor entrega as perguntas sem a resposta, recebe o que o
 // aluno escolheu e devolve a correção. Sem dependências, para valer igual no servidor e nos testes.
 
-import { corrigir, paraAluno, type Pergunta, type PerguntaDoAluno } from './quiz.ts';
+import { conferirPar, corrigir, paraAluno, type Par, type Pergunta, type PerguntaDoAluno } from './quiz.ts';
 
 export type LinhaDePergunta = { id: string; tipo: string; conteudo: unknown };
 
@@ -14,11 +14,24 @@ function textos(valor: unknown): string[] | null {
   return Array.isArray(valor) && valor.length > 0 && valor.every((v) => typeof v === 'string' && v.trim() !== '') ? (valor as string[]) : null;
 }
 
-// Pergunta gravada -> pergunta conferida. null para o que não dá para mostrar (tipo com áudio,
-// que esta versão não tem, ou conteúdo quebrado): a pergunta é pulada em vez de derrubar o quiz.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Pergunta gravada -> pergunta conferida. null para o que não dá para mostrar (o ditado, que esta
+// versão não tem, ou conteúdo quebrado): a pergunta é pulada em vez de derrubar o quiz.
 export function perguntaDoBanco(linha: LinhaDePergunta): Pergunta | null {
   const c = objeto(linha.conteudo);
   if (!c) return null;
+  if (linha.tipo === 'parear_audio') {
+    if ((c.modo !== 'audio' && c.modo !== 'escrita') || !Array.isArray(c.pares) || c.pares.length < 2) return null;
+    const pares: Par[] = [];
+    for (const bruto of c.pares) {
+      const par = objeto(bruto);
+      if (!par || typeof par.palavra !== 'string' || typeof par.traducao !== 'string' || par.palavra.trim() === '' || par.traducao.trim() === '') return null;
+      pares.push(typeof par.audio === 'string' && UUID.test(par.audio) ? { palavra: par.palavra, traducao: par.traducao, audio: par.audio } : { palavra: par.palavra, traducao: par.traducao });
+    }
+    if (new Set(pares.map((par) => par.traducao)).size !== pares.length) return null;
+    return { tipo: 'parear_audio', modo: c.modo, pares };
+  }
   if (linha.tipo === 'multipla_escolha' || linha.tipo === 'completar') {
     const opcoes = textos(c.opcoes);
     const correta = c.correta;
@@ -36,8 +49,8 @@ export function perguntaDoBanco(linha: LinhaDePergunta): Pergunta | null {
   return null;
 }
 
-// Só os três tipos de texto chegam ao aluno (esta versão não tem perguntas com áudio).
-export type PerguntaEntregue = Extract<PerguntaDoAluno, { tipo: 'multipla_escolha' | 'completar' | 'ordenar' }> & { id: string };
+// O ditado ainda não chega ao aluno; os outros quatro tipos, sim.
+export type PerguntaEntregue = Extract<PerguntaDoAluno, { tipo: 'multipla_escolha' | 'completar' | 'ordenar' | 'parear_audio' }> & { id: string };
 
 // O que vai para o navegador: cada pergunta sem a resposta e com as opções embaralhadas.
 export function entregar(linhas: readonly LinhaDePergunta[], sorteio: () => number = Math.random): PerguntaEntregue[] {
@@ -46,7 +59,7 @@ export function entregar(linhas: readonly LinhaDePergunta[], sorteio: () => numb
     const pergunta = perguntaDoBanco(linha);
     if (!pergunta) continue;
     const doAluno = paraAluno(pergunta, sorteio);
-    if (doAluno.tipo === 'multipla_escolha' || doAluno.tipo === 'completar' || doAluno.tipo === 'ordenar') {
+    if (doAluno.tipo !== 'ouvir_escrever') {
       entregues.push({ ...doAluno, id: linha.id });
     }
   }
@@ -81,7 +94,14 @@ export type Correcao = {
 function respostaCerta(pergunta: Pergunta): string {
   if (pergunta.tipo === 'multipla_escolha' || pergunta.tipo === 'completar') return pergunta.opcoes[pergunta.correta] ?? '';
   if (pergunta.tipo === 'ordenar') return pergunta.palavras.join(' ');
+  if (pergunta.tipo === 'parear_audio') return pergunta.pares.map((par) => `${par.palavra} = ${par.traducao}`).join(', ');
   return '';
+}
+
+// Uma tentativa no jogo de pares, conferida contra a pergunta gravada.
+export function conferirTentativa(linha: LinhaDePergunta, indice: unknown, traducao: unknown): { certo: boolean; palavra?: string } {
+  const pergunta = perguntaDoBanco(linha);
+  return pergunta ? conferirPar(pergunta, indice, traducao) : { certo: false };
 }
 
 // Pergunta sem resposta conta como errada. As perguntas que não puderam ser entregues ficam de fora.
@@ -109,10 +129,19 @@ export type EstadoDaResposta = {
 
 export const RESPOSTA_INICIAL: EstadoDaResposta = { vez: 0, situacao: 'inicial', error: null, correcao: null, guardado: false };
 
-// O que fica gravado de cada resposta: o texto escolhido ou a lista de palavras, com limite de
-// tamanho. Qualquer outra coisa é gravada como "sem resposta".
-export function respostaParaGuardar(resposta: unknown): string | string[] | null {
+type Tentativa = { i: number; t: string };
+
+// O que fica gravado de cada resposta: o texto escolhido, a lista de palavras ou (no jogo de pares)
+// a lista de tentativas, com limite de tamanho. Qualquer outra coisa é gravada como "sem resposta".
+export function respostaParaGuardar(resposta: unknown): string | string[] | Tentativa[] | null {
   if (typeof resposta === 'string') return resposta.length <= 500 ? resposta : null;
-  if (Array.isArray(resposta) && resposta.length <= 60 && resposta.every((p) => typeof p === 'string' && p.length <= 100)) return resposta as string[];
-  return null;
+  if (!Array.isArray(resposta) || resposta.length > 60) return null;
+  if (resposta.every((p) => typeof p === 'string' && p.length <= 100)) return resposta as string[];
+  const tentativas: Tentativa[] = [];
+  for (const item of resposta) {
+    const o = objeto(item);
+    if (!o || typeof o.i !== 'number' || !Number.isInteger(o.i) || o.i < 0 || o.i > 99 || typeof o.t !== 'string' || o.t.length > 100) return null;
+    tentativas.push({ i: o.i, t: o.t });
+  }
+  return tentativas;
 }

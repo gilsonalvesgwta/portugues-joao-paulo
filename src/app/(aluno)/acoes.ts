@@ -5,7 +5,7 @@ import { lerPosicao, montarPainel, videoConcluido } from '@/lib/aluno';
 import { carregarAulaNoCurso, carregarQuiz } from '@/lib/aluno/dados';
 import { ehUuid } from '@/lib/conteudo';
 import { ehEquipe } from '@/lib/papeis';
-import { corrigirEntrega, lerRespostas, respostaParaGuardar, type EstadoDaResposta, type LinhaDePergunta } from '@/lib/quiz-aluno';
+import { conferirTentativa, corrigirEntrega, lerRespostas, respostaParaGuardar, type EstadoDaResposta, type LinhaDePergunta } from '@/lib/quiz-aluno';
 import { clienteDeServico } from '@/lib/supabase/servico';
 import { clienteDoServidor, pessoaLogada } from '@/lib/supabase/servidor';
 
@@ -163,4 +163,30 @@ export async function responderQuiz(anterior: EstadoDaResposta, dados: FormData)
     }
   }
   return { vez: anterior.vez + 1, situacao: 'corregido', error: null, correcao, guardado: !previa };
+}
+
+// Uma tentativa no jogo de pares: o cartão de cima (índice do par) com uma tradução. O servidor
+// confere com o gabarito e devolve se acertou e, se acertou, a palavra em português do cartão.
+// Nada é gravado aqui: a nota sai do envio do quiz inteiro, com a lista de tentativas.
+export type ConferenciaDoPar = { situacao: 'ok'; certo: boolean; palavra?: string } | { situacao: 'erro' };
+
+export async function conferirParDoQuiz(quizId: unknown, perguntaId: unknown, indice: unknown, traducao: unknown): Promise<ConferenciaDoPar> {
+  const pessoa = await pessoaLogada();
+  if (!pessoa || !ehUuid(quizId) || !ehUuid(perguntaId) || typeof indice !== 'number' || typeof traducao !== 'string' || traducao.length > 200) {
+    return { situacao: 'erro' };
+  }
+  const quiz = await carregarQuiz(quizId);
+  const contexto = quiz ? await carregarAulaNoCurso(quiz.aula_id) : null;
+  if (!quiz || !contexto) return { situacao: 'erro' };
+  if (montarPainel(contexto.curso, contexto.progresso, ehEquipe(pessoa.papel)).fechados.has(quiz.id)) return { situacao: 'erro' };
+
+  const { data: linha } = await clienteDeServico()
+    .from('perguntas')
+    .select('id, tipo, conteudo')
+    .eq('quiz_id', quiz.id)
+    .eq('id', perguntaId)
+    .maybeSingle();
+  if (!linha) return { situacao: 'erro' };
+  const resultado = conferirTentativa(linha as unknown as LinhaDePergunta, indice, traducao);
+  return resultado.certo ? { situacao: 'ok', certo: true, palavra: resultado.palavra ?? '' } : { situacao: 'ok', certo: false };
 }
