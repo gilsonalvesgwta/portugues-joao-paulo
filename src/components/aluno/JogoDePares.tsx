@@ -89,6 +89,9 @@ export function JogoDePares({ modo, cartoes, traducoes, conferir, aoMudar, desat
     setDeCima(null);
     setDeBaixo(null);
     if (resposta.certo) {
+      // Um erro de antes, ainda piscando, para de piscar: a mensagem agora é do acerto.
+      window.clearTimeout(relogio.current);
+      setErrado(null);
       const proximos = new Map(combinados).set(i, { palavra: resposta.palavra ?? '', traducao: t });
       setCombinados(proximos);
       const terminou = proximos.size === cartoes.length;
