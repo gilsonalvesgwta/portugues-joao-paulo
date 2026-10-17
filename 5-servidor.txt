@@ -1,0 +1,19 @@
+
+> start
+> npm run preparar:servidor && HOSTNAME=0.0.0.0 node .next/standalone/server.js
+
+
+> preparar:servidor
+> mkdir -p .next/standalone/public .next/standalone/.next/static && cp -r public/. .next/standalone/public/ && cp -r .next/static/. .next/standalone/.next/static/
+
+▲ Next.js 16.4.0
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+✓ Ready in 0ms
+✓ Running next.config took 3ms
+Primeiro administrador criado a partir de ADMIN_EMAIL.
+Lembretes de aula: 2 enviados, 0 com falha.
+Papo: o serviço respondeu 503 (service_unavailable_error, server_is_overloaded) [indisponivel]
+Papo (teste do painel): o serviço respondeu 401 (invalid_request_error, invalid_api_key) [chave]
+Papo (teste do painel): o serviço respondeu 429 (insufficient_quota, insufficient_quota) [credito]
+Papo (teste do painel): o serviço respondeu 404 (invalid_request_error, model_not_found) [modelo]

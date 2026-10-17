@@ -1,0 +1,300 @@
+  duration_ms: 63.758723
+  type: 'test'
+  ...
+# Subtest: reembolso encerra o acesso na hora, sem e-mail
+ok 140 - reembolso encerra o acesso na hora, sem e-mail
+  ---
+  duration_ms: 257.885544
+  type: 'test'
+  ...
+# Subtest: nova compra de quem já tem senha: o acesso volta e o e-mail traz só o botão de entrar
+ok 141 - nova compra de quem já tem senha: o acesso volta e o e-mail traz só o botão de entrar
+  ---
+  duration_ms: 238.688399
+  type: 'test'
+  ...
+# Subtest: quem compra de novo com o acesso em dia soma os dias e não recebe outro e-mail
+ok 142 - quem compra de novo com o acesso em dia soma os dias e não recebe outro e-mail
+  ---
+  duration_ms: 32.562147
+  type: 'test'
+  ...
+# Subtest: assinatura: cada cobrança estende o acesso; cancelada, vale até o fim do período pago; sem pagamento, acaba
+ok 143 - assinatura: cada cobrança estende o acesso; cancelada, vale até o fim do período pago; sem pagamento, acaba
+  ---
+  duration_ms: 633.87208
+  type: 'test'
+  ...
+# Subtest: reembolso de quem não tem conta fica guardado e não cria conta
+ok 144 - reembolso de quem não tem conta fica guardado e não cria conta
+  ---
+  duration_ms: 73.604877
+  type: 'test'
+  ...
+# Subtest: oferta desativada: a compra fica pendente; o código de produto não se repete; dispensar tira o aviso da lista
+ok 145 - oferta desativada: a compra fica pendente; o código de produto não se repete; dispensar tira o aviso da lista
+  ---
+  duration_ms: 4594.028946
+  type: 'test'
+  ...
+# Subtest: o professor não vê Pagamentos; ofertas e avisos não respondem para ele nem para a aluna
+ok 146 - o professor não vê Pagamentos; ofertas e avisos não respondem para ele nem para a aluna
+  ---
+  duration_ms: 8204.598842
+  type: 'test'
+  ...
+# Subtest: visitante sem login não chama nenhuma função do banco nem lê as tabelas de pagamento
+ok 147 - visitante sem login não chama nenhuma função do banco nem lê as tabelas de pagamento
+  ---
+  duration_ms: 66.785669
+  type: 'test'
+  ...
+# Subtest: no celular, a tela de pagamentos e a de oferta cabem na largura
+ok 148 - no celular, a tela de pagamentos e a de oferta cabem na largura
+  ---
+  duration_ms: 3814.888666
+  type: 'test'
+  ...
+# Subtest: 1. a compra na Greenn cria a conta, a matrícula de um ano e manda o e-mail com o link
+ok 149 - 1. a compra na Greenn cria a conta, a matrícula de um ano e manda o e-mail com o link
+  ---
+  duration_ms: 1936.480055
+  type: 'test'
+  ...
+# Subtest: 2. ela abre o link do e-mail, cria a senha e cai no curso, no dia 1
+ok 150 - 2. ela abre o link do e-mail, cria a senha e cai no curso, no dia 1
+  ---
+  duration_ms: 2440.850774
+  type: 'test'
+  ...
+# Subtest: 3. assiste à aula 1, faz o quiz e é aprovada: o dia vira e a aula 2 abre
+ok 151 - 3. assiste à aula 1, faz o quiz e é aprovada: o dia vira e a aula 2 abre
+  ---
+  duration_ms: 2807.987545
+  type: 'test'
+  ...
+# Subtest: 4. reserva a aula ao vivo e recebe o link da sala na tela e no e-mail
+ok 152 - 4. reserva a aula ao vivo e recebe o link da sala na tela e no e-mail
+  ---
+  duration_ms: 1126.64877
+  type: 'test'
+  ...
+# Subtest: 5. muda o fuso em «Mi cuenta» e a agenda passa a mostrar a hora de lá
+ok 153 - 5. muda o fuso em «Mi cuenta» e a agenda passa a mostrar a hora de lá
+  ---
+  duration_ms: 685.875153
+  type: 'test'
+  ...
+# Subtest: 6. o administrador vê a aluna, a compra e a reserva nas telas dele
+ok 154 - 6. o administrador vê a aluna, a compra e a reserva nas telas dele
+  ---
+  duration_ms: 2650.944336
+  type: 'test'
+  ...
+# Subtest: 7. o reembolso tira o acesso na hora e solta a reserva da aula que ainda não aconteceu
+ok 155 - 7. o reembolso tira o acesso na hora e solta a reserva da aula que ainda não aconteceu
+  ---
+  duration_ms: 2515.978573
+  type: 'test'
+  ...
+# Subtest: 8. ela sai, e a senha continua sendo a porta de entrada
+ok 156 - 8. ela sai, e a senha continua sendo a porta de entrada
+  ---
+  duration_ms: 1580.665147
+  type: 'test'
+  ...
+# Subtest: o servidor manda sozinho o lembrete de 1 hora e o de 24 horas, com o link da sala e a hora da aluna
+ok 157 - o servidor manda sozinho o lembrete de 1 hora e o de 24 horas, com o link da sala e a hora da aluna
+  ---
+  duration_ms: 2666.490313
+  type: 'test'
+  ...
+# Subtest: o lembrete sai uma vez só, e quem reservou em cima da hora não recebe
+ok 158 - o lembrete sai uma vez só, e quem reservou em cima da hora não recebe
+  ---
+  duration_ms: 10024.310385
+  type: 'test'
+  ...
+# Subtest: sem a chave, o Papo não aparece no menu, a tela explica e o painel mostra "Desligado"
+ok 159 - sem a chave, o Papo não aparece no menu, a tela explica e o painel mostra "Desligado" # SKIP o aplicativo está com a chave do Papo
+  ---
+  duration_ms: 1288.80351
+  type: 'test'
+  ...
+# Subtest: a aluna abre o Papo pelo menu e vê quantas mensagens tem hoje
+ok 160 - a aluna abre o Papo pelo menu e vê quantas mensagens tem hoje
+  ---
+  duration_ms: 365.019644
+  type: 'test'
+  ...
+# Subtest: a mensagem vai ao modelo com a chave, as instruções e o nome; a resposta aparece e fica guardada
+ok 161 - a mensagem vai ao modelo com a chave, as instruções e o nome; a resposta aparece e fica guardada
+  ---
+  duration_ms: 2518.240308
+  type: 'test'
+  ...
+# Subtest: a conversa continua: o modelo recebe o histórico, e o que ele responde nunca vira HTML
+ok 162 - a conversa continua: o modelo recebe o histórico, e o que ele responde nunca vira HTML
+  ---
+  duration_ms: 1056.830019
+  type: 'test'
+  ...
+# Subtest: se o modelo falha, a aluna é avisada, o texto dela fica no campo e a mensagem não é contada
+ok 163 - se o modelo falha, a aluna é avisada, o texto dela fica no campo e a mensagem não é contada
+  ---
+  duration_ms: 940.322974
+  type: 'test'
+  ...
+# Subtest: conversa nova: a tela recomeça e o modelo não recebe mais o que veio antes
+ok 164 - conversa nova: a tela recomeça e o modelo não recebe mais o que veio antes
+  ---
+  duration_ms: 1735.379949
+  type: 'test'
+  ...
+# Subtest: no limite do dia, a última mensagem entra e depois o campo some
+ok 165 - no limite do dia, a última mensagem entra e depois o campo some
+  ---
+  duration_ms: 2320.062904
+  type: 'test'
+  ...
+# Subtest: quem não tem curso ativo vê a explicação e não conversa
+ok 166 - quem não tem curso ativo vê a explicação e não conversa
+  ---
+  duration_ms: 1234.209809
+  type: 'test'
+  ...
+# Subtest: painel: o administrador vê o Papo ligado e muda o limite do dia; o professor só lê
+ok 167 - painel: o administrador vê o Papo ligado e muda o limite do dia; o professor só lê
+  ---
+  duration_ms: 7271.087888
+  type: 'test'
+  ...
+# Subtest: no celular, a conversa com o Papo cabe na largura
+ok 168 - no celular, a conversa com o Papo cabe na largura
+  ---
+  duration_ms: 2625.680736
+  type: 'test'
+  ...
+# Subtest: e-mail sem conta recebe a mesma resposta na tela, e nenhum e-mail sai
+ok 169 - e-mail sem conta recebe a mesma resposta na tela, e nenhum e-mail sai
+  ---
+  duration_ms: 1499.634702
+  type: 'test'
+  ...
+# Subtest: primeiro acesso: recebe o link, cria a senha, entra e a senha vale no login
+ok 170 - primeiro acesso: recebe o link, cria a senha, entra e a senha vale no login
+  ---
+  duration_ms: 4366.885064
+  type: 'test'
+  ...
+# Subtest: nova senha: abrir o link sem clicar não o gasta; a senha antiga deixa de valer
+ok 171 - nova senha: abrir o link sem clicar não o gasta; a senha antiga deixa de valer
+  ---
+  duration_ms: 3385.114506
+  type: 'test'
+  ...
+# Subtest: link inventado é recusado
+ok 172 - link inventado é recusado
+  ---
+  duration_ms: 1240.617729
+  type: 'test'
+  ...
+# Subtest: no máximo 3 links por e-mail em 10 minutos, sem mudar a resposta na tela
+ok 173 - no máximo 3 links por e-mail em 10 minutos, sem mudar a resposta na tela
+  ---
+  duration_ms: 2109.606759
+  type: 'test'
+  ...
+# Subtest: o histórico de envios não guarda o link
+ok 174 - o histórico de envios não guarda o link
+  ---
+  duration_ms: 5.438951
+  type: 'test'
+  ...
+# Subtest: o professor monta os pares: grava uma palavra, envia o áudio de outra e deixa uma para a voz do navegador
+ok 175 - o professor monta os pares: grava uma palavra, envia o áudio de outra e deixa uma para a voz do navegador
+  ---
+  duration_ms: 8985.445993
+  type: 'test'
+  ...
+# Subtest: no celular, o editor dos pares cabe na largura
+ok 176 - no celular, o editor dos pares cabe na largura
+  ---
+  duration_ms: 2726.215661
+  type: 'test'
+  ...
+# Subtest: a página da aluna não traz a palavra gravada, e o áudio só sai para quem está logado
+ok 177 - a página da aluna não traz a palavra gravada, e o áudio só sai para quem está logado
+  ---
+  duration_ms: 2098.182789
+  type: 'test'
+  ...
+# Subtest: a aluna combina todos os pares sem errar: pergunta certa; com um erro no caminho, errada
+ok 178 - a aluna combina todos os pares sem errar: pergunta certa; com um erro no caminho, errada
+  ---
+  duration_ms: 6284.99007
+  type: 'test'
+  ...
+# Subtest: no celular, o jogo da aluna fica em duas colunas e cabe na largura
+ok 179 - no celular, o jogo da aluna fica em duas colunas e cabe na largura
+  ---
+  duration_ms: 1716.718081
+  type: 'test'
+  ...
+# Subtest: modo escrito: a palavra em português aparece no cartão, sem som
+ok 180 - modo escrito: a palavra em português aparece no cartão, sem som
+  ---
+  duration_ms: 2487.685109
+  type: 'test'
+  ...
+# Subtest: a conta nasce com o fuso de Madri, sem confirmação
+ok 181 - a conta nasce com o fuso de Madri, sem confirmação
+  ---
+  duration_ms: 791.908461
+  type: 'test'
+  ...
+# Subtest: na primeira entrada, toda tela da área do aluno leva para a confirmação do fuso
+ok 182 - na primeira entrada, toda tela da área do aluno leva para a confirmação do fuso
+  ---
+  duration_ms: 2911.085428
+  type: 'test'
+  ...
+# Subtest: o fuso do aparelho já vem escolhido, com a hora de lá; ao confirmar, a agenda passa a usar esse fuso
+ok 183 - o fuso do aparelho já vem escolhido, com a hora de lá; ao confirmar, a agenda passa a usar esse fuso
+  ---
+  duration_ms: 2662.934996
+  type: 'test'
+  ...
+# Subtest: a pessoa pode escolher outro fuso da lista: o relógio da tela acompanha e é esse que fica guardado
+ok 184 - a pessoa pode escolher outro fuso da lista: o relógio da tela acompanha e é esse que fica guardado
+  ---
+  duration_ms: 1407.989176
+  type: 'test'
+  ...
+# Subtest: aparelho sem fuso de lugar (UTC): fica o fuso do cadastro, e a pessoa escolhe na lista
+ok 185 - aparelho sem fuso de lugar (UTC): fica o fuso do cadastro, e a pessoa escolhe na lista
+  ---
+  duration_ms: 1162.453268
+  type: 'test'
+  ...
+# Subtest: a equipe trabalha na administração sem confirmar nada; a prévia da área do aluno pede o fuso uma vez
+ok 186 - a equipe trabalha na administração sem confirmar nada; a prévia da área do aluno pede o fuso uma vez
+  ---
+  duration_ms: 3157.083172
+  type: 'test'
+  ...
+# Subtest: quem não está logado não abre a tela, e o banco recusa fuso que não existe
+ok 187 - quem não está logado não abre a tela, e o banco recusa fuso que não existe
+  ---
+  duration_ms: 359.928751
+  type: 'test'
+  ...
+1..187
+# tests 187
+# suites 0
+# pass 183
+# fail 0
+# cancelled 0
+# skipped 4
+# todo 0
+# duration_ms 201522.253593

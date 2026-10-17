@@ -1,0 +1,72 @@
+#12 16.94 ├ ○ /icon.png
+#12 16.94 ├ ƒ /inicio
+#12 16.94 ├ ƒ /nueva-contrasena
+#12 16.94 ├ ƒ /papo
+#12 16.94 ├ ƒ /primer-acceso
+#12 16.94 ├ ƒ /quiz/[id]
+#12 16.94 ├ ƒ /recuperar
+#12 16.94 └ ƒ /zona-horaria
+#12 16.94 
+#12 16.94 
+#12 16.94 ƒ Proxy (Middleware)
+#12 16.94 
+#12 16.94 ○  (Static)   prerendered as static content
+#12 16.94 ƒ  (Dynamic)  server-rendered on demand
+#12 16.94 
+#12 16.98 npm notice
+#12 16.98 npm notice New major version of npm available! 10.9.9 -> 12.2.0
+#12 16.98 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#12 16.98 npm notice To update run: npm install -g npm@12.2.0
+#12 16.98 npm notice
+#12 DONE 17.1s
+
+#13 [final 3/6] COPY --from=compilacao --chown=node:node /app/.next/standalone ./
+#13 DONE 0.3s
+
+#14 [final 4/6] COPY --from=compilacao --chown=node:node /app/.next/static ./.next/static
+#14 DONE 0.0s
+
+#15 [final 5/6] COPY --from=compilacao --chown=node:node /app/public ./public
+#15 DONE 0.0s
+
+#16 [final 6/6] RUN mkdir -p /copias && chown node:node /copias && chmod 700 /copias
+#16 DONE 0.1s
+
+#17 exporting to image
+#17 exporting layers
+#17 exporting layers 0.9s done
+#17 writing image sha256:d034e9f1a67adba940df8ac372b28295b4712ef2e249b3dae9cd7dfcfe7abcf2 done
+#17 naming to docker.io/library/plataforma:teste done
+#17 DONE 0.9s
+#7 DONE 0.0s
+
+#8 [4/7] COPY deploy/banco/aplicar.sh /aplicar.sh
+#8 DONE 0.0s
+
+#9 [5/7] COPY deploy/banco/copias.sh /copias.sh
+#9 DONE 0.0s
+
+#10 [6/7] COPY deploy/banco/conferir-copia.awk /conferir-copia.awk
+#10 DONE 0.0s
+
+#11 [7/7] RUN mkdir -p /copias && chown 1000:1000 /copias && chmod 700 /copias
+#11 DONE 0.1s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 0.3s done
+#12 writing image sha256:3d10552068f2fac7663eebb559cff940233ab05c858e1ffd67332e6952bbca4f done
+#12 naming to docker.io/library/banco:teste done
+#12 DONE 0.4s
+usuário dentro da imagem do aplicativo: node
+tamanho da imagem do aplicativo: 299446971 bytes
+tamanho da imagem do banco: 292284119 bytes
+arquivos da imagem com alguma chave dentro: 0
+folhas de estilo na imagem: 1 arquivo(s), 50437 bytes
+folhas de estilo na compilação local: 1 arquivo(s), 51663 bytes
+fundo verde na imagem: .bg-verde{background-color:var(--color-verde)} 
+fundo verde na compilação local: .bg-verde{background-color:var(--color-verde)} 
+imagem publicada: ghcr.io/gilsonalvesgwta/portugues-joao-paulo:latest e ghcr.io/gilsonalvesgwta/portugues-joao-paulo:5acac2933a96
+imagem publicada: ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco:latest e ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco:5acac2933a96
+sem login, a imagem ghcr.io/gilsonalvesgwta/portugues-joao-paulo É baixada: o pacote está público
+sem login, a imagem ghcr.io/gilsonalvesgwta/portugues-joao-paulo-banco É baixada: o pacote está público

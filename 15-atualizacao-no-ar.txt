@@ -1,0 +1,7 @@
+== o serviço de dados reconhece uma coluna criada depois de a ligação de escuta ficar parada ==
+coluna que já existe: 204 (esperado 204) · coluna que não existe: 400 (esperado 400)
+prazo das ligações paradas na rede do serviço de dados: Timeout (tcp tcpfin udp): 90 30 30
+ligações de escuta encerradas: 1
+ligações de escuta abertas de novo: 1
+esperando 130 segundos com a ligação parada...
+coluna criada com o sistema no ar: 204 (esperado 204)

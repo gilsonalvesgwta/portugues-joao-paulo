@@ -1,0 +1,183 @@
+esperando o Traefik entregar a plataforma por https...
+resposta por https: 200 (aplicativo 1/1)
+quem não está logado é mandado para: https://plataforma.exemplo.test/entrar
+sem o endereço certo, o Traefik não entrega a plataforma: 404
+== acesso, primeiro acesso e jornada da aluna, pelo Traefik ==
+TAP version 13
+# Subtest: o perfil nasce junto com o usuário, como aluno e com o nome
+ok 1 - o perfil nasce junto com o usuário, como aluno e com o nome
+  ---
+  duration_ms: 1004.138935
+  type: 'test'
+  ...
+# Subtest: a tela de entrada mostra a foto do professor e o botão de entrar sem rolar, no computador e no celular
+ok 2 - a tela de entrada mostra a foto do professor e o botão de entrar sem rolar, no computador e no celular
+  ---
+  duration_ms: 2557.623729
+  type: 'test'
+  ...
+# Subtest: sem login, as áreas internas levam para a tela de acesso
+ok 3 - sem login, as áreas internas levam para a tela de acesso
+  ---
+  duration_ms: 1301.000436
+  type: 'test'
+  ...
+# Subtest: senha errada e e-mail desconhecido mostram o mesmo aviso e não entram
+ok 4 - senha errada e e-mail desconhecido mostram o mesmo aviso e não entram
+  ---
+  duration_ms: 1288.850974
+  type: 'test'
+  ...
+# Subtest: depois de 8 senhas erradas, aquele e-mail espera: nem a senha certa entra; as outras contas seguem normais
+ok 5 - depois de 8 senhas erradas, aquele e-mail espera: nem a senha certa entra; as outras contas seguem normais
+  ---
+  duration_ms: 7715.116221
+  type: 'test'
+  ...
+# Subtest: toda resposta leva os cabeçalhos de segurança
+ok 6 - toda resposta leva os cabeçalhos de segurança
+  ---
+  duration_ms: 294.158162
+  type: 'test'
+  ...
+# Subtest: a sessão fica em cookie que os programas da página não leem
+ok 7 - a sessão fica em cookie que os programas da página não leem
+  ---
+  duration_ms: 1717.352266
+  type: 'test'
+  ...
+# Subtest: a raiz leva cada um para o seu lugar, e endereço que não existe tem tela própria
+ok 8 - a raiz leva cada um para o seu lugar, e endereço que não existe tem tela própria
+  ---
+  duration_ms: 9211.026785
+  type: 'test'
+  ...
+# Subtest: a senha nunca aparece no endereço da página
+ok 9 - a senha nunca aparece no endereço da página
+  ---
+  duration_ms: 1450.389454
+  type: 'test'
+  ...
+# Subtest: aluna entra, vê a própria área, não entra na administração e sai
+ok 10 - aluna entra, vê a própria área, não entra na administração e sai
+  ---
+  duration_ms: 2076.909255
+  type: 'test'
+  ...
+# Subtest: professor entra direto na administração
+ok 11 - professor entra direto na administração
+  ---
+  duration_ms: 685.166679
+  type: 'test'
+  ...
+# Subtest: o primeiro administrador nasce das variáveis da instalação e entra na administração
+ok 12 - o primeiro administrador nasce das variáveis da instalação e entra na administração
+  ---
+  duration_ms: 1565.113291
+  type: 'test'
+  ...
+# Subtest: ninguém se cadastra sozinho pelo Supabase
+ok 13 - ninguém se cadastra sozinho pelo Supabase
+  ---
+  duration_ms: 10.114217
+  type: 'test'
+  ...
+# Subtest: visitante sem login não lê nenhuma tabela pela API
+ok 14 - visitante sem login não lê nenhuma tabela pela API
+  ---
+  duration_ms: 129.404072
+  type: 'test'
+  ...
+# Subtest: 1. a compra na Greenn cria a conta, a matrícula de um ano e manda o e-mail com o link
+ok 15 - 1. a compra na Greenn cria a conta, a matrícula de um ano e manda o e-mail com o link
+  ---
+  duration_ms: 2862.472762
+  type: 'test'
+  ...
+# Subtest: 2. ela abre o link do e-mail, cria a senha e cai no curso, no dia 1
+ok 16 - 2. ela abre o link do e-mail, cria a senha e cai no curso, no dia 1
+  ---
+  duration_ms: 3558.198014
+  type: 'test'
+  ...
+# Subtest: 3. assiste à aula 1, faz o quiz e é aprovada: o dia vira e a aula 2 abre
+ok 17 - 3. assiste à aula 1, faz o quiz e é aprovada: o dia vira e a aula 2 abre
+  ---
+  duration_ms: 4406.134627
+  type: 'test'
+  ...
+# Subtest: 4. reserva a aula ao vivo e recebe o link da sala na tela e no e-mail
+ok 18 - 4. reserva a aula ao vivo e recebe o link da sala na tela e no e-mail
+  ---
+  duration_ms: 2976.507623
+  type: 'test'
+  ...
+# Subtest: 5. muda o fuso em «Mi cuenta» e a agenda passa a mostrar a hora de lá
+ok 19 - 5. muda o fuso em «Mi cuenta» e a agenda passa a mostrar a hora de lá
+  ---
+  duration_ms: 2170.658547
+  type: 'test'
+  ...
+# Subtest: 6. o administrador vê a aluna, a compra e a reserva nas telas dele
+ok 20 - 6. o administrador vê a aluna, a compra e a reserva nas telas dele
+  ---
+  duration_ms: 4608.349832
+  type: 'test'
+  ...
+# Subtest: 7. o reembolso tira o acesso na hora e solta a reserva da aula que ainda não aconteceu
+ok 21 - 7. o reembolso tira o acesso na hora e solta a reserva da aula que ainda não aconteceu
+  ---
+  duration_ms: 4320.785766
+  type: 'test'
+  ...
+# Subtest: 8. ela sai, e a senha continua sendo a porta de entrada
+ok 22 - 8. ela sai, e a senha continua sendo a porta de entrada
+  ---
+  duration_ms: 2117.941629
+  type: 'test'
+  ...
+# Subtest: e-mail sem conta recebe a mesma resposta na tela, e nenhum e-mail sai
+ok 23 - e-mail sem conta recebe a mesma resposta na tela, e nenhum e-mail sai
+  ---
+  duration_ms: 2076.441841
+  type: 'test'
+  ...
+# Subtest: primeiro acesso: recebe o link, cria a senha, entra e a senha vale no login
+ok 24 - primeiro acesso: recebe o link, cria a senha, entra e a senha vale no login
+  ---
+  duration_ms: 6579.416834
+  type: 'test'
+  ...
+# Subtest: nova senha: abrir o link sem clicar não o gasta; a senha antiga deixa de valer
+ok 25 - nova senha: abrir o link sem clicar não o gasta; a senha antiga deixa de valer
+  ---
+  duration_ms: 5640.249434
+  type: 'test'
+  ...
+# Subtest: link inventado é recusado
+ok 26 - link inventado é recusado
+  ---
+  duration_ms: 1025.09068
+  type: 'test'
+  ...
+# Subtest: no máximo 3 links por e-mail em 10 minutos, sem mudar a resposta na tela
+ok 27 - no máximo 3 links por e-mail em 10 minutos, sem mudar a resposta na tela
+  ---
+  duration_ms: 3716.428674
+  type: 'test'
+  ...
+# Subtest: o histórico de envios não guarda o link
+ok 28 - o histórico de envios não guarda o link
+  ---
+  duration_ms: 16.864492
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32207.268535

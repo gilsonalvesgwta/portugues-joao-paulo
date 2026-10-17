@@ -1,0 +1,133 @@
+Since --detach=false was not specified, tasks will be created in the background.
+In a future release, --detach=false will become the default.
+Creating service portuguesjp_portuguesjp_banco
+Creating service portuguesjp_portuguesjp_copias
+Creating service portuguesjp_portuguesjp_db
+Creating service portuguesjp_portuguesjp_rest
+Creating service portuguesjp_portuguesjp_app
+Creating service portuguesjp_portuguesjp_auth
+esperando o preparo do banco...
+Esperando o banco em portuguesjp_db:5432...
+Definindo a senha dos usuários internos...
+Esperando as tabelas de login...
+aplicando: 0001_esquema_inicial.sql
+aplicando: 0002_materiais_por_link.sql
+aplicando: 0003_salvar_quiz.sql
+aplicando: 0004_tarefas_por_link.sql
+aplicando: 0005_trilha_por_dia.sql
+aplicando: 0006_alunos_e_matricula.sql
+aplicando: 0007_avisos_da_greenn.sql
+aplicando: 0008_area_do_aluno.sql
+aplicando: 0009_conversacao.sql
+aplicando: 0010_lembretes.sql
+aplicando: 0011_apagar_conta.sql
+aplicando: 0012_papo.sql
+aplicando: 0013_revisao.sql
+aplicando: 0014_fuso_confirmado.sql
+aplicando: 0015_audios.sql
+BANCO PRONTO (15 migração(ões) aplicada(s) agora).
+esperando o aplicativo, o login e os dados...
+respostas: aplicativo 200, login 200, dados 200
+sinal de vida: {"ok":true}
+serviço portuguesjp_portuguesjp_app: 1/1
+serviço portuguesjp_portuguesjp_auth: 1/1
+serviço portuguesjp_portuguesjp_banco: 0/1
+serviço portuguesjp_portuguesjp_copias: 1/1
+serviço portuguesjp_portuguesjp_db: 1/1
+serviço portuguesjp_portuguesjp_rest: 1/1
+
+== preparo do banco pela segunda vez (como em uma atualização) ==
+BANCO PRONTO (15 migração(ões) aplicada(s) agora).
+já aplicada: 0012_papo.sql
+já aplicada: 0013_revisao.sql
+já aplicada: 0014_fuso_confirmado.sql
+já aplicada: 0015_audios.sql
+BANCO PRONTO (0 migração(ões) aplicada(s) agora).
+
+== memória e saúde de cada contêiner, depois dos testes ==
+portuguesjp_portuguesjp_app: 110.5MiB / 768MiB
+portuguesjp_portuguesjp_auth: 17.09MiB / 256MiB
+portuguesjp_portuguesjp_copias: 1.23MiB / 256MiB
+portuguesjp_portuguesjp_db: 150.8MiB / 1GiB
+portuguesjp_portuguesjp_rest: 29.63MiB / 256MiB
+portuguesjp_portuguesjp_app: Up 57 seconds (healthy)
+portuguesjp_portuguesjp_auth: Up 2 minutes
+portuguesjp_portuguesjp_copias: Up 2 minutes
+portuguesjp_portuguesjp_db: Up 2 minutes (healthy)
+portuguesjp_portuguesjp_rest: Up 2 minutes
+
+== registro de portuguesjp_app ==
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+▲ Next.js 16.4.0
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+✓ Ready in 0ms
+✓ Ready in 0ms
+✓ Running next.config took 1.0ms
+✓ Running next.config took 1.4ms
+Lembretes de aula: Não consegui separar os lembretes: Could not query the database for the schema cache. Retrying.
+Lembretes de aula: Não consegui separar os lembretes: Could not query the database for the schema cache. Retrying.
+Primeiro administrador criado a partir de ADMIN_EMAIL.
+
+== registro de portuguesjp_auth ==
+{"component":"api","duration":240981207,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"1def4a53-f837-4484-b72f-2ddb9daf45b0","status":200,"time":"2026-10-17T02:52:17Z"}
+{"component":"api","error":"422: Signups not allowed for this instance","level":"info","method":"POST","msg":"422: Signups not allowed for this instance","path":"/signup","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.0.2","request_id":"8ca90fc6-3491-4715-ae66-0ee24d0529ca","time":"2026-10-17T02:52:17Z"}
+{"component":"api","duration":282979,"error_code":"signup_disabled","level":"info","method":"POST","msg":"request completed","path":"/signup","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.0.2","request_id":"8ca90fc6-3491-4715-ae66-0ee24d0529ca","status":422,"time":"2026-10-17T02:52:17Z"}
+{"component":"api","duration":293511084,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"9979a54e-46cb-4c33-8504-5b718cd33a60","status":200,"time":"2026-10-17T02:52:17Z"}
+{"component":"api","duration":414298144,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"ba97e0bf-68ae-44e9-ad0b-ca65b524f1da","status":200,"time":"2026-10-17T02:52:17Z"}
+{"component":"api","duration":339844315,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"21c79194-6870-42e4-9054-1e118633b7b5","status":200,"time":"2026-10-17T02:52:17Z"}
+{"component":"api","duration":366250277,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"173325f4-ec7c-4555-96c8-a6348c24d5a7","status":200,"time":"2026-10-17T02:52:17Z"}
+{"component":"api","duration":376737822,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"209c53dc-db14-470f-aa81-36a06b4d4fd7","status":200,"time":"2026-10-17T02:52:18Z"}
+{"component":"api","duration":337337708,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"2ae509a2-ddc0-4d7d-9142-64f7056e49a4","status":200,"time":"2026-10-17T02:52:18Z"}
+{"component":"api","duration":369183522,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"fb435afb-3c75-4cb1-9912-75bf4b36f8b3","status":200,"time":"2026-10-17T02:52:18Z"}
+{"component":"api","duration":340811471,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"ac4cf11a-ffc3-47bc-af0c-e4155e815622","status":200,"time":"2026-10-17T02:52:18Z"}
+{"component":"api","duration":293948644,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"https://plataforma.exemplo.test","remote_addr":"10.0.1.41","request_id":"9049c09e-3dcf-49f3-8340-254bb6a91ac8","status":200,"time":"2026-10-17T02:52:18Z"}
+
+== registro de portuguesjp_rest ==
+17/Oct/2026:02:49:42 +0000: Connection Pool initialized with a maximum size of 10 connections
+17/Oct/2026:02:49:42 +0000: Config reloaded
+17/Oct/2026:02:49:42 +0000: Schema cache queried in 7.7 milliseconds
+17/Oct/2026:02:49:42 +0000: Schema cache loaded 30 Relations, 30 Relationships, 31 Functions, 0 Domain Representations, 4 Media Type Handlers, 1194 Timezones
+17/Oct/2026:02:49:42 +0000: Schema cache loaded in 1.5 milliseconds
+17/Oct/2026:02:49:54 +0000: Received a schema cache reload message on the "pgrst" channel
+17/Oct/2026:02:49:54 +0000: Successfully connected to PostgreSQL 15.8 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
+17/Oct/2026:02:49:54 +0000: Connection Pool initialized with a maximum size of 10 connections
+17/Oct/2026:02:49:54 +0000: Config reloaded
+17/Oct/2026:02:49:54 +0000: Schema cache queried in 5.0 milliseconds
+17/Oct/2026:02:49:54 +0000: Schema cache loaded 30 Relations, 30 Relationships, 31 Functions, 0 Domain Representations, 4 Media Type Handlers, 1194 Timezones
+17/Oct/2026:02:49:54 +0000: Schema cache loaded in 0.7 milliseconds
+
+== registro de portuguesjp_db ==
+10.0.1.41 2026-10-17 02:52:17.770 UTC [5121] authenticator@postgres ERROR:  permission denied for table perfis
+10.0.1.41 2026-10-17 02:52:17.770 UTC [5121] authenticator@postgres STATEMENT:  WITH pgrst_source AS ( SELECT "public"."perfis".* FROM "public"."perfis"   LIMIT $1 OFFSET $2 )  SELECT null::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), '[]') AS body, nullif(current_setting('response.headers', true), '') AS response_headers, nullif(curren
+10.0.1.41 2026-10-17 02:52:17.779 UTC [5117] authenticator@postgres ERROR:  permission denied for table matriculas
+10.0.1.41 2026-10-17 02:52:17.779 UTC [5117] authenticator@postgres STATEMENT:  WITH pgrst_source AS ( SELECT "public"."matriculas".* FROM "public"."matriculas"   LIMIT $1 OFFSET $2 )  SELECT null::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), '[]') AS body, nullif(current_setting('response.headers', true), '') AS response_headers, nulli
+10.0.1.41 2026-10-17 02:52:17.784 UTC [722] authenticator@postgres ERROR:  permission denied for table aulas
+10.0.1.41 2026-10-17 02:52:17.784 UTC [722] authenticator@postgres STATEMENT:  WITH pgrst_source AS ( SELECT "public"."aulas".* FROM "public"."aulas"   LIMIT $1 OFFSET $2 )  SELECT null::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), '[]') AS body, nullif(current_setting('response.headers', true), '') AS response_headers, nullif(current_s
+10.0.1.41 2026-10-17 02:52:17.791 UTC [1187] authenticator@postgres ERROR:  permission denied for table perguntas
+10.0.1.41 2026-10-17 02:52:17.791 UTC [1187] authenticator@postgres STATEMENT:  WITH pgrst_source AS ( SELECT "public"."perguntas".* FROM "public"."perguntas"   LIMIT $1 OFFSET $2 )  SELECT null::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), '[]') AS body, nullif(current_setting('response.headers', true), '') AS response_headers, nullif(
+10.0.1.41 2026-10-17 02:52:17.796 UTC [1185] authenticator@postgres ERROR:  permission denied for table eventos_pagamento
+10.0.1.41 2026-10-17 02:52:17.796 UTC [1185] authenticator@postgres STATEMENT:  WITH pgrst_source AS ( SELECT "public"."eventos_pagamento".* FROM "public"."eventos_pagamento"   LIMIT $1 OFFSET $2 )  SELECT null::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), '[]') AS body, nullif(current_setting('response.headers', true), '') AS response_
+10.0.1.41 2026-10-17 02:52:17.802 UTC [841] authenticator@postgres ERROR:  permission denied for table notificacoes
+10.0.1.41 2026-10-17 02:52:17.802 UTC [841] authenticator@postgres STATEMENT:  WITH pgrst_source AS ( SELECT "public"."notificacoes".* FROM "public"."notificacoes"   LIMIT $1 OFFSET $2 )  SELECT null::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), '[]') AS body, nullif(current_setting('response.headers', true), '') AS response_headers, nu
+
+== registro de portuguesjp_banco ==
+aplicando: 0005_trilha_por_dia.sql
+aplicando: 0006_alunos_e_matricula.sql
+aplicando: 0007_avisos_da_greenn.sql
+aplicando: 0008_area_do_aluno.sql
+aplicando: 0009_conversacao.sql
+aplicando: 0010_lembretes.sql
+aplicando: 0011_apagar_conta.sql
+aplicando: 0012_papo.sql
+aplicando: 0013_revisao.sql
+aplicando: 0014_fuso_confirmado.sql
+aplicando: 0015_audios.sql
+BANCO PRONTO (15 migração(ões) aplicada(s) agora).
+
+== registro de portuguesjp_copias ==
+Serviço de cópias no ar. Cópia automática todo dia a partir das 0h (America/Sao_Paulo), guardada por 14 dias.
+2026-10-16 23:49:39 copiar ok portuguesjp-2026-10-16-234939-automatica.sql.gz Cópia pronta (4.0K).
+2026-10-16 23:49:54 copiar ok portuguesjp-2026-10-16-234954-antes-de-restaurar.sql.gz Cópia do que existia antes da restauração (4.0K).
+2026-10-16 23:49:54 restaurar ok portuguesjp-2026-10-16-234951-enviada.sql.gz Restauração pronta. Os dados de antes dela ficaram guardados na cópia “Antes de restaurar” da lista.

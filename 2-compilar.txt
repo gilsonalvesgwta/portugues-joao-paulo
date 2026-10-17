@@ -1,0 +1,93 @@
+
+> build
+> next build
+
+▲ Next.js 16.4.0 (Turbopack)
+✓ Running next.config.mjs took 17ms
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 6.6s
+  Running TypeScript ...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next/dev/types/**/*.ts'
+
+  Finished TypeScript in 7.7s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/34) ...
+  Generating static pages using 3 workers (8/34) 
+  Generating static pages using 3 workers (16/34) 
+  Generating static pages using 3 workers (25/34) 
+✓ Generating static pages using 3 workers (34/34) in 330ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/alunos
+├ ƒ /admin/alunos/[id]
+├ ƒ /admin/alunos/novo
+├ ƒ /admin/aulas
+├ ƒ /admin/aulas/[id]
+├ ƒ /admin/aulas/[id]/anotacoes
+├ ƒ /admin/aulas/[id]/materiais/novo
+├ ƒ /admin/aulas/[id]/quiz
+├ ƒ /admin/aulas/nova
+├ ƒ /admin/conversacao
+├ ƒ /admin/conversacao/temas
+├ ƒ /admin/conversacao/temas/[id]
+├ ƒ /admin/conversacao/temas/novo
+├ ƒ /admin/conversacao/turmas/[id]
+├ ƒ /admin/conversacao/turmas/nova
+├ ƒ /admin/copias
+├ ƒ /admin/copias/restaurar
+├ ƒ /admin/cursos
+├ ƒ /admin/cursos/[id]
+├ ƒ /admin/cursos/[id]/materiais/novo
+├ ƒ /admin/cursos/novo
+├ ƒ /admin/lixeira
+├ ƒ /admin/materiais/[id]
+├ ƒ /admin/modulos/[id]
+├ ƒ /admin/modulos/novo
+├ ƒ /admin/pagamentos
+├ ƒ /admin/pagamentos/ofertas/[id]
+├ ƒ /admin/pagamentos/ofertas/nova
+├ ƒ /admin/tarefas
+├ ƒ /admin/tarefas/[id]
+├ ƒ /admin/tarefas/nova
+├ ƒ /admin/trilha
+├ ƒ /api/admin/audios
+├ ƒ /api/admin/copias/[nome]
+├ ƒ /api/admin/copias/enviar
+├ ƒ /api/audio/[id]
+├ ƒ /api/greenn/[segredo]
+├ ƒ /api/saude
+├ ƒ /auth/confirmar
+├ ƒ /clase/[id]
+├ ƒ /conversacion
+├ ƒ /cuenta
+├ ƒ /entrar
+├ ○ /icon.png
+├ ƒ /inicio
+├ ƒ /nueva-contrasena
+├ ƒ /papo
+├ ƒ /primer-acceso
+├ ƒ /quiz/[id]
+├ ƒ /recuperar
+└ ƒ /zona-horaria
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

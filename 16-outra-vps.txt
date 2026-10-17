@@ -1,0 +1,253 @@
+== na instalação antiga: fazer uma cópia e baixar ==
+cópia baixada: portuguesjp-2026-10-16-234917-manual.sql.gz (145388 bytes)
+na instalação antiga: 71 contas, 71 identidades, 71 perfis, 26 matrículas, 23 cursos, 21 aulas, 11 reservas, 15 migrações
+== a stack é apagada, com os volumes, e instalada do zero ==
+volumes que sobraram da instalação antiga: 0
+Since --detach=false was not specified, tasks will be created in the background.
+In a future release, --detach=false will become the default.
+Creating service portuguesjp_portuguesjp_banco
+Creating service portuguesjp_portuguesjp_copias
+Creating service portuguesjp_portuguesjp_db
+Creating service portuguesjp_portuguesjp_rest
+Creating service portuguesjp_portuguesjp_app
+Creating service portuguesjp_portuguesjp_auth
+respostas: aplicativo 200, login 200, dados 200
+na instalação nova, antes de restaurar: 1 contas, 1 identidades, 1 perfis, 0 matrículas, 0 cursos, 0 aulas, 0 reservas, 15 migrações
+== na instalação nova: enviar a cópia e restaurar pela tela ==
+restauração feita pela tela, na instalação nova
+na instalação nova, depois de restaurar: 71 contas, 71 identidades, 71 perfis, 26 matrículas, 23 cursos, 21 aulas, 11 reservas, 15 migrações
+contas e senhas iguais às da instalação antiga: sim
+cópias na pasta da instalação nova: portuguesjp-2026-10-16-234939-automatica.sql.gz portuguesjp-2026-10-16-234951-enviada.sql.gz portuguesjp-2026-10-16-234954-antes-de-restaurar.sql.gz 
+== login, regras de acesso e administração de conteúdo na instalação nova ==
+TAP version 13
+# Subtest: o perfil nasce junto com o usuário, como aluno e com o nome
+ok 1 - o perfil nasce junto com o usuário, como aluno e com o nome
+  ---
+  duration_ms: 1115.509045
+  type: 'test'
+  ...
+# Subtest: a tela de entrada mostra a foto do professor e o botão de entrar sem rolar, no computador e no celular
+ok 2 - a tela de entrada mostra a foto do professor e o botão de entrar sem rolar, no computador e no celular
+  ---
+  duration_ms: 2245.631771
+  type: 'test'
+  ...
+# Subtest: sem login, as áreas internas levam para a tela de acesso
+ok 3 - sem login, as áreas internas levam para a tela de acesso
+  ---
+  duration_ms: 1494.962768
+  type: 'test'
+  ...
+# Subtest: senha errada e e-mail desconhecido mostram o mesmo aviso e não entram
+ok 4 - senha errada e e-mail desconhecido mostram o mesmo aviso e não entram
+  ---
+  duration_ms: 1810.349012
+  type: 'test'
+  ...
+# Subtest: depois de 8 senhas erradas, aquele e-mail espera: nem a senha certa entra; as outras contas seguem normais
+ok 5 - depois de 8 senhas erradas, aquele e-mail espera: nem a senha certa entra; as outras contas seguem normais
+  ---
+  duration_ms: 9158.304989
+  type: 'test'
+  ...
+# Subtest: toda resposta leva os cabeçalhos de segurança
+ok 6 - toda resposta leva os cabeçalhos de segurança
+  ---
+  duration_ms: 346.46196
+  type: 'test'
+  ...
+# Subtest: a sessão fica em cookie que os programas da página não leem
+ok 7 - a sessão fica em cookie que os programas da página não leem
+  ---
+  duration_ms: 3388.811216
+  type: 'test'
+  ...
+# Subtest: a raiz leva cada um para o seu lugar, e endereço que não existe tem tela própria
+ok 8 - a raiz leva cada um para o seu lugar, e endereço que não existe tem tela própria
+  ---
+  duration_ms: 7610.30555
+  type: 'test'
+  ...
+# Subtest: a senha nunca aparece no endereço da página
+ok 9 - a senha nunca aparece no endereço da página
+  ---
+  duration_ms: 2160.185982
+  type: 'test'
+  ...
+# Subtest: aluna entra, vê a própria área, não entra na administração e sai
+ok 10 - aluna entra, vê a própria área, não entra na administração e sai
+  ---
+  duration_ms: 7849.033364
+  type: 'test'
+  ...
+# Subtest: professor entra direto na administração
+ok 11 - professor entra direto na administração
+  ---
+  duration_ms: 2254.876829
+  type: 'test'
+  ...
+# Subtest: o primeiro administrador nasce das variáveis da instalação e entra na administração
+ok 12 - o primeiro administrador nasce das variáveis da instalação e entra na administração
+  ---
+  duration_ms: 1907.064553
+  type: 'test'
+  ...
+# Subtest: ninguém se cadastra sozinho pelo Supabase
+ok 13 - ninguém se cadastra sozinho pelo Supabase
+  ---
+  duration_ms: 13.886743
+  type: 'test'
+  ...
+# Subtest: visitante sem login não lê nenhuma tabela pela API
+ok 14 - visitante sem login não lê nenhuma tabela pela API
+  ---
+  duration_ms: 150.411045
+  type: 'test'
+  ...
+# Subtest: curso: campo vazio mostra o erro sem perder o que foi digitado; depois salva como rascunho
+ok 15 - curso: campo vazio mostra o erro sem perder o que foi digitado; depois salva como rascunho
+  ---
+  duration_ms: 4735.283591
+  type: 'test'
+  ...
+# Subtest: módulos: entram no fim da lista e trocam de lugar
+ok 16 - módulos: entram no fim da lista e trocam de lugar
+  ---
+  duration_ms: 11174.245962
+  type: 'test'
+  ...
+# Subtest: aula: não publica sem vídeo, salva como rascunho e depois publica com vídeo
+ok 17 - aula: não publica sem vídeo, salva como rascunho e depois publica com vídeo
+  ---
+  duration_ms: 6980.075013
+  type: 'test'
+  ...
+# Subtest: aula: número repetido no curso é recusado, mesmo em outro módulo
+ok 18 - aula: número repetido no curso é recusado, mesmo em outro módulo
+  ---
+  duration_ms: 3694.752861
+  type: 'test'
+  ...
+# Subtest: lista de aulas: filtra por módulo, situação e busca sem acento
+ok 19 - lista de aulas: filtra por módulo, situação e busca sem acento
+  ---
+  duration_ms: 8087.780721
+  type: 'test'
+  ...
+# Subtest: no celular, as telas da administração cabem na largura
+ok 20 - no celular, as telas da administração cabem na largura
+  ---
+  duration_ms: 9808.71973
+  type: 'test'
+  ...
+# Subtest: aluna não abre as telas da administração e não grava conteúdo pelo banco
+ok 21 - aluna não abre as telas da administração e não grava conteúdo pelo banco
+  ---
+  duration_ms: 7356.44094
+  type: 'test'
+  ...
+# Subtest: aluna matriculada só vê a aula publicada, e só depois de o curso ser publicado
+ok 22 - aluna matriculada só vê a aula publicada, e só depois de o curso ser publicado
+  ---
+  duration_ms: 3425.434476
+  type: 'test'
+  ...
+# Subtest: lixeira: módulo com aula não vai; a aula vai, some para a aluna e volta como rascunho
+ok 23 - lixeira: módulo com aula não vai; a aula vai, some para a aluna e volta como rascunho
+  ---
+  duration_ms: 12884.845098
+  type: 'test'
+  ...
+# Subtest: lixeira: curso só vai depois dos módulos, e módulo não volta antes do curso
+ok 24 - lixeira: curso só vai depois dos módulos, e módulo não volta antes do curso
+  ---
+  duration_ms: 10391.056503
+  type: 'test'
+  ...
+# Subtest: início: o curso, o dia 1 de 2 com o que fazer hoje, e a aula de depois fechada
+ok 25 - início: o curso, o dia 1 de 2 com o que fazer hoje, e a aula de depois fechada
+  ---
+  duration_ms: 3807.559632
+  type: 'test'
+  ...
+# Subtest: aula fechada, aula em rascunho e quiz de aula em rascunho não abrem nem pelo endereço
+ok 26 - aula fechada, aula em rascunho e quiz de aula em rascunho não abrem nem pelo endereço
+  ---
+  duration_ms: 9974.730818
+  type: 'test'
+  ...
+# Subtest: a tela da aula traz o vídeo, as anotações, o material, a tarefa e o quiz
+ok 27 - a tela da aula traz o vídeo, as anotações, o material, a tarefa e o quiz
+  ---
+  duration_ms: 2352.197236
+  type: 'test'
+  ...
+# Subtest: o reprodutor guarda onde a aluna parou, retoma dali e marca a aula como vista perto do fim
+ok 28 - o reprodutor guarda onde a aluna parou, retoma dali e marca a aula como vista perto do fim
+  ---
+  duration_ms: 4155.785298
+  type: 'test'
+  ...
+# Subtest: o botão desmarca e marca a aula como vista
+ok 29 - o botão desmarca e marca a aula como vista
+  ---
+  duration_ms: 2706.094715
+  type: 'test'
+  ...
+# Subtest: quiz: as respostas certas não vão para o navegador; faltando resposta, avisa; depois corrige e mostra as certas
+ok 30 - quiz: as respostas certas não vão para o navegador; faltando resposta, avisa; depois corrige e mostra as certas
+  ---
+  duration_ms: 3059.547499
+  type: 'test'
+  ...
+# Subtest: tentar de novo e acertar tudo: aprovada; o início marca a aula e o quiz como feitos
+ok 31 - tentar de novo e acertar tudo: aprovada; o início marca a aula e o quiz como feitos
+  ---
+  duration_ms: 5938.90198
+  type: 'test'
+  ...
+# Subtest: tarefa feita: o dia vira, a aula 2 abre; a tarefa opcional não segurou; desmarcar volta atrás
+ok 32 - tarefa feita: o dia vira, a aula 2 abre; a tarefa opcional não segurou; desmarcar volta atrás
+  ---
+  duration_ms: 10553.206999
+  type: 'test'
+  ...
+# Subtest: última aula vista: curso completo, 100 %, e tudo continua aberto para repassar
+ok 33 - última aula vista: curso completo, 100 %, e tudo continua aberto para repassar
+  ---
+  duration_ms: 1285.937886
+  type: 'test'
+  ...
+# Subtest: com a própria sessão, a aluna não escreve a nota, não lê o gabarito e não mexe no progresso de outra pessoa
+ok 34 - com a própria sessão, a aluna não escreve a nota, não lê o gabarito e não mexe no progresso de outra pessoa
+  ---
+  duration_ms: 208.427414
+  type: 'test'
+  ...
+# Subtest: sem matrícula não há curso; com o acesso bloqueado o curso some na hora
+ok 35 - sem matrícula não há curso; com o acesso bloqueado o curso some na hora
+  ---
+  duration_ms: 4559.212147
+  type: 'test'
+  ...
+# Subtest: a equipe vê o curso como o aluno, com tudo aberto, e nada do que faz fica gravado
+ok 36 - a equipe vê o curso como o aluno, com tudo aberto, e nada do que faz fica gravado
+  ---
+  duration_ms: 6921.834995
+  type: 'test'
+  ...
+# Subtest: no celular, o início, a aula e o quiz cabem na largura
+ok 37 - no celular, o início, a aula e o quiz cabem na largura
+  ---
+  duration_ms: 13152.929695
+  type: 'test'
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 79575.59351
