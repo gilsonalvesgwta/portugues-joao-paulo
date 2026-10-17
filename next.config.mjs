@@ -2,14 +2,15 @@
 // - a plataforma nunca abre dentro de outra página (golpe de clique escondido);
 // - o navegador não adivinha o tipo dos arquivos;
 // - sites de fora recebem só o endereço da plataforma, nunca a página em que o aluno estava;
-// - câmera, microfone, localização e pagamento ficam desligados;
+// - câmera, localização e pagamento ficam desligados; o microfone, só para a própria plataforma
+//   (o professor grava a pronúncia das palavras no editor do quiz);
 // - formulários só enviam para a própria plataforma, e os únicos quadros de fora são os do YouTube;
 // - depois da primeira visita, o navegador só usa a plataforma por https.
 const SEGURANCA = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), payment=()' },
   {
     key: 'Content-Security-Policy',
     value:
