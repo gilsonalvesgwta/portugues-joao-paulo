@@ -19,6 +19,7 @@
   --color-aviso: #8a4b00;
   --color-aviso-suave: #fbf1df;
   --color-perigo: #b3261e;
+  --color-perigo-suave: #fbeceb; /* fundo de um par errado, por um instante */
 
   /* Área do aluno: tons de apoio do visual novo. */
   --color-papel: #fbf8f1; /* cartão de fundo suave */

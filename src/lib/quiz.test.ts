@@ -1,16 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { corrigir, corrigirQuiz, paraAluno, validarPergunta, type Pergunta } from './quiz.ts';
+import { conferirPar, corrigir, corrigirQuiz, paraAluno, validarPergunta, type Pergunta } from './quiz.ts';
 
+// Três pares com a gravação do professor e um sem (esse vai para a voz do navegador).
 const parear: Pergunta = {
   tipo: 'parear_audio',
+  modo: 'audio',
   pares: [
-    { audio: 'a/ele.mp3', traducao: 'él' },
-    { audio: 'a/ela.mp3', traducao: 'ella' },
-    { audio: 'a/eles.mp3', traducao: 'ellos' },
-    { audio: 'a/isso.mp3', traducao: 'eso' },
+    { palavra: 'ele', traducao: 'él', audio: 'a1' },
+    { palavra: 'ela', traducao: 'ella', audio: 'a2' },
+    { palavra: 'eles', traducao: 'ellos', audio: 'a3' },
+    { palavra: 'isso', traducao: 'eso' },
   ],
 };
+const escrita: Pergunta = { tipo: 'parear_audio', modo: 'escrita', pares: [{ palavra: 'tudo bem', traducao: 'todo bien' }, { palavra: 'oi', traducao: 'hola' }] };
 const multipla: Pergunta = { tipo: 'multipla_escolha', enunciado: '¿Cómo se dice «gracias»?', opcoes: ['obrigado', 'por favor', 'desculpa'], correta: 0 };
 const completar: Pergunta = { tipo: 'completar', frase: 'Ela ___ no Brasil.', opcoes: ['mora', 'moro', 'moram'], correta: 0 };
 const ordenar: Pergunta = { tipo: 'ordenar', palavras: ['Ele', 'é', 'professor'], traducao: 'Él es profesor.' };
@@ -32,14 +35,21 @@ test('a versão do aluno não leva o gabarito', () => {
     assert.equal(json.includes('pares'), false, p.tipo);
   }
   assert.equal(JSON.stringify(paraAluno(ditado)).includes('Você'), false);
+  // Com a gravação, a palavra em português (a resposta do par) não vai para o navegador.
+  const json = JSON.stringify(paraAluno(parear, sorteioFixo(7)));
+  for (const palavra of ['"ele"', '"ela"', '"eles"']) assert.equal(json.includes(palavra), false, palavra);
 });
 
 test('a versão do aluno mantém todas as opções e os áudios', () => {
   const p = paraAluno(parear, sorteioFixo(3));
   assert.equal(p.tipo, 'parear_audio');
   if (p.tipo !== 'parear_audio') return;
-  assert.deepEqual([...p.audios].sort(), ['a/ela.mp3', 'a/ele.mp3', 'a/eles.mp3', 'a/isso.mp3']);
+  assert.deepEqual([...p.cartoes].sort((a, b) => a.indice - b.indice), [
+    { indice: 0, audio: 'a1' }, { indice: 1, audio: 'a2' }, { indice: 2, audio: 'a3' }, { indice: 3, fala: 'isso' },
+  ]);
   assert.deepEqual([...p.traducoes].sort(), ['ella', 'ellos', 'eso', 'él'].sort());
+  const e = paraAluno(escrita, sorteioFixo(3));
+  assert.deepEqual(e.tipo === 'parear_audio' && [...e.cartoes].sort((a, b) => a.indice - b.indice), [{ indice: 0, palavra: 'tudo bem' }, { indice: 1, palavra: 'oi' }]);
   const m = paraAluno(multipla, sorteioFixo(3));
   assert.equal(m.tipo === 'multipla_escolha' && [...m.opcoes].sort().join(), ['desculpa', 'obrigado', 'por favor'].join());
 });
@@ -52,12 +62,18 @@ test('ordenar nunca é entregue já na ordem certa', () => {
   }
 });
 
-test('parear: certo só com todos os pares corretos, sem repetir áudio', () => {
-  const certo = parear.tipo === 'parear_audio' ? parear.pares : [];
+test('parear: cada tentativa é conferida; a pergunta é certa com todos os pares e nenhum erro', () => {
+  assert.deepEqual(conferirPar(parear, 1, 'ella'), { certo: true, palavra: 'ela' });
+  assert.deepEqual(conferirPar(parear, 1, 'él'), { certo: false });
+  assert.deepEqual(conferirPar(parear, 9, 'ella'), { certo: false });
+  assert.deepEqual(conferirPar(parear, '1', 'ella'), { certo: false });
+  assert.deepEqual(conferirPar(multipla, 0, 'obrigado'), { certo: false });
+
+  const certo = [{ i: 0, t: 'él' }, { i: 1, t: 'ella' }, { i: 2, t: 'ellos' }, { i: 3, t: 'eso' }];
   assert.equal(corrigir(parear, certo).correta, true);
   assert.equal(corrigir(parear, [...certo].reverse()).correta, true);
-  const trocado = [{ audio: 'a/ele.mp3', traducao: 'ella' }, { audio: 'a/ela.mp3', traducao: 'él' }, certo[2], certo[3]];
-  assert.equal(corrigir(parear, trocado).correta, false);
+  // Um erro no meio do caminho, mesmo terminando tudo certo: a pergunta conta como errada.
+  assert.equal(corrigir(parear, [{ i: 0, t: 'ella' }, ...certo]).correta, false);
   assert.equal(corrigir(parear, certo.slice(0, 3)).correta, false);
   assert.equal(corrigir(parear, [certo[0], certo[0], certo[0], certo[0]]).correta, false);
 });
@@ -107,8 +123,10 @@ test('nota do quiz: percentual e aprovação com 70%', () => {
 
 test('validação da administração aponta o que falta', () => {
   for (const p of [parear, multipla, completar, ordenar, ditado]) assert.deepEqual(validarPergunta(p), [], p.tipo);
-  assert.equal(validarPergunta({ tipo: 'parear_audio', pares: [{ audio: 'a.mp3', traducao: 'él' }] }).length, 1);
-  assert.equal(validarPergunta({ tipo: 'parear_audio', pares: [{ audio: 'a.mp3', traducao: 'él' }, { audio: 'b.mp3', traducao: 'él' }] }).length, 1);
+  assert.deepEqual(validarPergunta(escrita), []);
+  assert.equal(validarPergunta({ tipo: 'parear_audio', modo: 'audio', pares: [{ palavra: 'ele', traducao: 'él' }] }).length, 1);
+  assert.equal(validarPergunta({ tipo: 'parear_audio', modo: 'audio', pares: [{ palavra: 'ele', traducao: 'él' }, { palavra: 'Ele', traducao: 'Él' }] }).length, 2);
+  assert.equal(validarPergunta({ tipo: 'parear_audio', modo: 'audio', pares: [{ palavra: '', traducao: 'él' }, { palavra: 'ela', traducao: ' ' }] }).length, 1);
   assert.equal(validarPergunta({ tipo: 'multipla_escolha', enunciado: '', opcoes: ['a'], correta: 3 }).length, 3);
   assert.equal(validarPergunta({ tipo: 'multipla_escolha', enunciado: 'x', opcoes: ['a', 'a '], correta: 0 }).length, 1);
   assert.equal(validarPergunta({ tipo: 'completar', frase: 'Sem lacuna.', opcoes: ['a', 'b'], correta: 0 }).length, 1);

@@ -14,7 +14,7 @@ o plano completo está no documento "Plano mestre — Plataforma Português com 
 | `supabase/tests/` | Testes do banco: 235 verificações de regra e 2 testes de disputa simultânea | Passando |
 | `src/lib/` | Regras do aplicativo sem dependências: eventos da Greenn, quizzes, trilha por dia, agenda por fuso, e-mails em espanhol, validação do conteúdo, link do YouTube, configuração do e-mail e do banco, anotações da aula, editor de quiz, trilha por dia, cadastro e matrícula de alunos, ofertas, área do aluno, correção do quiz, conversação, reservas do aluno, limite de tentativas de senha e o Papo | 193 testes passando |
 | `src/app/`, `src/components/` | Aplicativo Next.js 16 com Tailwind 4. Acesso em espanhol: login, primeiro acesso e nova senha por link de uso único. Áreas internas protegidas por papel (aluno, professor, administrador) | Funcionando. Área do aluno em espanhol: início com o dia de hoje, aula (vídeo, anotações, materiais, tarefas), quiz corrigido pelo servidor, conversação (agenda no fuso do aluno, reservar, cancelar, avaliar), Papo (tutor com IA) e «Mi cuenta» |
-| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
+| `src/app/admin/` | Administração em português: painel, cursos, módulos, aulas (rascunho e publicação), anotações da aula em blocos com prévia do aluno, materiais de apoio por link, quiz da aula (perguntas de texto e combinar pares com a voz do professor), tarefas, trilha por dia, lixeira, alunos (cadastro, matrícula, bloqueio, validade, papel) pagamentos (ofertas e avisos da Greenn) e conversação (temas, turmas, inscritos, presença) | Funcionando |
 | `e2e/` | Testes de ponta a ponta do acesso, da administração e do envio de e-mail, com navegador de verdade, contra o Supabase local e contra a stack da VPS | 175 testes: 174 passando no Supabase local (com o Papo ligado, falando com um serviço de imitação) e 166 na stack (com o Papo desligado, como fica sem a chave). Parte deles roda de novo com a stack atrás de um Traefik, por https |
 | `.github/workflows/` | Testes automáticos no GitHub: lógica, banco, instalação, compilação, tipos, fotos das telas, acesso de ponta a ponta e a imagem da VPS (construída, testada com login e publicada) | Passando |
 | `Dockerfile`, `deploy/` | Imagens do aplicativo e do preparo do banco, e a stack do Portainer (Swarm + Traefik) com banco e login próprios | Stack testada em Swarm no GitHub; instalação na VPS ainda não feita |
@@ -84,9 +84,19 @@ Em `/admin`, o curso é dividido em módulos e cada módulo reúne aulas.
   não vão para a lixeira.
 - As tarefas (o que o aluno faz além do vídeo e do quiz) pertencem a um curso e podem ser ligadas a uma aula.
   Têm título e instrução em espanhol e um link opcional, só `https://`. Vão para a lixeira e podem ser restauradas.
-- O quiz da aula tem, por enquanto, três tipos de pergunta: múltipla escolha, completar a frase e ordenar a
-  frase. É gravado de uma vez dentro do banco (função `salvar_quiz`): ou entra inteiro, ou nada muda. O aluno
-  nunca lê a tabela de perguntas, que guarda o gabarito. Não há perguntas com áudio nesta primeira versão.
+- O quiz da aula tem quatro tipos de pergunta: múltipla escolha, completar a frase, ordenar a frase e combinar
+  pares. É gravado de uma vez dentro do banco (função `salvar_quiz`): ou entra inteiro, ou nada muda. O aluno
+  nunca lê a tabela de perguntas, que guarda o gabarito.
+- **Combinar pares** (como o da Aloud): em cima, as palavras em português; embaixo, as traduções em espanhol,
+  embaralhadas. No modo com áudio o aluno ouve a voz do professor, gravada na própria tela do quiz (microfone,
+  em WAV, com o silêncio das pontas cortado) ou enviada como arquivo (MP3, WAV, M4A, OGG); palavra sem gravação é
+  lida pela voz do navegador. No modo escrito, o aluno lê a palavra. Cada tentativa é conferida pelo servidor
+  (`conferirParDoQuiz`): acertou, a palavra aparece no cartão; errou, os dois piscam e ele tenta de novo. A
+  pergunta conta como certa quando todos os pares saem sem nenhum erro. A palavra gravada nunca vai para a página
+  do aluno (o cartão leva só o identificador da gravação). As gravações ficam no banco (tabela `audios`, só a
+  equipe lê e grava; o aluno ouve por `/api/audio/...`, que atende pedidos de pedaço, como o Safari precisa):
+  entram nas cópias de segurança e vão junto numa mudança de VPS. Gravação que o quiz deixou de usar é apagada
+  um dia depois, ao salvar o quiz.
 - As anotações da aula (o resumo que o aluno lê junto com o vídeo) são montadas em blocos: capa, seção numerada,
   texto, pares de exemplo, cartões de termo, certo e errado, nota do professor, vocabulário e tabela-resumo.
   O texto do professor é sempre texto: nunca vira HTML. O único destaque é `**negrito**`.
